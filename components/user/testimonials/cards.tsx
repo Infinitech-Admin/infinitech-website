@@ -27,15 +27,16 @@ const Cards = () => {
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between gap-4">
-        <div className="max-w-2xl">
-          <h1 className={`text-5xl text-accent ${poetsen_one.className}`}>
-            TESTIMONIALS
-          </h1>
+       <div className="max-w-2xl mt-12 mx-auto text-center">
+  <h1 className={`text-5xl text-accent ${poetsen_one.className}`}>
+    TESTIMONIALS
+  </h1>
 
-          <h1 className={`text-4xl text-primary ${poetsen_one.className}`}>
-            We help to achieve customers business goals
-          </h1>
-        </div>
+  <h1 className={`text-4xl text-primary ${poetsen_one.className}`}>
+    We help to achieve customers business goals
+  </h1>
+</div>
+
         <div className="flex gap-2">
           <Button
             size="lg"
