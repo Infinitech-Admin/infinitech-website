@@ -1,13 +1,17 @@
 export const members = [
   {
     name: "Angelle Sarmiento",
+     facebookname: "ABIC Realty",
+      facebooknames: "Infinitech Advertising",
     position: "Chief Executive Officer",
     image: "angelle.png",
     email: "abicrealtyph@gmail.com",
     phone: "09157100777",
     telegram: "09157100777",
     viber: "09157100777",
-    href: "https://www.facebook.com/angelle.sarmiento",
+    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+      hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
+    company: "abicrealtyph.com | Infinitech Advertising"
   },
   {
     name: "Maria Krissa Charez Bongon",
