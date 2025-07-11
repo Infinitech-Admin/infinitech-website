@@ -23,7 +23,7 @@ const Member = ({ id }: { id: number }) => {
         {member ? (
           <Card className="p-4">
             <CardBody>
-              <div className="flex flex-col sm:flex-row justify gap-8">
+              <div className="flex flex-col sm:flex-row gap-8">
                 {/* Image Section */}
                 <div className="flex justify-center sm:justify-start items-center">
                   <Image
@@ -34,23 +34,26 @@ const Member = ({ id }: { id: number }) => {
                 </div>
 
                 {/* Info Section */}
-                <div className="flex flex-col justify-start gap-4">
-                  <div className="uppercase">
-                    <h3 className="text-3xl font-semibold text-accent">
+                <div className="flex flex-col justify-start gap-4 w-full">
+                  <div className="text-center sm:text-left uppercase">
+                    <h3 className="text-2xl font-semibold text-accent">
                       {member.name}
                     </h3>
                     <h3 className="text-xl font-semibold text-primary">
                       {member.position}
                     </h3>
+                  </div>
 
-                    {/* Websites under position - one icon, one line */}
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-[40px_1fr] gap-y-3 gap-x-3 items-start text-sm text-blue-700">
+                    {/* Websites */}
                     {(member.company?.includes("abicrealtyph.com") ||
                       member.company?.includes("Infinitech Advertising")) && (
-                      <div className="flex items-center gap-2 text-blue-700 normal-case">
-                        <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                           <LuGlobe size={20} />
                         </div>
-                        <div className="flex gap-2 text-sm flex-wrap">
+                        <div className="flex flex-wrap gap-2">
                           {member.company.includes("abicrealtyph.com") && (
                             <a
                               href="https://abicrealtyph.com"
@@ -76,105 +79,116 @@ const Member = ({ id }: { id: number }) => {
                             </a>
                           )}
                         </div>
-                      </div>
+                      </>
                     )}
-                  </div>
 
-                  {/* Contact Info */}
-                  <div className="flex flex-col gap-1">
-                    <a
-                      href="https://www.google.com/maps?q=Unit+311,+Campos+Rueda+Building,+101+Urban+Ave,+Makati,+Metro+Manila"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <div className="px-2 py-2 rounded-lg items-center bg-blue-100 text-blue-900">
-                        <LuBriefcaseBusiness size={20} />
-                      </div>
-                      <h3 className="text-sm">
-                        Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
-                        Metro Manila
-                      </h3>
-                    </a>
+                    {/* Address */}
+                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                      <LuBriefcaseBusiness size={20} />
+                    </div>
+                    <div>
+                      Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila
+                    </div>
 
-                    <a
-                      href={`mailto:${member.email}`}
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
-                        <LuMail size={20} />
-                      </div>
-                      <h3 className="text-sm">{member.email}</h3>
-                    </a>
+                    {/* Email */}
+                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                      <LuMail size={20} />
+                    </div>
+                    <div>
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="hover:underline"
+                      >
+                        {member.email}
+                      </a>
+                    </div>
 
-                    <a
-                      href={`tel:${removeSpaces(member.phone)}`}
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
-                        <LuPhone size={20} />
-                      </div>
-                      <h3 className="text-sm">{member.phone}</h3>
-                    </a>
-                  </div>
+                    {/* Phone */}
+                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                      <LuPhone size={20} />
+                    </div>
+                    <div>
+                      <a
+                        href={`tel:${removeSpaces(member.phone)}`}
+                        className="hover:underline"
+                      >
+                        {member.phone}
+                      </a>
+                    </div>
 
-                  {/* Social Links */}
-                  <div className="flex flex-col gap-1">
-                    <a
-                      href={member.telegram || "https://web.telegram.org"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
-                        <RiTelegram2Line size={20} />
-                      </div>
-                      <h3 className="text-sm">{member.telegram}</h3>
-                    </a>
+                    {/* Telegram */}
+                    {member.telegram && (
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                          <RiTelegram2Line size={20} />
+                        </div>
+                        <div>
+                          <a
+                            href={member.telegram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.telegram}
+                          </a>
+                        </div>
+                      </>
+                    )}
 
-                    <a
-                      href={member.viber || "https://www.viber.com"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-700 hover:underline"
-                    >
-                      <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
-                        <FaViber size={20} />
-                      </div>
-                      <h3 className="text-sm">{member.viber}</h3>
-                    </a>
+                    {/* Viber */}
+                    {member.viber && (
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                          <FaViber size={20} />
+                        </div>
+                        <div>
+                          <a
+                            href={member.viber}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.viber}
+                          </a>
+                        </div>
+                      </>
+                    )}
 
-                    {/* Facebook - Two separate icons/lines */}
+                    {/* Facebooks */}
                     {member.facebookname && (
-                      <div className="flex items-center gap-2 text-blue-700 normal-case">
-                        <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                           <LuFacebook size={20} />
                         </div>
-                        <a
-                          href={member.href || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm hover:underline"
-                        >
-                          {member.facebookname}
-                        </a>
-                      </div>
+                        <div>
+                          <a
+                            href={member.href || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.facebookname}
+                          </a>
+                        </div>
+                      </>
                     )}
 
                     {member.facebooknames && (
-                      <div className="flex items-center gap-2 text-blue-700 normal-case">
-                        <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                           <LuFacebook size={20} />
                         </div>
-                        <a
-                          href={member.hrefs || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm hover:underline"
-                        >
-                          {member.facebooknames}
-                        </a>
-                      </div>
+                        <div>
+                          <a
+                            href={member.hrefs || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.facebooknames}
+                          </a>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
