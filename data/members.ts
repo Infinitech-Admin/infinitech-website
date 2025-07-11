@@ -1,8 +1,8 @@
 export const members = [
   {
     name: "Angelle Sarmiento",
-     facebookname: "ABIC Realty",
-      facebooknames: "Infinitech Advertising",
+     facebookname: "ABIC Realty & Consultancy Corporation",
+      facebooknames: "Infinitech Advertising Corporation",
     position: "Chief Executive Officer",
     image: "angelle.png",
     email: "abicrealtyph@gmail.com",
