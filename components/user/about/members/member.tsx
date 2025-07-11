@@ -144,37 +144,36 @@ const Member = ({ id }: { id: number }) => {
                       <h3 className="text-sm">{member.viber}</h3>
                     </a>
 
-                    {/* Facebook - Styled like website section */}
-                    {(member.facebookname || member.facebooknames) && (
+                    {/* Facebook - Two separate icons/lines */}
+                    {member.facebookname && (
                       <div className="flex items-center gap-2 text-blue-700 normal-case">
                         <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
                           <LuFacebook size={20} />
                         </div>
-                        <div className="flex gap-2 text-sm flex-wrap">
-                          {member.facebookname && (
-                            <a
-                              href={member.href || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline"
-                            >
-                              {member.facebookname}
-                            </a>
-                          )}
-                          {member.facebookname && member.facebooknames && (
-                            <span className="text-gray-400">|</span>
-                          )}
-                          {member.facebooknames && (
-                            <a
-                              href={member.hrefs || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline"
-                            >
-                              {member.facebooknames}
-                            </a>
-                          )}
+                        <a
+                          href={member.href || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm hover:underline"
+                        >
+                          {member.facebookname}
+                        </a>
+                      </div>
+                    )}
+
+                    {member.facebooknames && (
+                      <div className="flex items-center gap-2 text-blue-700 normal-case">
+                        <div className="px-2 py-2 rounded-lg bg-blue-100 text-blue-900">
+                          <LuFacebook size={20} />
                         </div>
+                        <a
+                          href={member.hrefs || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm hover:underline"
+                        >
+                          {member.facebooknames}
+                        </a>
                       </div>
                     )}
                   </div>
