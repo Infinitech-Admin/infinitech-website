@@ -73,6 +73,16 @@ export const members = [
     viber: "09667515747",
     facebook: "https://www.facebook.com/darlenefajarito",
   },
+
+    {
+    name: "Diana V. Brown",
+    position: "Executive Marketing Officer & Quality Analyst",
+    image: "diana.png",
+    email: "abicrealty.diana@gmail.com",
+    phone: "09455914895 ",
+    telegram: "09455914895"
+  },
+
   {
     name: "Moses Alcantara",
     position: "Senior Web Developer",
