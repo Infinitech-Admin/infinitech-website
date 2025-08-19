@@ -80,7 +80,10 @@ export const members = [
     image: "diana.png",
     email: "abicrealty.diana@gmail.com",
     phone: "09455914895 ",
-    telegram: "09455914895"
+    telegram: "09455914895",
+    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+    hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
+    company: "abicrealtyph.com | Infinitech Advertising"
   },
 
   {
