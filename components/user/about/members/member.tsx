@@ -91,40 +91,55 @@ const Member = ({ id }: { id: number }) => {
                     </div>
 
                     {/* Email */}
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                      <LuMail size={20} />
-                    </div>
-                    <div>
-                      <a
-                        href={`mailto:${member.email}`}
-                        className="hover:underline"
-                      >
-                        {member.email}
-                      </a>
-                    </div>
+                  <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                  <LuMail size={20} />
+                </div>
+                <div className="flex items-center mt-2">
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="hover:underline"
+                  >
+                    {member.email}
+                  </a>
+                </div>
 
                     {/* Phone */}
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                      <LuPhone size={20} />
-                    </div>
-                    <div>
-                      <a
-                        href={`tel:${removeSpaces(member.phone)}`}
-                        className="hover:underline"
-                      >
-                        {member.phone}
-                      </a>
-                    </div>
-
+                  <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                  <LuPhone size={20} />
+                </div>
+                <div className="flex items-center mt-2">
+                  <a
+                    href={`tel:${removeSpaces(member.phone)}`}
+                    className="hover:underline"
+                  >
+                    {member.phone}
+                  </a>
+                </div>
                     {/* Telegram */}
-                    {member.telegram && (
+                   {member.telegram && typeof member.telegram !== "string" ? (
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                          <RiTelegram2Line size={20} />
+                        </div>
+                        <div className="flex items-center mt-2">
+                          <a
+                            href={member.telegram.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.telegram.title}
+                          </a>
+                        </div>
+                      </>
+                    ) : member.telegram ? (
                       <>
                         <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                           <RiTelegram2Line size={20} />
                         </div>
                         <div>
                           <a
-                            href={member.telegram}
+                            href={`https://web.telegram.org/a/#${member.telegram}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline"
@@ -133,26 +148,27 @@ const Member = ({ id }: { id: number }) => {
                           </a>
                         </div>
                       </>
-                    )}
+                    ) : null}
+
 
                     {/* Viber */}
-                    {member.viber && (
-                      <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <FaViber size={20} />
-                        </div>
-                        <div>
-                          <a
-                            href={member.viber}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            {member.viber}
-                          </a>
-                        </div>
-                      </>
-                    )}
+                   {member.viber && (
+                    <>
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                        <FaViber size={20} />
+                      </div>
+                      <div>
+                        <a
+                          href={member.viber.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {member.viber.title}
+                        </a>
+                      </div>
+                    </>
+                  )}
 
                     {/* Facebooks */}
                     {member.facebookname && (
