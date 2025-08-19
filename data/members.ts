@@ -33,8 +33,8 @@ export const members = [
       title: "09298597655",
       href: "https://msng.link/o?09298597655=vi"
     },
-    facebook: "https://www.facebook.com/charizr1",
     facebookname: "Maria Krissa Charez Bongon",
+    href: "https://www.facebook.com/charizr1",
   },
   {
     name: "Marisol Centeno",
@@ -89,8 +89,8 @@ export const members = [
       title: "09456754591",
       href: "https://msng.link/o?09456754591=vi"
     },
-    facebook: "https://www.facebook.com/tine.tainy",
     facebookname: "Justin De Castro",
+    href: "https://www.facebook.com/tine.tainy",
   },
   {
     name: "Darlene Angel Fajarito",
@@ -106,7 +106,8 @@ export const members = [
       title: "09667515747",
       href: "https://msng.link/o?09667515747=vi"
     },
-    facebook: "https://www.facebook.com/darlenefajarito",
+    facebookname: "Darlene Angel Fajarito",
+    href: "https://www.facebook.com/darlenefajarito",
   },
   {
     name: "Diana V. Brown",
