@@ -18,23 +18,23 @@ const Member = ({ id }: { id: number }) => {
   const member = members[id];
 
   return (
-    <section>
-      <div className="flex flex-col justify-center lg:px-12 xl:px-64 2xl:px-[30rem] py-24">
+    <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] py-12 sm:py-16 lg:py-20">
+      <div className="w-full max-w-6xl">
         {member ? (
           <Card className="p-4">
             <CardBody>
-              <div className="flex flex-col sm:flex-row gap-8">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
                 {/* Image Section */}
-                <div className="flex justify-center sm:justify-start items-center">
+                <div className="flex justify-center sm:justify-start items-center sm:w-[40%]">
                   <Image
                     src={`/images/members/${member.image}`}
                     alt={member.name}
-                    className="w-full sm:w-auto h-auto sm:h-[20rem] min-h-[16rem] object-cover rounded-lg"
+                    className="w-full h-auto sm:h-[20rem] max-h-[24rem] object-cover rounded-lg"
                   />
                 </div>
 
                 {/* Info Section */}
-                <div className="flex flex-col justify-start gap-4 w-full">
+                <div className="flex flex-col justify-start gap-4 w-full sm:w-[60%]">
                   <div className="text-center sm:text-left uppercase">
                     <h3 className="text-2xl font-semibold text-accent">
                       {member.name}
@@ -87,41 +87,43 @@ const Member = ({ id }: { id: number }) => {
                       <LuBriefcaseBusiness size={20} />
                     </div>
                     <div>
-                      Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila
+                      Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
+                      Metro Manila
                     </div>
 
                     {/* Email */}
-                  <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                  <LuMail size={20} />
-                </div>
-                <div className="flex items-center mt-2">
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="hover:underline"
-                  >
-                    {member.email}
-                  </a>
-                </div>
+                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                      <LuMail size={20} />
+                    </div>
+                    <div>
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="hover:underline"
+                      >
+                        {member.email}
+                      </a>
+                    </div>
 
                     {/* Phone */}
-                  <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                  <LuPhone size={20} />
-                </div>
-                <div className="flex items-center mt-2">
-                  <a
-                    href={`tel:${removeSpaces(member.phone)}`}
-                    className="hover:underline"
-                  >
-                    {member.phone}
-                  </a>
-                </div>
+                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                      <LuPhone size={20} />
+                    </div>
+                    <div>
+                      <a
+                        href={`tel:${removeSpaces(member.phone)}`}
+                        className="hover:underline"
+                      >
+                        {member.phone}
+                      </a>
+                    </div>
+
                     {/* Telegram */}
-                   {member.telegram && typeof member.telegram !== "string" ? (
+                    {member.telegram && typeof member.telegram !== "string" ? (
                       <>
                         <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                           <RiTelegram2Line size={20} />
                         </div>
-                        <div className="flex items-center mt-2">
+                        <div>
                           <a
                             href={member.telegram.href}
                             target="_blank"
@@ -150,27 +152,26 @@ const Member = ({ id }: { id: number }) => {
                       </>
                     ) : null}
 
-
                     {/* Viber */}
-                   {member.viber && (
-                    <>
-                      <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                        <FaViber size={20} />
-                      </div>
-                      <div>
-                        <a
-                          href={member.viber.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline"
-                        >
-                          {member.viber.title}
-                        </a>
-                      </div>
-                    </>
-                  )}
+                    {member.viber && (
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                          <FaViber size={20} />
+                        </div>
+                        <div>
+                          <a
+                            href={member.viber.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {member.viber.title}
+                          </a>
+                        </div>
+                      </>
+                    )}
 
-                    {/* Facebooks */}
+                    {/* Facebook */}
                     {member.facebookname && (
                       <>
                         <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
@@ -212,7 +213,7 @@ const Member = ({ id }: { id: number }) => {
             </CardBody>
           </Card>
         ) : (
-          <div className="flex justify-center">
+          <div className="flex justify-center py-8">
             <h3 className="font-semibold">Member Not Found</h3>
           </div>
         )}
