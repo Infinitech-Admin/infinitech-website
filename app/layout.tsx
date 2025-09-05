@@ -25,9 +25,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         <Providers>
           <Toaster position="top-right" />
 
-          <div className="flex flex-col">
+          {/* Main Page Wrapper with Sticky Footer */}
+          <div className="flex flex-col min-h-screen">
             <NavBar />
-            <main>{children}</main>
+            <main className="flex-grow">{children}</main>
             <Footer />
           </div>
         </Providers>
