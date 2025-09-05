@@ -36,61 +36,23 @@ export const members = [
     facebookname: "Maria Krissa Charez Bongon",
     href: "https://www.facebook.com/charizr1",
   },
-  {
-    name: "Marisol Centeno",
-    position: "Accounting Head",
-    image: "sol.png",
-    email: "abicrealty.marisol@gmail.com",
-    phone: "09615105051",
-    telegram: "09615105051",
-    viber: {
-      title: "09615105051",
-      href: "https://msng.link/o?09615105051=vi"
-    },
-    facebook: "https://www.facebook.com/mars.cntn",
-  },
-  {
-    name: "Rhea Jane Quintano",
-    position: "Human Resources",
-    image: "rhea.png",
-    email: "abicrealty.rhea@gmail.com",
-    phone: "09455493651",
-    telegram: "09455493651",
-    viber: {
-      title: "09455493651",
-      href: "https://msng.link/o?09455493651=vi"
-    },
-    facebook: "https://www.facebook.com/rhjne.qntno",
-  },
-  {
-    name: "Antonio Sy",
-    position: "Company Driver",
-    image: "antonio.png",
-    email: "antoniosy90@gmail.com",
-    phone: "09685913442",
-    telegram: "09685913442",
-    viber: {
-      title: "09685913442",
-      href: "https://msng.link/o?09685913442=vi"
-    },
-    facebook: "https://www.facebook.com/antonio.sy.709888",
-  },
-  {
-    name: "Justin De Castro",
-    position: "IT Supervisor",
-    image: "justin.png",
-    email: "infinitech.justin2024@gmail.com",
-    phone: "09456754591",
+  
+  
+   {
+    name: "Diana V. Brown",
+    position: "Executive Marketing Officer & Quality Analyst",
+    image: "diana.png",
+    email: "abicrealty.diana@gmail.com",
+    phone: "09455914895",
     telegram: {
-      title: "09456754591",
-      href: "https://web.telegram.org/a/#5645362073"
+      title: "09455914895",
+      href: "https://web.telegram.org/a/#6024830507"
     },
-    viber: {
-      title: "09456754591",
-      href: "https://msng.link/o?09456754591=vi"
-    },
-    facebookname: "Justin De Castro",
-    href: "https://www.facebook.com/tine.tainy",
+    facebookname: "ABIC Realty & Consultancy Corporation",
+    facebooknames: "Infinitech Advertising Corporation",
+    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+    hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
+    company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
   {
     name: "Darlene Angel Fajarito",
@@ -110,71 +72,117 @@ export const members = [
     href: "https://www.facebook.com/darlenefajarito",
   },
   {
-    name: "Diana V. Brown",
-    position: "Executive Marketing Officer & Quality Analyst",
-    image: "diana.png",
-    email: "abicrealty.diana@gmail.com",
-    phone: "09455914895",
+    name: "Justin De Castro",
+    position: "IT Supervisor",
+    image: "justin.png",
+    email: "infinitech.justin2024@gmail.com",
+    phone: "09456754591",
     telegram: {
-      title: "09455914895",
-      href: "https://web.telegram.org/a/#6024830507"
+      title: "09456754591",
+      href: "https://web.telegram.org/a/#5645362073"
     },
-    facebookname: "ABIC Realty & Consultancy Corporation",
-    facebooknames: "Infinitech Advertising Corporation",
-    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
-    hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
-    company: "abicrealtyph.com | Infinitech Advertising Corporation"
-  },
-  {
-    name: "Moses Alcantara",
-    position: "Senior Web Developer",
-    image: "moses.png",
-    email: "infinitech.mosesalcantara@gmail.com",
-    phone: "09685913442",
-    telegram: "09685913442",
     viber: {
-      title: "09685913442",
-      href: "https://msng.link/o?09685913442=vi"
+      title: "09456754591",
+      href: "https://msng.link/o?09456754591=vi"
     },
-    facebook: "https://www.facebook.com/profile.php?id=100014147623605",
+    facebookname: "Justin De Castro",
+    href: "https://www.facebook.com/tine.tainy",
   },
   {
-    name: "Giolo Evora",
-    position: "Senior Web Developer",
-    image: "gio.png",
-    email: "infinitech.giolo.evora@gmail.com",
-    phone: "09924401097",
-    telegram: "09924401097",
-    viber: {
-      title: "09924401097",
-      href: "https://msng.link/o?09924401097=vi"
+    name: "Kasandra Carise Jurquia",
+    position: "Digital Marketing Staff",
+    image: "jurquia.png",
+    email: "Infinitech.Kasandra@gmail.com",
+    phone: "09151934556",
+     telegram: {
+      title: "09486672069",
+      href: "https://web.telegram.org/k/#7207919572"
     },
-    facebook: "https://www.facebook.com/profile.php?id=61573384516391",
+    facebookname: "Kasandra Carise Jurquia",
+    href: "https://www.facebook.com/share/1FJ35D4XQc/",
   },
   {
-    name: "Kimberly Niñeria",
+    name: "Ayen Marriane Milante",
+    position: "Digital Marketing Staff",
+    image: "milante.png",
+    email: "infinitech.ayen@gmail.com",
+    phone: "09128352623",
+     telegram: {
+      title: "09128352623",
+      href: "https://web.telegram.org/k/#5711049742"
+    },
+    facebookname: "Ayen Marriane Milante ",
+    href: "https://www.facebook.com/ayenmarriane.milante.3",
+  },
+  {
+    name: "Kristia Marie Borbe",
+    position: "Digital Marketing Staff",
+    image: "borbe.png",
+    email: "kristiaborbe85@gmail.com",
+    phone: "09512780279",
+     telegram: {
+      title: "09512780279",
+      href: "https://web.telegram.org/k/#1413683475"
+    },
+    facebookname: "Kristia Marie Borbe",
+    href: "https://www.facebook.com/share/1D32bWA1he/?mibextid=wwXIfr",
+  },
+  {
+    name: "Michael Tapec",
+    position: "Digital Marketing Staff",
+    image: "madriaga.png",
+    email: "Infinitech.mike@gmail.com ",
+    phone: "09566423715",
+     telegram: {
+      title: "09566423715",
+      href: "https://web.telegram.org/k/#@Mike_madriaga"
+    },
+    facebookname: "Michael Tapec",
+    href: "https://www.facebook.com/share/1Rg9NYHbRL/",
+  },
+  {
+    name: "Jose Dexter Anyayahan",
+    position: "Digital Marketing Staff",
+    image: "anyayahan.png",
+    email: "infinitech.jd@gmail.com",
+    phone: "09668830150",
+     telegram: {
+      title: "09668830150",
+      href: "https://web.telegram.org/k/#5736999446"
+    },
+    facebookname: "Jd Anyayahan",
+    href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
+  },
+  {
+    name: "Janine Santos",
     position: "Junior Web Developer",
-    image: "kim.png",
-    email: "infinitech.kimberly@gmail.com",
-    phone: "09994274253",
-    telegram: "09994274253",
-    viber: {
-      title: "09994274253",
-      href: "https://msng.link/o?09994274253=vi"
+    image: "santos.png",
+    email: "infinitech.janine@gmail.com",
+    phone: "09517407062",
+     telegram: {
+      title: "09517407062",
+      href: "https://web.telegram.org/k/#7182482046"
     },
-    facebook: "https://www.facebook.com/kiiiiimmmyyy",
+    facebookname: "Janine Santos",
+    href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
   },
   {
-    name: "Lyca Mae Nobleza",
+    name: "Shekinah Anisette Valdez",
     position: "Junior Web Developer",
-    image: "lyca.png",
-    email: "infinitech.lycanobleza@gmail.com",
-    phone: "09151949345",
-    telegram: "09151949345",
-    viber: {
-      title: "09151949345",
-      href: "https://msng.link/o?09151949345=vi"
+    image: "valdez.png",
+    email: "infinitech.shekinah@gmail.com",
+    phone: "09854031332",
+     telegram: {
+      title: "09854031332",
+      href: "https://web.telegram.org/k/#7984703534"
+    
     },
-    facebook: "https://www.facebook.com/misisnilavs",
+    viber: {
+      title: "09854031332",
+      href: "https://msng.link/o?09854031332=vi"
+    },
+    facebookname: "Shekinah Anisette Valdez",
+    href: "https://www.facebook.com/share/1YcxRTQkEH/",
   },
+  
 ];
