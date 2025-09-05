@@ -18,7 +18,7 @@ const Member = ({ id }: { id: number }) => {
   const member = members[id];
 
   return (
-    <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] py-12 sm:py-16 lg:py-20">
+    <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] my-12">
       <div className="w-full max-w-6xl">
         {member ? (
           <Card className="p-4">
