@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
+import withPWA from "@ducanh2912/next-pwa";
 
-const nextConfig: NextConfig = {};
-
-module.exports = {
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,4 +11,7 @@ module.exports = {
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development", // disable in dev
+})(nextConfig);
