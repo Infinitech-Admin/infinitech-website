@@ -86,10 +86,18 @@ const Member = ({ id }: { id: number }) => {
                     <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                       <LuBriefcaseBusiness size={20} />
                     </div>
-                    <div>
-                      Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
-                      Metro Manila
-                    </div>
+                   <div>
+  <a
+    href="https://www.google.com/maps?q=Unit+311,+Campos+Rueda+Building,+101+Urban+Ave,+Makati,+Metro+Manila"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="hover:underline"
+  >
+    Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
+    Metro Manila
+  </a>
+</div>
+
 
                     {/* Email */}
                     <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
