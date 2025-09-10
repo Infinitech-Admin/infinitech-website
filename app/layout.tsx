@@ -34,7 +34,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         <Providers>
           <Toaster position="top-right" />
 
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-screen">
             <NavBar />
             <main>{children}</main>
             <Footer />
