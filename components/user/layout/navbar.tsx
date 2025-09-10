@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import {
   Navbar,
   NavbarContent,
@@ -10,54 +10,53 @@ import {
   NavbarItem,
   NavbarMenuItem,
   Button,
-  Link,
-} from "@heroui/react";
-import { LuArrowRight, LuDownload } from "react-icons/lu";
-import { Logo } from "@/components/globals/icons";
-import { usePathname, useRouter } from "next/navigation";
-import { links } from "@/data/links";
+} from "@heroui/react"
+import { LuArrowRight, LuDownload } from "react-icons/lu"
+import { Logo } from "@/components/globals/icons"
+import { usePathname, useRouter } from "next/navigation"
+import { links } from "@/data/links"
 
 const NavBar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const isActive = (href: string) => pathname == href;
+  const pathname = usePathname()
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+  const isActive = (href: string) => pathname == href
 
   // 👉 State for PWA install
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallButton, setShowInstallButton] = useState(false)
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallButton(true);
-    };
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallButton(true)
+    }
 
     const handleAppInstalled = () => {
-      setShowInstallButton(false);
-      setDeferredPrompt(null);
-    };
+      setShowInstallButton(false)
+      setDeferredPrompt(null)
+    }
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+    window.addEventListener("appinstalled", handleAppInstalled)
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-    };
-  }, []);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      window.removeEventListener("appinstalled", handleAppInstalled)
+    }
+  }, [])
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
 
     if (outcome === "accepted") {
-      setShowInstallButton(false);
+      setShowInstallButton(false)
     }
-    setDeferredPrompt(null);
-  };
+    setDeferredPrompt(null)
+  }
 
   return (
     <Navbar className="fixed shadow-lg" maxWidth="2xl" position="sticky" isMenuOpen={isOpen}>
@@ -117,6 +116,19 @@ const NavBar = () => {
       </NavbarContent>
 
       <NavbarContent className="lg:hidden basis-1 pl-4" justify="end">
+        {showInstallButton && (
+          <NavbarItem>
+            <Button
+              onPress={handleInstallApp}
+              className="bg-blue-600 text-white font-medium hover:bg-blue-700 mr-2"
+              variant="solid"
+              size="sm"
+              isIconOnly
+            >
+              <LuDownload />
+            </Button>
+          </NavbarItem>
+        )}
         <NavbarMenuToggle onClick={() => setIsOpen(!isOpen)} />
       </NavbarContent>
 
@@ -127,8 +139,8 @@ const NavBar = () => {
               className={`cursor-pointer ${isActive(link.href) ? "text-primary-light" : "text-black"}`}
               key={link.name}
               onClick={() => {
-                setIsOpen(false);
-                router.push(link.href);
+                setIsOpen(false)
+                router.push(link.href)
               }}
             >
               {link.name}
@@ -140,8 +152,8 @@ const NavBar = () => {
             <NavbarMenuItem
               className="cursor-pointer text-blue-600"
               onClick={() => {
-                handleInstallApp();
-                setIsOpen(false);
+                handleInstallApp()
+                setIsOpen(false)
               }}
             >
               Install App
@@ -151,8 +163,8 @@ const NavBar = () => {
           <NavbarMenuItem
             className={`cursor-pointer ${isActive("/quote") ? "text-primary-light" : "text-black"}`}
             onClick={() => {
-              setIsOpen(false);
-              router.push("/quote");
+              setIsOpen(false)
+              router.push("/quote")
             }}
           >
             Get a Quote
@@ -160,7 +172,7 @@ const NavBar = () => {
         </div>
       </NavbarMenu>
     </Navbar>
-  );
-};
+  )
+}
 
-export default NavBar;
+export default NavBar
