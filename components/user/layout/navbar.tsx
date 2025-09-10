@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Navbar,
   NavbarContent,
@@ -12,7 +12,7 @@ import {
   Button,
   Link,
 } from "@heroui/react";
-import { LuArrowRight } from "react-icons/lu";
+import { LuArrowRight, LuDownload } from "react-icons/lu";
 import { Logo } from "@/components/globals/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { links } from "@/data/links";
@@ -23,54 +23,90 @@ const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isActive = (href: string) => pathname == href;
 
+  // 👉 State for PWA install
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    const handleAppInstalled = () => {
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setShowInstallButton(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   return (
-    <Navbar
-      className="fixed shadow-lg"
-      maxWidth="2xl"
-      position="sticky"
-      isMenuOpen={isOpen}
-    >
+    <Navbar className="fixed shadow-lg" maxWidth="2xl" position="sticky" isMenuOpen={isOpen}>
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-        <NavbarBrand
-          className="max-w-fit cursor-pointer"
-          onClick={() => router.push("/")}
-        >
+        <NavbarBrand className="max-w-fit cursor-pointer" onClick={() => router.push("/")}>
           <Logo />
           <div className="mt-2 hidden xl:flex">
             <div className="flex flex-col justify-center items-center">
-              <p className="font-bold leading-4 text-3xl text-primary">
-                INFINITECH
-              </p>
-              <p className="text-tiny font-semibold text-primary">
-                ADVERTISING CORPORATION
-              </p>
+              <p className="font-bold leading-4 text-3xl text-primary">INFINITECH</p>
+              <p className="text-tiny font-semibold text-primary">ADVERTISING CORPORATION</p>
             </div>
           </div>
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent
-        justify="center"
-        className="hidden lg:flex justify-start ml-2"
-      >
+      <NavbarContent justify="center" className="hidden lg:flex justify-start ml-2">
         {links.map((link) => (
-          <NavbarItem
-            key={link.name}
-          >
-            <Button onPress={() => router.push(link.href)} className={`cursor-pointer ${isActive(link.href) ? "text-gray-400 bg-primary font-semibold" : "text-black"}`} variant={`${isActive(link.href) ? "solid" : "light"}`}>
+          <NavbarItem key={link.name}>
+            <Button
+              onPress={() => router.push(link.href)}
+              className={`cursor-pointer ${
+                isActive(link.href) ? "text-gray-400 bg-primary font-semibold" : "text-black"
+              }`}
+              variant={`${isActive(link.href) ? "solid" : "light"}`}
+            >
               {link.name}
             </Button>
           </NavbarItem>
         ))}
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden lg:flex basis-1/5 sm:basis-full"
-        justify="end"
-      >
+      <NavbarContent className="hidden lg:flex basis-1/5 sm:basis-full" justify="end">
+        {/* ✅ Show Install App button only when available */}
+        {showInstallButton && (
+          <NavbarItem>
+            <Button
+              onPress={handleInstallApp}
+              className="bg-blue-600 text-white font-medium hover:bg-blue-700"
+              variant="solid"
+              startContent={<LuDownload />}
+            >
+              Install App
+            </Button>
+          </NavbarItem>
+        )}
+
         <NavbarItem className="gap-2 cursor-pointer">
           <Button
-            className="text-sm  bg-primary text-white font-medium hover:bg-primary-light"
+            className="text-sm bg-primary text-white font-medium hover:bg-primary-light"
             endContent={<LuArrowRight />}
             variant="solid"
             onPress={() => router.push("/quote")}
@@ -81,11 +117,7 @@ const NavBar = () => {
       </NavbarContent>
 
       <NavbarContent className="lg:hidden basis-1 pl-4" justify="end">
-        <NavbarMenuToggle
-          onClick={() => {
-            setIsOpen(!isOpen);
-          }}
-        />
+        <NavbarMenuToggle onClick={() => setIsOpen(!isOpen)} />
       </NavbarContent>
 
       <NavbarMenu>
@@ -102,6 +134,19 @@ const NavBar = () => {
               {link.name}
             </NavbarMenuItem>
           ))}
+
+          {/* ✅ Install App inside mobile menu too */}
+          {showInstallButton && (
+            <NavbarMenuItem
+              className="cursor-pointer text-blue-600"
+              onClick={() => {
+                handleInstallApp();
+                setIsOpen(false);
+              }}
+            >
+              Install App
+            </NavbarMenuItem>
+          )}
 
           <NavbarMenuItem
             className={`cursor-pointer ${isActive("/quote") ? "text-primary-light" : "text-black"}`}
