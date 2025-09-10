@@ -123,9 +123,9 @@ const NavBar = () => {
               className="bg-blue-600 text-white font-medium hover:bg-blue-700 mr-2"
               variant="solid"
               size="sm"
-              isIconOnly
+              startContent={<LuDownload />}
             >
-              <LuDownload />
+              Install App
             </Button>
           </NavbarItem>
         )}
