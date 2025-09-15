@@ -25,12 +25,27 @@ const solutionsdata = [
         link: "https://abicrealtyph.com/",
         image: "/images/solutions/abic.png",
     },
-
+    
     {
         project: "LELUXE CLINIC",
         description: " Le Luxe Clinic is a new modern type beauty clinic that will offer you the best beaty services such as nails, waxing, threading, warts removal, facial, RF, slimming, etc.",
         link: "https://leluxe-clinic.vercel.app/",
         image: "/images/solutions/leluxe.png",
+    },
+
+    {
+        project: "YAMAARAW",
+        description: " Yamaaraw offers premium electric vehicles designed for modern urban transport, providing eco-friendly commuting solutions and supporting a sustainable lifestyle.",
+        link: "https://yamaaraw-ecom-shopph.vercel.app/",
+        image: "/images/solutions/yamaaraw.png",
+    },
+
+    
+    {
+        project: "Consultancy",
+        description: " ABIC Consultancy is your trusted partner in business success, providing expert guidance and support to help companies grow and thrive in the Philippines.",
+        link: "https://abicconsultancy.vercel.app/",
+        image: "/images/solutions/consultancy.png",
     },
 ];
 
