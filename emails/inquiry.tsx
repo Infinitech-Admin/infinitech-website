@@ -73,7 +73,7 @@ export const Inquiry = ({ name, email, phone, message }: Props) => (
             <Img
               alt="Infinitech"
               height="100"
-              src="https://abic-agent-bakit.s3.ap-southeast-1.amazonaws.com/media/infinitech.png"
+              src="https://www.infinitechphil.com/images/logo-white.jpg"
               style={logo}
             />
           </Section>
