@@ -27,7 +27,7 @@ const InquiryForm = () => {
 
     const { code, message } = await sendInquiry(values);
 
-    if (code == 200) {
+    if (code === 200) {
       actions.resetForm();
       toast.success(message);
     } else {
@@ -46,6 +46,7 @@ const InquiryForm = () => {
       {() => (
         <Form>
           <div className="flex flex-col space-y-4">
+            {/* Full Name */}
             <Field name="name">
               {({ field, meta }: FieldProps) => (
                 <div>
@@ -57,7 +58,6 @@ const InquiryForm = () => {
                     variant="bordered"
                     placeholder="eg. Juan Dela Cruz"
                   />
-
                   {meta.touched && meta.error && (
                     <small className="text-red-500">{meta.error}</small>
                   )}
@@ -65,6 +65,7 @@ const InquiryForm = () => {
               )}
             </Field>
 
+            {/* Email */}
             <Field name="email">
               {({ field, meta }: FieldProps) => (
                 <div>
@@ -76,7 +77,6 @@ const InquiryForm = () => {
                     variant="bordered"
                     placeholder="eg. juandelacruz@gmail.com"
                   />
-
                   {meta.touched && meta.error && (
                     <small className="text-red-500">{meta.error}</small>
                   )}
@@ -84,6 +84,7 @@ const InquiryForm = () => {
               )}
             </Field>
 
+            {/* Phone */}
             <Field name="phone">
               {({ field, meta }: FieldProps) => (
                 <div>
@@ -95,7 +96,6 @@ const InquiryForm = () => {
                     variant="bordered"
                     placeholder="eg. 09924401097"
                   />
-
                   {meta.touched && meta.error && (
                     <small className="text-red-500">{meta.error}</small>
                   )}
@@ -103,18 +103,17 @@ const InquiryForm = () => {
               )}
             </Field>
 
+            {/* Message */}
             <Field name="message">
               {({ field, meta }: FieldProps) => (
                 <div>
                   <Textarea
                     {...field}
-                    type="text"
                     size="lg"
                     label="Message"
                     variant="bordered"
-                    placeholder="Leave us message..."
+                    placeholder="Leave us a message..."
                   />
-
                   {meta.touched && meta.error && (
                     <small className="text-red-500">{meta.error}</small>
                   )}
@@ -122,6 +121,7 @@ const InquiryForm = () => {
               )}
             </Field>
 
+            {/* Submit Button */}
             <div>
               <Button
                 type="submit"
