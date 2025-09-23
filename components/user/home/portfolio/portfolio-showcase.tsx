@@ -439,17 +439,14 @@ const PortfolioShowcase: React.FC = () => {
           </div>
         </div>
 
-        {/* Call to Action with logo-matching colors */}
+        {/* Call to Action with logo-matching colors - SMALLER BUTTON */}
         <div className={`text-center mt-20 relative z-10 transition-all duration-1000 delay-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
-          <a href="/solutions" className="group inline-flex items-center px-12 py-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-xl rounded-2xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 transform hover:scale-110 shadow-2xl">
-            <Eye className="w-8 h-8 mr-4 group-hover:animate-bounce" />
-            View All Solutions
-            <div className="ml-4 p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors duration-300">
-              <ChevronRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-            </div>
-          </a>
+          <button className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-base rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+            <span>View All Solutions</span>
+            <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+          </button>
           
           <div className="mt-10 flex flex-wrap justify-center items-center gap-8 text-slate-600">
             <div className="flex items-center">
