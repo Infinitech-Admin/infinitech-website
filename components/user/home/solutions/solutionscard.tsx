@@ -39,7 +39,7 @@ const solutionsdata: Solution[] = [
     link: "https://abicmanpower.com/",
     image: "/websites/abicmanpower.png",
     category: "Recruitment Platform",
-    technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"]
+    technologies: ["Laravel", "Bootstrap", "MySQL"]
   },
   {
     id: 4,
