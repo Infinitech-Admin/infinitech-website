@@ -194,27 +194,22 @@ const PortfolioShowcase: React.FC = () => {
     return shuffled;
   };
 
-  // Group projects by category for better organization
-  const ecommerceProjects = [projects[4], projects[5], projects[7]]; // Oppane, Unakichi, Yamaaraw
-  const realEstateProjects = [projects[3], projects[8], projects[9], projects[10], projects[11], projects[12], projects[13], projects[14]]; // ABIC Realty, DMCI, Joe, Kaila, Angely, Jayvee, Lloyd, Janina
-  const businessProjects = [projects[0], projects[1], projects[2], projects[6]]; // Hotel, Consultancy, Manpower, Anilao
-
-  // Create 3 diverse rows
-  const row1Projects = [...ecommerceProjects, ...businessProjects.slice(0, 2)]; // E-commerce + Hotel + Consultancy
-  const row2Projects = [...realEstateProjects.slice(0, 5)]; // Real Estate specialists
-  const row3Projects = [...realEstateProjects.slice(5), ...businessProjects.slice(2)]; // More Real Estate + Manpower + Anilao
+  // Create 3 completely different rows with unique projects
+  const row1Projects = [projects[0], projects[1], projects[4], projects[5], projects[6]]; // Hotel, Consultancy, Oppane, Unakichi, Anilao
+  const row2Projects = [projects[2], projects[3], projects[7], projects[8], projects[9]]; // Manpower, ABIC Realty, Yamaaraw, DMCI, Joe
+  const row3Projects = [projects[10], projects[11], projects[12], projects[13], projects[14]]; // Kaila, Angely, Jayvee, Lloyd, Janina
 
   const ProjectCard = ({ project, index }: { project: Project; index: number }) => (
     <div
-      className="flex-shrink-0 w-[420px] mx-6 group cursor-pointer"
+      className="flex-shrink-0 w-[340px] md:w-[420px] mx-3 md:mx-6 group cursor-pointer"
       onMouseEnter={() => setHoveredProject(project.id)}
       onMouseLeave={() => setHoveredProject(null)}
       onClick={() => handleProjectClick(project)}
     >
-      <div className="relative h-[320px] rounded-3xl overflow-hidden bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl group-hover:shadow-cyan-500/25 transition-all duration-500 group-hover:scale-105">
+      <div className="relative h-[320px] md:h-[380px] rounded-3xl overflow-hidden bg-white backdrop-blur-sm border border-slate-200 shadow-2xl group-hover:shadow-cyan-500/25 transition-all duration-500 group-hover:scale-105">
         
         {/* Project Image */}
-        <div className="relative w-full h-[60%] overflow-hidden">
+        <div className="relative w-full h-[55%] overflow-hidden">
           <img
             src={project.image}
             alt={project.title}
@@ -225,70 +220,70 @@ const PortfolioShowcase: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           
           {/* Category Badge */}
-          <div className="absolute top-4 left-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-sm font-bold border border-white/20 shadow-lg">
+          <div className="absolute top-3 md:top-4 left-3 md:left-4 px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-xs md:text-sm font-bold border border-white/20 shadow-lg">
             {project.category}
           </div>
           
           {/* View Button */}
-          <div className={`absolute top-4 right-4 transition-all duration-300 ${
+          <div className={`absolute top-3 md:top-4 right-3 md:right-4 transition-all duration-300 ${
             hoveredProject === project.id ? 'opacity-100 scale-100' : 'opacity-70 scale-90'
           }`}>
             <button 
-              className="p-3 bg-white/90 backdrop-blur-md rounded-full border border-white/40 hover:bg-white transition-colors duration-200 shadow-lg"
+              className="p-2 md:p-3 bg-white/90 backdrop-blur-md rounded-full border border-white/40 hover:bg-white transition-colors duration-200 shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 handleProjectClick(project);
               }}
             >
-              <ExternalLink className="w-5 h-5 text-slate-700" />
+              <ExternalLink className="w-4 md:w-5 h-4 md:h-5 text-slate-700" />
             </button>
           </div>
         </div>
 
-        {/* Content Section with White Background */}
-        <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-white p-6">
-          <h3 className={`text-slate-800 font-bold text-xl mb-2 transition-all duration-300 ${
+        {/* Content Section with White Background - OPTIMIZED FOOTER */}
+        <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-white p-4 md:p-6">
+          <h3 className={`text-slate-900 font-bold text-lg md:text-xl mb-2 md:mb-3 transition-all duration-300 leading-tight ${
             hoveredProject === project.id ? 'text-blue-600 scale-105' : ''
           }`}>
             {project.title}
           </h3>
           
-          <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-slate-700 text-sm md:text-base mb-3 md:mb-4 line-clamp-2 leading-relaxed font-medium">
             {project.description}
           </p>
 
-          {/* Tech Stack */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          {/* Tech Stack - Optimized size */}
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
             {project.technologies.slice(0, 3).map((tech, i) => (
               <span
                 key={i}
-                className={`px-3 py-1 bg-slate-100 text-slate-700 text-xs rounded-full border border-slate-200 transition-all duration-300 font-medium ${
-                  hoveredProject === project.id ? 'bg-blue-100 text-blue-700 border-blue-200' : ''
+                className={`px-2.5 md:px-3 py-1 md:py-1.5 bg-slate-200 text-slate-800 text-xs md:text-sm rounded-full border border-slate-300 transition-all duration-300 font-semibold ${
+                  hoveredProject === project.id ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
                 }`}
               >
                 {tech}
               </span>
             ))}
             {project.technologies.length > 3 && (
-              <span className="px-3 py-1 bg-slate-50 text-slate-500 text-xs rounded-full border border-slate-200 font-medium">
+              <span className="px-2.5 md:px-3 py-1 md:py-1.5 bg-slate-100 text-slate-700 text-xs md:text-sm rounded-full border border-slate-300 font-semibold">
                 +{project.technologies.length - 3}
               </span>
             )}
           </div>
 
-          {/* Action Button */}
+          {/* Action Button - Compact but readable */}
           <div className={`transition-all duration-300 ${
-            hoveredProject === project.id ? 'opacity-100 translate-y-0' : 'opacity-70 translate-y-2'
+            hoveredProject === project.id ? 'opacity-100 translate-y-0' : 'opacity-90 translate-y-1'
           }`}>
             <button 
-              className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg"
+              className="inline-flex items-center px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm md:text-base font-bold rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-xl"
               onClick={(e) => {
                 e.stopPropagation();
                 handleProjectClick(project);
               }}
             >
               <span>View Project</span>
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ChevronRight className="w-4 md:w-5 h-4 md:h-5 ml-2" />
             </button>
           </div>
         </div>
@@ -336,16 +331,47 @@ const PortfolioShowcase: React.FC = () => {
           }
         }
         
-        .marquee-left {
-          animation: marquee-left 35s linear infinite;
+        /* Desktop Animations - Slower for better viewing */
+        @media (min-width: 768px) {
+          .marquee-left {
+            animation: marquee-left 35s linear infinite;
+          }
+          
+          .marquee-right {
+            animation: marquee-right 40s linear infinite;
+          }
+          
+          .marquee-left-slow {
+            animation: marquee-left 45s linear infinite;
+          }
+          
+          .marquee-container:hover .marquee-left,
+          .marquee-container:hover .marquee-right,
+          .marquee-container:hover .marquee-left-slow {
+            animation-play-state: paused;
+          }
         }
         
-        .marquee-right {
-          animation: marquee-right 40s linear infinite;
-        }
-        
-        .marquee-left-slow {
-          animation: marquee-left 45s linear infinite;
+        /* Mobile Animations - Faster for engagement */
+        @media (max-width: 767px) {
+          .marquee-left {
+            animation: marquee-left 15s linear infinite;
+          }
+          
+          .marquee-right {
+            animation: marquee-right 18s linear infinite;
+          }
+          
+          .marquee-left-slow {
+            animation: marquee-left 20s linear infinite;
+          }
+          
+          /* No hover pause on mobile - touch devices */
+          .marquee-container:hover .marquee-left,
+          .marquee-container:hover .marquee-right,
+          .marquee-container:hover .marquee-left-slow {
+            animation-play-state: running;
+          }
         }
         
         .animate-fade-in-up {
@@ -359,12 +385,6 @@ const PortfolioShowcase: React.FC = () => {
         .marquee-container {
           mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
           -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-        }
-        
-        .marquee-container:hover .marquee-left,
-        .marquee-container:hover .marquee-right,
-        .marquee-container:hover .marquee-left-slow {
-          animation-play-state: paused;
         }
       `}</style>
 
@@ -385,18 +405,18 @@ const PortfolioShowcase: React.FC = () => {
             PORTFOLIO SHOWCASE
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-black text-slate-800 mb-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+          <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-slate-800 mb-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
             Our Work
           </h1>
           
-          <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+          <p className="text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
             Explore our collection of custom-built websites and powerful web systems crafted from scratch or redesigned to perfection. Click any project to visit the live site!
           </p>
         </div>
 
-        {/* 3 Organized Rows by Category */}
+        {/* 2 Organized Rows with Unique Content */}
         <div className="space-y-12 relative z-10">
-          {/* Row 1 - E-Commerce & Business Systems */}
+          {/* Row 1 - Mixed Business & E-commerce */}
           <div className="marquee-container">
             <div className="flex marquee-left">
               {Array.from({length: 3}, (_, i) => 
@@ -407,23 +427,12 @@ const PortfolioShowcase: React.FC = () => {
             </div>
           </div>
 
-          {/* Row 2 - Real Estate & Property Specialists */}
+          {/* Row 2 - Business & Real Estate Platforms */}
           <div className="marquee-container">
             <div className="flex marquee-right">
               {Array.from({length: 3}, (_, i) => 
                 row2Projects.map((project, index) => (
                   <ProjectCard key={`row2-${i}-${index}`} project={project} index={index} />
-                ))
-              ).flat()}
-            </div>
-          </div>
-
-          {/* Row 3 - Property Specialists & Services */}
-          <div className="marquee-container">
-            <div className="flex marquee-left-slow">
-              {Array.from({length: 3}, (_, i) => 
-                row3Projects.map((project, index) => (
-                  <ProjectCard key={`row3-${i}-${index}`} project={project} index={index} />
                 ))
               ).flat()}
             </div>
