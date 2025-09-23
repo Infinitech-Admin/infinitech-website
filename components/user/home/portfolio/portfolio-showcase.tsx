@@ -177,6 +177,13 @@ const PortfolioShowcase: React.FC = () => {
     };
   }, []);
 
+  // Function to handle project click
+  const handleProjectClick = (project: Project) => {
+    if (project.url) {
+      window.open(project.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   // Function to shuffle array to avoid duplicates appearing together
   const shuffleArray = (array: Project[]) => {
     const shuffled = [...array];
@@ -202,6 +209,7 @@ const PortfolioShowcase: React.FC = () => {
       className="flex-shrink-0 w-[420px] mx-6 group cursor-pointer"
       onMouseEnter={() => setHoveredProject(project.id)}
       onMouseLeave={() => setHoveredProject(null)}
+      onClick={() => handleProjectClick(project)}
     >
       <div className="relative h-[320px] rounded-3xl overflow-hidden bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl group-hover:shadow-cyan-500/25 transition-all duration-500 group-hover:scale-105">
         
@@ -225,7 +233,13 @@ const PortfolioShowcase: React.FC = () => {
           <div className={`absolute top-4 right-4 transition-all duration-300 ${
             hoveredProject === project.id ? 'opacity-100 scale-100' : 'opacity-70 scale-90'
           }`}>
-            <button className="p-3 bg-white/90 backdrop-blur-md rounded-full border border-white/40 hover:bg-white transition-colors duration-200 shadow-lg">
+            <button 
+              className="p-3 bg-white/90 backdrop-blur-md rounded-full border border-white/40 hover:bg-white transition-colors duration-200 shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleProjectClick(project);
+              }}
+            >
               <ExternalLink className="w-5 h-5 text-slate-700" />
             </button>
           </div>
@@ -266,7 +280,13 @@ const PortfolioShowcase: React.FC = () => {
           <div className={`transition-all duration-300 ${
             hoveredProject === project.id ? 'opacity-100 translate-y-0' : 'opacity-70 translate-y-2'
           }`}>
-            <button className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg">
+            <button 
+              className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleProjectClick(project);
+              }}
+            >
               <span>View Project</span>
               <ChevronRight className="w-4 h-4 ml-2" />
             </button>
@@ -274,7 +294,7 @@ const PortfolioShowcase: React.FC = () => {
         </div>
 
         {/* Glow Border on Hover */}
-        <div className={`absolute inset-0 rounded-3xl border-2 transition-all duration-300 ${
+        <div className={`absolute inset-0 rounded-3xl border-2 transition-all duration-300 pointer-events-none ${
           hoveredProject === project.id 
             ? 'border-cyan-400/60 shadow-2xl shadow-cyan-400/30' 
             : 'border-transparent'
@@ -340,6 +360,12 @@ const PortfolioShowcase: React.FC = () => {
           mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
           -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
         }
+        
+        .marquee-container:hover .marquee-left,
+        .marquee-container:hover .marquee-right,
+        .marquee-container:hover .marquee-left-slow {
+          animation-play-state: paused;
+        }
       `}</style>
 
       <section ref={sectionRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-12 px-4 overflow-hidden relative">
@@ -364,7 +390,7 @@ const PortfolioShowcase: React.FC = () => {
           </h1>
           
           <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-            Explore our collection of custom-built websites and powerful web systems crafted from scratch or redesigned to perfection
+            Explore our collection of custom-built websites and powerful web systems crafted from scratch or redesigned to perfection. Click any project to visit the live site!
           </p>
         </div>
 
