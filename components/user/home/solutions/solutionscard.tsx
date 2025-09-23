@@ -18,7 +18,7 @@ const solutionsdata: Solution[] = [
     id: 1,
     project: "Eurotel Hotel Management System",
     description: "Complete hotel management system with booking, room management, guest services and billing functionality for seamless operations.",
-    link: "https://eurotel-makati.vercel.app/",
+    link: "https://example.com",
     image: "/websites/eurotel.png",
     category: "Hotel Management",
     technologies: ["Next.js", "Laravel", "MySQL", "TypeScript", "Tailwind CSS"]
@@ -39,7 +39,7 @@ const solutionsdata: Solution[] = [
     link: "https://abicmanpower.com/",
     image: "/websites/abicmanpower.png",
     category: "Recruitment Platform",
-    technologies: ["Laravel", "Bootstrap", "MySQL"]
+    technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"]
   },
   {
     id: 4,
@@ -54,7 +54,7 @@ const solutionsdata: Solution[] = [
     id: 5,
     project: "Oppane E-Commerce",
     description: "Full-featured e-commerce platform with inventory management, payment integration and comprehensive analytics dashboard.",
-    link: "https://oppane.vercel.app/",
+    link: "https://example.com",
     image: "/websites/oppane.png",
     category: "E-Commerce",
     technologies: ["Next.js", "Laravel", "MySQL", "Node.js", "Tailwind CSS"]
@@ -63,7 +63,7 @@ const solutionsdata: Solution[] = [
     id: 6,
     project: "Unakichi E-Commerce",
     description: "Modern e-commerce solution with product catalog, shopping cart and advanced order management system.",
-    link: "https://unakichi.vercel.app/",
+    link: "https://example.com",
     image: "/websites/unakichi.png",
     category: "E-Commerce",
     technologies: ["TypeScript", "Laravel", "MySQL", "Hero UI", "Node.js"]
@@ -72,7 +72,7 @@ const solutionsdata: Solution[] = [
     id: 7,
     project: "Anilao Scuba Diving Center",
     description: "Diving center booking system with equipment rental, course scheduling and certification tracking features.",
-    link: "https://anilaoscubadivingcenter.vercel.app/",
+    link: "https://example.com",
     image: "/websites/anilao.png",
     category: "Booking System",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
@@ -99,7 +99,7 @@ const solutionsdata: Solution[] = [
     id: 10,
     project: "Joe Property Specialist",
     description: "Personal real estate portfolio showcasing luxury properties and professional real estate services with client management.",
-    link: "https://www.abicrealtyphjoe.com/",
+    link: "https://example.com",
     image: "/websites/joe.png",
     category: "Property Specialist",
     technologies: ["Next.js", "TypeScript", "Tailwind CSS", "MySQL", "Laravel"]
@@ -108,7 +108,7 @@ const solutionsdata: Solution[] = [
     id: 11,
     project: "Kaila Property Specialist",
     description: "Professional property consultant website with comprehensive property listings and advanced client management tools.",
-    link: "https://www.abicrealtyphkaila.com/",
+    link: "https://example.com",
     image: "/websites/kaila.png",
     category: "Property Specialist",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"]
@@ -117,7 +117,7 @@ const solutionsdata: Solution[] = [
     id: 12,
     project: "Angely Property Specialist",
     description: "Real estate specialist platform featuring premium properties and personalized client services with virtual tours.",
-    link: "https://www.abicrealtyphangely.com/",
+    link: "https://example.com",
     image: "/websites/angely.png",
     category: "Property Specialist",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
@@ -126,7 +126,7 @@ const solutionsdata: Solution[] = [
     id: 13,
     project: "Jayvee Property Specialist",
     description: "Commercial and residential property specialist with advanced search functionality and inquiry management system.",
-    link: "https://www.abicrealtyphjayvee.com/",
+    link: "https://example.com",
     image: "/websites/jayvee.png",
     category: "Property Specialist",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"]
@@ -135,7 +135,7 @@ const solutionsdata: Solution[] = [
     id: 14,
     project: "Lloyd Property Specialist",
     description: "Professional real estate consultant website with property showcase and comprehensive lead generation tools.",
-    link: "https://www.abicrealtyphlloyd.com/",
+    link: "https://example.com",
     image: "/websites/lloyd.png",
     category: "Property Specialist",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"]
@@ -144,7 +144,7 @@ const solutionsdata: Solution[] = [
     id: 15,
     project: "Janina Property Specialist",
     description: "Luxury property specialist platform with virtual tours and comprehensive property management features.",
-    link: "https://www.abicrealtyphjanina.com/",
+    link: "https://example.com",
     image: "/websites/janina.png",
     category: "Property Specialist",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
@@ -264,16 +264,21 @@ const SolutionsPage: React.FC = () => {
           </div>
 
           {/* Super Prominent Action Button */}
-          <div className="mt-auto">
+          <div className="mt-auto relative z-20">
             <a
               href={solution.link}
               target="_blank"
               rel="noopener noreferrer"
-              className={`w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black text-base rounded-xl transition-all duration-300 shadow-2xl border-3 border-orange-400 hover:border-red-400 transform hover:scale-[1.02] ${
+              className={`w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black text-base rounded-xl transition-all duration-300 shadow-2xl border-2 border-orange-400 hover:border-red-400 transform hover:scale-[1.02] cursor-pointer ${
                 hoveredCard === solution.id ? 'animate-pulse scale-[1.02]' : ''
               }`}
               style={{
-                boxShadow: '0 6px 24px rgba(249, 115, 22, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                boxShadow: '0 6px 24px rgba(249, 115, 22, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                pointerEvents: 'auto'
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                window.open(solution.link, '_blank', 'noopener,noreferrer');
               }}
             >
               <span>VIEW LIVE SITE</span>
