@@ -38,7 +38,7 @@ const projects: Project[] = [
     description: "Comprehensive hiring and manpower platform with job matching and recruitment management",
     image: "/websites/abicmanpower.png",
     url: "https://abicmanpower.com/",
-    technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"],
+    technologies: ["Laravel", "MySQL", "Bootstrap"],
     category: "Recruitment Platform"
   },
   {
