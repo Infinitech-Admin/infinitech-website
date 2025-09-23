@@ -18,7 +18,7 @@ const solutionsdata: Solution[] = [
     id: 1,
     project: "Eurotel Hotel Management System",
     description: "Complete hotel management system with booking, room management, guest services and billing functionality for seamless operations.",
-    link: "https://example.com",
+    link: "https://eurotel-makati.vercel.app/",
     image: "/websites/eurotel.png",
     category: "Hotel Management",
     technologies: ["Next.js", "Laravel", "MySQL", "TypeScript", "Tailwind CSS"]
@@ -54,7 +54,7 @@ const solutionsdata: Solution[] = [
     id: 5,
     project: "Oppane E-Commerce",
     description: "Full-featured e-commerce platform with inventory management, payment integration and comprehensive analytics dashboard.",
-    link: "https://example.com",
+    link: "https://oppane.vercel.app/",
     image: "/websites/oppane.png",
     category: "E-Commerce",
     technologies: ["Next.js", "Laravel", "MySQL", "Node.js", "Tailwind CSS"]
@@ -63,7 +63,7 @@ const solutionsdata: Solution[] = [
     id: 6,
     project: "Unakichi E-Commerce",
     description: "Modern e-commerce solution with product catalog, shopping cart and advanced order management system.",
-    link: "https://example.com",
+    link: "https://unakichi.vercel.app/",
     image: "/websites/unakichi.png",
     category: "E-Commerce",
     technologies: ["TypeScript", "Laravel", "MySQL", "Hero UI", "Node.js"]
@@ -72,7 +72,7 @@ const solutionsdata: Solution[] = [
     id: 7,
     project: "Anilao Scuba Diving Center",
     description: "Diving center booking system with equipment rental, course scheduling and certification tracking features.",
-    link: "https://example.com",
+    link: "https://anilaoscubadivingcenter.vercel.app/",
     image: "/websites/anilao.png",
     category: "Booking System",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
@@ -99,7 +99,7 @@ const solutionsdata: Solution[] = [
     id: 10,
     project: "Joe Property Specialist",
     description: "Personal real estate portfolio showcasing luxury properties and professional real estate services with client management.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphjoe.com/",
     image: "/websites/joe.png",
     category: "Property Specialist",
     technologies: ["Next.js", "TypeScript", "Tailwind CSS", "MySQL", "Laravel"]
@@ -108,7 +108,7 @@ const solutionsdata: Solution[] = [
     id: 11,
     project: "Kaila Property Specialist",
     description: "Professional property consultant website with comprehensive property listings and advanced client management tools.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphkaila.com/",
     image: "/websites/kaila.png",
     category: "Property Specialist",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"]
@@ -117,7 +117,7 @@ const solutionsdata: Solution[] = [
     id: 12,
     project: "Angely Property Specialist",
     description: "Real estate specialist platform featuring premium properties and personalized client services with virtual tours.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphangely.com/",
     image: "/websites/angely.png",
     category: "Property Specialist",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
@@ -126,7 +126,7 @@ const solutionsdata: Solution[] = [
     id: 13,
     project: "Jayvee Property Specialist",
     description: "Commercial and residential property specialist with advanced search functionality and inquiry management system.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphjayvee.com/",
     image: "/websites/jayvee.png",
     category: "Property Specialist",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"]
@@ -135,7 +135,7 @@ const solutionsdata: Solution[] = [
     id: 14,
     project: "Lloyd Property Specialist",
     description: "Professional real estate consultant website with property showcase and comprehensive lead generation tools.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphlloyd.com/",
     image: "/websites/lloyd.png",
     category: "Property Specialist",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"]
@@ -144,7 +144,7 @@ const solutionsdata: Solution[] = [
     id: 15,
     project: "Janina Property Specialist",
     description: "Luxury property specialist platform with virtual tours and comprehensive property management features.",
-    link: "https://example.com",
+    link: "https://www.abicrealtyphjanina.com/",
     image: "/websites/janina.png",
     category: "Property Specialist",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
