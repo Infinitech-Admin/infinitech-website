@@ -19,7 +19,7 @@ const projects: Project[] = [
     title: "Eurotel Hotel Management System",
     description: "Complete hotel management system with booking, room management, guest services and billing",
     image: "/websites/eurotel.png",
-    url: "https://example.com",
+    url: "https://eurotel-makati.vercel.app/",
     technologies: ["Next.js", "Laravel", "MySQL", "TypeScript", "Tailwind CSS"],
     category: "Hotel Management"
   },
@@ -28,7 +28,7 @@ const projects: Project[] = [
     title: "ABIC Consultancy Website",
     description: "Professional consultancy website with service showcase, client portal and consultation booking",
     image: "/websites/abicconsultancy.png",
-    url: "https://example.com",
+    url: "https://abicconsultancy.vercel.app/",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Corporate Website"
   },
@@ -37,7 +37,7 @@ const projects: Project[] = [
     title: "ABIC Manpower Services",
     description: "Comprehensive hiring and manpower platform with job matching and recruitment management",
     image: "/websites/abicmanpower.png",
-    url: "https://example.com",
+    url: "https://abicmanpower.com/",
     technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"],
     category: "Recruitment Platform"
   },
@@ -46,7 +46,7 @@ const projects: Project[] = [
     title: "ABIC Realty Platform",
     description: "Real estate website with property listings, virtual tours and client management system",
     image: "/websites/abicrealty.png",
-    url: "https://example.com",
+    url: "https://abicrealtyph.com/",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Real Estate"
   },
@@ -55,7 +55,7 @@ const projects: Project[] = [
     title: "Oppane E-Commerce",
     description: "Full-featured e-commerce platform with inventory management, payment integration and analytics",
     image: "/websites/oppane.png",
-    url: "https://example.com",
+    url: "https://oppane.vercel.app/",
     technologies: ["Next.js", "Laravel", "MySQL", "Node.js", "Tailwind CSS"],
     category: "E-Commerce"
   },
@@ -64,7 +64,7 @@ const projects: Project[] = [
     title: "Unakichi E-Commerce",
     description: "Modern e-commerce solution with product catalog, shopping cart and order management",
     image: "/websites/unakichi.png",
-    url: "https://example.com",
+    url: "https://unakichi.vercel.app/",
     technologies: ["TypeScript", "Laravel", "MySQL", "Hero UI", "Node.js"],
     category: "E-Commerce"
   },
@@ -73,7 +73,7 @@ const projects: Project[] = [
     title: "Anilao Scuba Diving Center",
     description: "Diving center booking system with equipment rental, course scheduling and certification tracking",
     image: "/websites/anilao.png",
-    url: "https://example.com",
+    url: "https://anilaoscubadivingcenter.vercel.app/",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Booking System"
   },
@@ -82,7 +82,7 @@ const projects: Project[] = [
     title: "Yamaaraw E-Commerce",
     description: "E-commerce platform with multi-vendor support, payment gateway and inventory management",
     image: "/websites/yamaaraw.png",
-    url: "https://example.com",
+    url: "https://yamaaraw-ecom-shopph.vercel.app/",
     technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"],
     category: "E-Commerce"
   },
@@ -91,7 +91,7 @@ const projects: Project[] = [
     title: "DMCI Real Estate Portal",
     description: "Corporate real estate platform with property showcase, investment tracking and client portal",
     image: "/websites/dmci.png",
-    url: "https://example.com",
+    url: "https://dmci-agent-website-main.vercel.app/",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Real Estate"
   },
@@ -100,7 +100,7 @@ const projects: Project[] = [
     title: "Joe Property Specialist",
     description: "Personal real estate portfolio showcasing luxury properties and professional real estate services",
     image: "/websites/joe.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphjoe.com/",
     technologies: ["Next.js", "TypeScript", "Tailwind CSS", "MySQL", "Laravel"],
     category: "Property Specialist"
   },
@@ -109,7 +109,7 @@ const projects: Project[] = [
     title: "Kaila Property Specialist",
     description: "Professional property consultant website with property listings and client management tools",
     image: "/websites/kaila.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphkaila.com/",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"],
     category: "Property Specialist"
   },
@@ -118,7 +118,7 @@ const projects: Project[] = [
     title: "Angely Property Specialist",
     description: "Real estate specialist platform featuring premium properties and personalized client services",
     image: "/websites/angely.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphangely.com/",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Property Specialist"
   },
@@ -127,7 +127,7 @@ const projects: Project[] = [
     title: "Jayvee Property Specialist",
     description: "Commercial and residential property specialist with advanced search and inquiry management",
     image: "/websites/jayvee.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphjayvee.com/",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Property Specialist"
   },
@@ -136,7 +136,7 @@ const projects: Project[] = [
     title: "Lloyd Property Specialist",
     description: "Professional real estate consultant website with property showcase and lead generation tools",
     image: "/websites/lloyd.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphlloyd.com/",
     technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"],
     category: "Property Specialist"
   },
@@ -145,7 +145,7 @@ const projects: Project[] = [
     title: "Janina Property Specialist",
     description: "Luxury property specialist platform with virtual tours and comprehensive property management",
     image: "/websites/janina.png",
-    url: "https://example.com",
+    url: "https://abicrealtyphjanina.com/",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Property Specialist"
   }
