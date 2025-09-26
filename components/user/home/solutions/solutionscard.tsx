@@ -268,10 +268,6 @@ const SolutionsPage: React.FC = () => {
               className={`w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-sm rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
                 hoveredCard === solution.id ? 'animate-pulse scale-[1.02]' : ''
               }`}
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(solution.link, '_blank', 'noopener,noreferrer');
-              }}
             >
               <span>VIEW LIVE SITE</span>
               <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
