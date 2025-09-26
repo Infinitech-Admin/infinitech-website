@@ -195,48 +195,53 @@ const SolutionsPage: React.FC = () => {
       onMouseEnter={() => setHoveredCard(solution.id)}
       onMouseLeave={() => setHoveredCard(null)}
     >
-      <div className="relative h-[600px] rounded-3xl overflow-hidden bg-white shadow-xl border border-slate-100 group-hover:shadow-2xl group-hover:shadow-cyan-500/20 transition-all duration-500 group-hover:scale-[1.02]">
+      <div className="relative h-[500px] sm:h-[550px] lg:h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl border border-slate-100 group-hover:shadow-2xl group-hover:shadow-cyan-500/20 transition-all duration-500 group-hover:scale-[1.02] touch-manipulation">
         
         {/* Image Section */}
-        <div className="relative w-full h-[55%] overflow-hidden">
+        <div className="relative w-full h-[60%] sm:h-[55%] overflow-hidden">
           <img
             src={solution.image}
             alt={solution.project}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = `https://via.placeholder.com/600x400/e2e8f0/64748b?text=${encodeURIComponent(solution.project)}`;
+            }}
           />
           
           {/* Dark Overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
           
           {/* Category Badge */}
-          <div className="absolute top-6 left-6 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-sm font-bold shadow-lg border border-white/20">
+          <div className="absolute top-3 sm:top-4 lg:top-6 left-3 sm:left-4 lg:left-6 px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-xs sm:text-sm font-bold shadow-lg border border-white/20">
             {solution.category}
           </div>
           
           {/* External Link Icon */}
-          <div className={`absolute top-6 right-6 transition-all duration-300 ${
+          <div className={`absolute top-3 sm:top-4 lg:top-6 right-3 sm:right-4 lg:right-6 transition-all duration-300 ${
             hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
           }`}>
-            <div className="p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
-              <ExternalLink className="w-5 h-5 text-white" />
+            <div className="p-2 sm:p-2.5 lg:p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
+              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
           </div>
 
-          {/* Tech Stack Overlay on Hover */}
-          <div className={`absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 ${
+          {/* Tech Stack Overlay on Hover - Hidden on mobile for performance */}
+          <div className={`hidden sm:block absolute bottom-0 left-0 right-0 p-4 lg:p-6 transition-all duration-300 ${
             hoveredCard === solution.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 lg:gap-2">
               {solution.technologies.slice(0, 4).map((tech, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-xs rounded-full border border-white/30 font-medium"
+                  className="px-2 lg:px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-xs rounded-full border border-white/30 font-medium"
                 >
                   {tech}
                 </span>
               ))}
               {solution.technologies.length > 4 && (
-                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white/80 text-xs rounded-full border border-white/20">
+                <span className="px-2 lg:px-3 py-1 bg-white/20 backdrop-blur-sm text-white/80 text-xs rounded-full border border-white/20">
                   +{solution.technologies.length - 4}
                 </span>
               )}
@@ -245,36 +250,53 @@ const SolutionsPage: React.FC = () => {
         </div>
 
         {/* Content Section - White Background */}
-        <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-white p-6 flex flex-col justify-between border-t-4 border-slate-200">
+        <div className="absolute bottom-0 left-0 right-0 h-[40%] sm:h-[45%] bg-white p-4 sm:p-5 lg:p-6 flex flex-col justify-between border-t-2 lg:border-t-4 border-slate-200">
           <div className="flex-1">
-            <h3 className={`text-slate-800 font-bold text-lg mb-2 transition-all duration-300 line-clamp-2 ${
+            <h3 className={`text-slate-800 font-bold text-base sm:text-lg lg:text-xl mb-2 transition-all duration-300 line-clamp-2 ${
               hoveredCard === solution.id ? 'text-blue-600' : ''
             }`}>
               {solution.project}
             </h3>
             
-            <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mb-3">
+            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed line-clamp-2 mb-2 sm:mb-3">
               {solution.description}
             </p>
             
-            <div className="flex items-center text-xs text-slate-500 mb-3">
-              <Globe className="w-4 h-4 mr-2" />
+            <div className="flex items-center text-xs text-slate-500 mb-2 sm:mb-3">
+              <Globe className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
               <span>Live Website Available</span>
+            </div>
+
+            {/* Tech Stack for Mobile - Always visible */}
+            <div className="sm:hidden flex flex-wrap gap-1 mb-3">
+              {solution.technologies.slice(0, 3).map((tech, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-medium"
+                >
+                  {tech}
+                </span>
+              ))}
+              {solution.technologies.length > 3 && (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-full">
+                  +{solution.technologies.length - 3}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Super Prominent Action Button */}
+          {/* Action Button */}
           <div className="mt-auto relative z-20">
             <a
               href={solution.link}
               target="_blank"
               rel="noopener noreferrer"
-              className={`w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black text-base rounded-xl transition-all duration-300 shadow-2xl border-2 border-orange-400 hover:border-red-400 transform hover:scale-[1.02] cursor-pointer ${
+              className={`w-full inline-flex items-center justify-center px-4 sm:px-5 lg:px-6 py-3 sm:py-3.5 lg:py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold sm:font-black text-sm sm:text-base rounded-lg sm:rounded-xl transition-all duration-300 shadow-xl sm:shadow-2xl border-2 border-orange-400 hover:border-red-400 transform hover:scale-[1.02] cursor-pointer active:scale-95 touch-manipulation ${
                 hoveredCard === solution.id ? 'animate-pulse scale-[1.02]' : ''
               }`}
               style={{
-                boxShadow: '0 6px 24px rgba(249, 115, 22, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                pointerEvents: 'auto'
+                boxShadow: '0 4px 16px rgba(249, 115, 22, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                WebkitTapHighlightColor: 'transparent'
               }}
               onClick={(e) => {
                 e.preventDefault();
@@ -282,15 +304,15 @@ const SolutionsPage: React.FC = () => {
               }}
             >
               <span>VIEW LIVE SITE</span>
-              <ChevronRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2 transition-transform duration-300 group-hover:translate-x-1" />
             </a>
           </div>
         </div>
 
         {/* Glow Border on Hover */}
-        <div className={`absolute inset-0 rounded-3xl border-2 transition-all duration-300 ${
+        <div className={`absolute inset-0 rounded-2xl lg:rounded-3xl border-2 transition-all duration-300 ${
           hoveredCard === solution.id 
-            ? 'border-cyan-400/60 shadow-2xl shadow-cyan-400/30' 
+            ? 'border-cyan-400/60 shadow-xl lg:shadow-2xl shadow-cyan-400/30' 
             : 'border-transparent'
         }`}></div>
       </div>
@@ -328,55 +350,91 @@ const SolutionsPage: React.FC = () => {
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
+
+        /* Prevent horizontal scroll and dragging */
+        html, body {
+          overflow-x: hidden;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        /* Prevent text selection on touch devices */
+        .touch-manipulation {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+          .min-h-screen {
+            min-height: -webkit-fill-available;
+          }
+        }
       `}</style>
 
-      <div ref={sectionRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-16 px-4">
-        {/* Background Elements */}
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '0s', animationDuration: '8s'}}></div>
-          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '3s', animationDuration: '10s'}}></div>
+      <div 
+        ref={sectionRef} 
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y pinch-zoom'
+        }}
+      >
+        {/* Background Elements - Reduced on mobile */}
+        <div className="absolute inset-0 opacity-20 sm:opacity-40">
+          <div className="absolute top-1/4 left-1/4 w-[300px] sm:w-[500px] lg:w-[600px] h-[300px] sm:h-[500px] lg:h-[600px] bg-blue-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '0s', animationDuration: '8s'}}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-[250px] sm:w-[400px] lg:w-[500px] h-[250px] sm:h-[400px] lg:h-[500px] bg-cyan-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '3s', animationDuration: '10s'}}></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header */}
-          <div className={`text-center mb-16 transition-all duration-1000 ${
+          <div className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600/20 to-cyan-500/20 backdrop-blur-md border border-blue-300/30 rounded-full text-slate-700 font-bold mb-8 shadow-xl">
-              <Code className="w-6 h-6 mr-3 text-blue-600" />
-              SOLUTIONS
+            <div className="inline-flex items-center px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-gradient-to-r from-blue-600/20 to-cyan-500/20 backdrop-blur-md border border-blue-300/30 rounded-full text-slate-700 font-bold mb-6 sm:mb-8 shadow-xl">
+              <Code className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-blue-600" />
+              <span className="text-sm sm:text-base">SOLUTIONS</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-black text-slate-800 mb-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-4 sm:mb-6 animate-fade-in-up leading-tight" style={{animationDelay: '0.2s'}}>
               We design & build your custom website
             </h1>
             
-            <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-12" style={{animationDelay: '0.4s'}}>
+            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-8 sm:mb-12 px-4 sm:px-0" style={{animationDelay: '0.4s'}}>
               From concept to completion - we craft beautiful, functional websites that help your business thrive online
             </p>
 
-            {/* Category Filters */}
-            <div className={`flex flex-wrap justify-center gap-3 mb-12 transition-all duration-1000 delay-500 ${
+            {/* Category Filters - Scrollable on mobile */}
+            <div className={`mb-8 sm:mb-12 transition-all duration-1000 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}>
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveFilter(category)}
-                  className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
-                    activeFilter === category
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg scale-105'
-                      : 'bg-white/70 text-slate-600 hover:bg-white hover:text-slate-800 border border-slate-200 hover:scale-105'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+              <div className="flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3 overflow-x-auto pb-2 px-4 sm:px-0 -mx-4 sm:mx-0">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveFilter(category)}
+                    className={`flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 text-sm sm:text-base touch-manipulation ${
+                      activeFilter === category
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg scale-105'
+                        : 'bg-white/70 text-slate-600 hover:bg-white hover:text-slate-800 border border-slate-200 hover:scale-105 active:scale-95'
+                    }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Solutions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 lg:mb-16">
             {filteredSolutions.map((solution, index) => (
               <SolutionCard key={solution.id} solution={solution} index={index} />
             ))}
@@ -386,29 +444,29 @@ const SolutionsPage: React.FC = () => {
           <div className={`text-center transition-all duration-1000 delay-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Palette className="w-8 h-8 text-white" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto">
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                  <Palette className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-2">{solutionsdata.length}</h3>
-                <p className="text-slate-600 font-semibold">Live Websites</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">{solutionsdata.length}</h3>
+                <p className="text-slate-600 font-semibold text-sm sm:text-base">Live Websites</p>
               </div>
 
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Code className="w-8 h-8 text-white" />
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                  <Code className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-2">100%</h3>
-                <p className="text-slate-600 font-semibold">Custom Built</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">100%</h3>
+                <p className="text-slate-600 font-semibold text-sm sm:text-base">Custom Built</p>
               </div>
 
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Zap className="w-8 h-8 text-white" />
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                  <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-800 mb-2">Fast</h3>
-                <p className="text-slate-600 font-semibold">Delivery</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Fast</h3>
+                <p className="text-slate-600 font-semibold text-sm sm:text-base">Delivery</p>
               </div>
             </div>
           </div>
