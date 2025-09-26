@@ -397,13 +397,13 @@ const SolutionsPage: React.FC = () => {
           <div className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <div className="inline-flex items-center px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-gradient-to-r from-blue-600/20 to-cyan-500/20 backdrop-blur-md border border-blue-300/30 rounded-full text-slate-700 font-bold mb-6 sm:mb-8 shadow-xl">
-              <Code className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-blue-600" />
+            <div className="inline-flex items-center px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 backdrop-blur-md border border-orange-300/30 rounded-full text-slate-700 font-bold mb-6 sm:mb-8 shadow-xl">
+              <Code className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 text-orange-600" />
               <span className="text-sm sm:text-base">SOLUTIONS</span>
             </div>
             
             <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-4 sm:mb-6 animate-fade-in-up leading-tight" style={{animationDelay: '0.2s'}}>
-              We design & build your custom website
+              Beautiful, Functional Websites
             </h1>
             
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-8 sm:mb-12 px-4 sm:px-0" style={{animationDelay: '0.4s'}}>
