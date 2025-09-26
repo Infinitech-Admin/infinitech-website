@@ -217,15 +217,6 @@ const SolutionsPage: React.FC = () => {
           <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-xs font-bold shadow-lg border border-white/20">
             {solution.category}
           </div>
-          
-          {/* External Link Icon */}
-          <div className={`absolute top-4 right-4 transition-all duration-300 ${
-            hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
-          }`}>
-            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
-              <ExternalLink className="w-4 h-4 text-white" />
-            </div>
-          </div>
 
           {/* Tech Stack Overlay on Hover */}
           <div className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
