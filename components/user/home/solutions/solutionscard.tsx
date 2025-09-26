@@ -354,10 +354,22 @@ const SolutionsPage: React.FC = () => {
         /* Prevent horizontal scroll and dragging */
         html, body {
           overflow-x: hidden;
+          width: 100%;
+          max-width: 100vw;
           -webkit-user-select: none;
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+        }
+        
+        /* Hide scrollbars */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
         
         /* Prevent text selection on touch devices */
@@ -380,10 +392,11 @@ const SolutionsPage: React.FC = () => {
 
       <div 
         ref={sectionRef} 
-        className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden"
+        className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 relative overflow-hidden"
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y pinch-zoom'
+          touchAction: 'pan-y pinch-zoom',
+          maxWidth: '100vw'
         }}
       >
         {/* Background Elements - Reduced on mobile */}
@@ -392,9 +405,9 @@ const SolutionsPage: React.FC = () => {
           <div className="absolute bottom-1/4 right-1/4 w-[250px] sm:w-[400px] lg:w-[500px] h-[250px] sm:h-[400px] lg:h-[500px] bg-cyan-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '3s', animationDuration: '10s'}}></div>
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="w-full max-w-[95vw] xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto relative z-10 px-0">
           {/* Header */}
-          <div className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${
+          <div className={`text-center mb-6 sm:mb-8 lg:mb-16 transition-all duration-1000 px-2 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
             <div className="inline-flex items-center px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 backdrop-blur-md border border-orange-300/30 rounded-full text-slate-700 font-bold mb-6 sm:mb-8 shadow-xl">
@@ -402,24 +415,24 @@ const SolutionsPage: React.FC = () => {
               <span className="text-sm sm:text-base">SOLUTIONS</span>
             </div>
             
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-4 sm:mb-6 animate-fade-in-up leading-tight" style={{animationDelay: '0.2s'}}>
+            <h1 className="text-2xl sm:text-4xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-3 sm:mb-4 lg:mb-6 animate-fade-in-up leading-tight px-2" style={{animationDelay: '0.2s'}}>
               Beautiful, Functional Websites
             </h1>
             
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-8 sm:mb-12 px-4 sm:px-0" style={{animationDelay: '0.4s'}}>
+            <p className="text-sm sm:text-base lg:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-6 sm:mb-8 lg:mb-12 px-3 sm:px-4" style={{animationDelay: '0.4s'}}>
               From concept to completion - we craft beautiful, functional websites that help your business thrive online
             </p>
 
             {/* Category Filters - Scrollable on mobile */}
-            <div className={`mb-8 sm:mb-12 transition-all duration-1000 delay-500 ${
+            <div className={`mb-6 sm:mb-8 lg:mb-12 transition-all duration-1000 delay-500 px-2 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}>
-              <div className="flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3 overflow-x-auto pb-2 px-4 sm:px-0 -mx-4 sm:mx-0">
+              <div className="flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setActiveFilter(category)}
-                    className={`flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 text-sm sm:text-base touch-manipulation ${
+                    className={`flex-shrink-0 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 text-xs sm:text-sm lg:text-base touch-manipulation whitespace-nowrap ${
                       activeFilter === category
                         ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg scale-105'
                         : 'bg-white/70 text-slate-600 hover:bg-white hover:text-slate-800 border border-slate-200 hover:scale-105 active:scale-95'
@@ -434,39 +447,41 @@ const SolutionsPage: React.FC = () => {
           </div>
 
           {/* Solutions Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 lg:mb-16">
-            {filteredSolutions.map((solution, index) => (
-              <SolutionCard key={solution.id} solution={solution} index={index} />
-            ))}
+          <div className="w-full px-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:mb-16">
+              {filteredSolutions.map((solution, index) => (
+                <SolutionCard key={solution.id} solution={solution} index={index} />
+              ))}
+            </div>
           </div>
 
           {/* Stats Section */}
-          <div className={`text-center transition-all duration-1000 delay-1000 ${
+          <div className={`text-center transition-all duration-1000 delay-1000 px-2 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto">
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
-                  <Palette className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 max-w-4xl mx-auto">
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4 shadow-lg">
+                  <Palette className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">{solutionsdata.length}</h3>
-                <p className="text-slate-600 font-semibold text-sm sm:text-base">Live Websites</p>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 mb-1 sm:mb-2">{solutionsdata.length}</h3>
+                <p className="text-slate-600 font-semibold text-xs sm:text-sm lg:text-base">Live Websites</p>
               </div>
 
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
-                  <Code className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4 shadow-lg">
+                  <Code className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">100%</h3>
-                <p className="text-slate-600 font-semibold text-sm sm:text-base">Custom Built</p>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 mb-1 sm:mb-2">100%</h3>
+                <p className="text-slate-600 font-semibold text-xs sm:text-sm lg:text-base">Custom Built</p>
               </div>
 
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
-                  <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-xl border border-white/20 hover:scale-105 transition-transform duration-300 touch-manipulation">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4 shadow-lg">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Fast</h3>
-                <p className="text-slate-600 font-semibold text-sm sm:text-base">Delivery</p>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 mb-1 sm:mb-2">Fast</h3>
+                <p className="text-slate-600 font-semibold text-xs sm:text-sm lg:text-base">Delivery</p>
               </div>
             </div>
           </div>
