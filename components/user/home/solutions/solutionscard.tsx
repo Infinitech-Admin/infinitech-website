@@ -186,6 +186,15 @@ const SolutionsPage: React.FC = () => {
     ? solutionsdata 
     : solutionsdata.filter(item => item.category === activeFilter);
 
+  // Function to handle external link opening
+  const handleExternalLink = (url: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const SolutionCard = ({ solution, index }: { solution: Solution; index: number }) => (
     <div
       className={`group cursor-pointer transition-all duration-700 ${
@@ -194,6 +203,7 @@ const SolutionsPage: React.FC = () => {
       style={{ animationDelay: `${index * 100}ms` }}
       onMouseEnter={() => setHoveredCard(solution.id)}
       onMouseLeave={() => setHoveredCard(null)}
+      onClick={() => handleExternalLink(solution.link)}
     >
       <div className="relative h-[380px] sm:h-[420px] md:h-[460px] lg:h-[480px] xl:h-[500px] rounded-2xl overflow-hidden bg-white shadow-lg hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:scale-[1.02] border border-gray-200">
         
@@ -218,14 +228,17 @@ const SolutionsPage: React.FC = () => {
             {solution.category}
           </div>
           
-          {/* External Link Icon */}
-          <div className={`absolute top-4 right-4 transition-all duration-300 ${
-            hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
-          }`}>
-            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
+          {/* External Link Icon - Now clickable */}
+          <button
+            onClick={(e) => handleExternalLink(solution.link, e)}
+            className={`absolute top-4 right-4 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 rounded-full ${
+              hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
+            }`}
+          >
+            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200">
               <ExternalLink className="w-4 h-4 text-white" />
             </div>
-          </div>
+          </button>
 
           {/* Tech Stack Overlay on Hover */}
           <div className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
@@ -268,28 +281,22 @@ const SolutionsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Button - Same color as badge */}
+          {/* Action Button - Now properly handles clicks */}
           <div className="mt-auto">
-            <a
-              href={solution.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-sm rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
+            <button
+              onClick={(e) => handleExternalLink(solution.link, e)}
+              className={`w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-sm rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 ${
                 hoveredCard === solution.id ? 'animate-pulse scale-[1.02]' : ''
               }`}
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(solution.link, '_blank', 'noopener,noreferrer');
-              }}
             >
               <span>VIEW LIVE SITE</span>
               <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-            </a>
+            </button>
           </div>
         </div>
 
         {/* Glow Border on Hover */}
-        <div className={`absolute inset-0 rounded-2xl border-2 transition-all duration-300 ${
+        <div className={`absolute inset-0 rounded-2xl border-2 transition-all duration-300 pointer-events-none ${
           hoveredCard === solution.id 
             ? 'border-cyan-400/60 shadow-xl shadow-cyan-400/30' 
             : 'border-transparent'
