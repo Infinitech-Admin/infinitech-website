@@ -365,27 +365,7 @@ const SolutionsPage: React.FC = () => {
             <div className={`mb-12 transition-all duration-1000 delay-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}>
-              {/* Mobile: Scrollable horizontal layout */}
-              <div className="block sm:hidden mb-4">
-                <div className="flex overflow-x-auto scrollbar-hide gap-3 px-4 pb-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setActiveFilter(category)}
-                      className={`flex-shrink-0 px-6 py-3 rounded-full font-semibold transition-all duration-300 text-sm whitespace-nowrap ${
-                        activeFilter === category
-                          ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg'
-                          : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-800 border border-slate-200'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Desktop: Centered flex wrap layout */}
-              <div className="hidden sm:flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
+              <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
                 {categories.map((category) => (
                   <button
                     key={category}
