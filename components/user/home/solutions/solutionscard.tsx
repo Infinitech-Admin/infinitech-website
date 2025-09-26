@@ -217,6 +217,15 @@ const SolutionsPage: React.FC = () => {
           <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-xs font-bold shadow-lg border border-white/20">
             {solution.category}
           </div>
+          
+          {/* External Link Icon */}
+          <div className={`absolute top-4 right-4 transition-all duration-300 ${
+            hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
+          }`}>
+            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
+              <ExternalLink className="w-4 h-4 text-white" />
+            </div>
+          </div>
 
           {/* Tech Stack Overlay on Hover */}
           <div className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-300 ${
@@ -268,6 +277,10 @@ const SolutionsPage: React.FC = () => {
               className={`w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-sm rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
                 hoveredCard === solution.id ? 'animate-pulse scale-[1.02]' : ''
               }`}
+              onClick={(e) => {
+                e.preventDefault();
+                window.open(solution.link, '_blank', 'noopener,noreferrer');
+              }}
             >
               <span>VIEW LIVE SITE</span>
               <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
