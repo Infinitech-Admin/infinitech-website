@@ -54,7 +54,7 @@ const solutionsdata: Solution[] = [
     id: 5,
     project: "Oppane E-Commerce",
     description: "Full-featured e-commerce platform with inventory management, payment integration and comprehensive analytics dashboard.",
-    link: "hhttps://oppane.vercel.app/",
+    link: "https://oppane.vercel.app/",
     image: "/websites/oppane.png",
     category: "E-Commerce",
     technologies: ["Next.js", "Laravel", "MySQL", "Node.js", "Tailwind CSS"]
