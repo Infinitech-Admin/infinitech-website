@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink, Eye, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation'; // Add this import
 
 interface Project {
   id: number;
@@ -155,6 +156,7 @@ const PortfolioShowcase: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const router = useRouter(); // Add router hook
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -182,6 +184,11 @@ const PortfolioShowcase: React.FC = () => {
     if (project.url) {
       window.open(project.url, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  // Function to handle solutions navigation
+  const handleViewAllSolutions = () => {
+    router.push('/solutions');
   };
 
   // Function to shuffle array to avoid duplicates appearing together
@@ -443,7 +450,10 @@ const PortfolioShowcase: React.FC = () => {
         <div className={`text-center mt-20 relative z-10 transition-all duration-1000 delay-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
-          <button className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-base rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={handleViewAllSolutions}
+            className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-base rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
             <span>View All Solutions</span>
             <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
           </button>
