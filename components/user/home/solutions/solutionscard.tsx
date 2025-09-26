@@ -383,9 +383,9 @@ const SolutionsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Solutions Grid - Responsive */}
+          {/* Solutions Grid - Fixed to 4 cards per row */}
           <div className="mb-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
               {filteredSolutions.map((solution, index) => (
                 <SolutionCard key={solution.id} solution={solution} index={index} />
               ))}
