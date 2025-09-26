@@ -348,10 +348,7 @@ const SolutionsPage: React.FC = () => {
           <div className={`text-center mb-12 lg:mb-16 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 backdrop-blur-md border border-orange-300/30 rounded-full text-slate-700 font-bold mb-8 shadow-xl">
-              <Code className="w-5 h-5 mr-3 text-orange-600" />
-              <span>SOLUTIONS</span>
-            </div>
+           
             
             <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-6 animate-fade-in-up leading-tight">
               Beautiful, Functional Websites
