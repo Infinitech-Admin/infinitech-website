@@ -195,7 +195,7 @@ const SolutionsPage: React.FC = () => {
       onMouseEnter={() => setHoveredCard(solution.id)}
       onMouseLeave={() => setHoveredCard(null)}
     >
-      <div className="relative h-[500px] sm:h-[550px] lg:h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl border border-slate-100 group-hover:shadow-2xl group-hover:shadow-cyan-500/20 transition-all duration-500 group-hover:scale-[1.02] touch-manipulation">
+      <div className="relative h-[450px] sm:h-[500px] lg:h-[550px] xl:h-[580px] rounded-2xl lg:rounded-3xl overflow-hidden bg-white shadow-xl border border-slate-100 group-hover:shadow-2xl group-hover:shadow-cyan-500/20 transition-all duration-500 group-hover:scale-[1.02] touch-manipulation">
         
         {/* Image Section */}
         <div className="relative w-full h-[60%] sm:h-[55%] overflow-hidden">
@@ -405,7 +405,7 @@ const SolutionsPage: React.FC = () => {
           <div className="absolute bottom-1/4 right-1/4 w-[250px] sm:w-[400px] lg:w-[500px] h-[250px] sm:h-[400px] lg:h-[500px] bg-cyan-400/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '3s', animationDuration: '10s'}}></div>
         </div>
 
-        <div className="w-full max-w-none mx-auto relative z-10 px-0">
+        <div className="w-full max-w-[90vw] xl:max-w-[85vw] 2xl:max-w-[80vw] mx-auto relative z-10 px-0">
           {/* Header */}
           <div className={`text-center mb-6 sm:mb-8 lg:mb-16 transition-all duration-1000 px-2 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
@@ -447,8 +447,8 @@ const SolutionsPage: React.FC = () => {
           </div>
 
           {/* Solutions Grid */}
-          <div className="w-full px-2 sm:px-4 lg:px-8 xl:px-16 2xl:px-24">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-6 sm:mb-8 lg:mb-16">
+          <div className="w-full px-2 sm:px-4 lg:px-6 xl:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 xl:gap-7 mb-6 sm:mb-8 lg:mb-16">
               {filteredSolutions.map((solution, index) => (
                 <SolutionCard key={solution.id} solution={solution} index={index} />
               ))}
