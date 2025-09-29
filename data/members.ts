@@ -37,26 +37,9 @@ export const members = [
     href: "https://www.facebook.com/charizr1",
   },
   
-  
-   {
-    name: "Diana V. Brown",
-    position: "Executive Marketing Officer & Quality Analyst",
-    image: "diana.png",
-    email: "abicrealty.diana@gmail.com",
-    phone: "09455914895",
-    telegram: {
-      title: "09455914895",
-      href: "https://web.telegram.org/a/#6024830507"
-    },
-    facebookname: "ABIC Realty & Consultancy Corporation",
-    facebooknames: "Infinitech Advertising Corporation",
-    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
-    hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
-    company: "abicrealtyph.com | Infinitech Advertising Corporation"
-  },
   {
     name: "Darlene Angel Fajarito",
-    position: "Administrative Assistant",
+    position: "Accounting Assistant",
     image: "darlene.png",
     email: "infinitech.darlene@gmail.com",
     phone: "09667515747",
