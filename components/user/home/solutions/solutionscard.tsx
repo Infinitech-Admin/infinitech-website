@@ -341,18 +341,15 @@ const SolutionsPage: React.FC = () => {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Header */}
+          
+         
           <div className={`text-center mb-12 lg:mb-16 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-           
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-slate-800 mb-4 sm:mb-6 animate-fade-in-up leading-tight px-4">
-              Beautiful, Functional Websites
-            </h1>
+          
             
             <p className="text-sm sm:text-base lg:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up mb-8 sm:mb-12 px-4" style={{animationDelay: '0.2s'}}>
-              From concept to completion - we craft beautiful, functional websites that help your business thrive online
+              From concept to completion - explore our portfolio of custom websites and example projects
             </p>
 
             {/* Category Filters */}
