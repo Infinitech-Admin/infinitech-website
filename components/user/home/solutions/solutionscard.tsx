@@ -228,17 +228,7 @@ const SolutionsPage: React.FC = () => {
             {solution.category}
           </div>
           
-          {/* External Link Icon - Now clickable */}
-          <button
-            onClick={(e) => handleExternalLink(solution.link, e)}
-            className={`absolute top-3 sm:top-4 right-3 sm:right-4 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 rounded-full ${
-              hoveredCard === solution.id ? 'opacity-100 scale-100 rotate-12' : 'opacity-80 scale-90'
-            }`}
-          >
-            <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg hover:bg-white/30 transition-all duration-200">
-              <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-            </div>
-          </button>
+
 
           {/* Tech Stack Overlay on Hover */}
           <div className={`absolute bottom-0 left-0 right-0 p-3 sm:p-4 transition-all duration-300 ${
@@ -366,15 +356,53 @@ const SolutionsPage: React.FC = () => {
             </p>
 
             {/* Category Filters */}
-            <div className={`mb-8 sm:mb-12 transition-all duration-1000 delay-300 ${
+            <div className={`mb-8 sm:mb-12 transition-all duration-1000 delay-300 relative z-20 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}>
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-4xl mx-auto px-4">
+              {/* Mobile Dropdown */}
+              <div className="md:hidden px-4 max-w-md mx-auto">
+                <div className="relative">
+                  <label className="block text-slate-700 font-semibold text-xs mb-2 text-center">
+                    Filter by Category
+                  </label>
+               <select
+                    value={activeFilter}
+                    onChange={(e) => setActiveFilter(e.target.value)}
+                    className="w-full px-4 py-3.5 rounded-xl font-bold text-base bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg border-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 cursor-pointer appearance-none pr-10 text-center transition-all duration-300"
+                    style={{
+                      backgroundImage: 'linear-gradient(to right, #2563eb, #06b6d4)',
+                      color: 'white'
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <option 
+                        key={category} 
+                        value={category} 
+                        className="bg-slate-800 text-white font-semibold py-3"
+                        style={{
+                          backgroundColor: '#1e293b',
+                          color: '#87ceeb'
+                        }}
+                      >
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-[60%] -translate-y-1/2 pointer-events-none">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Buttons */}
+              <div className="hidden md:flex flex-wrap justify-center gap-3 max-w-4xl mx-auto px-4">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setActiveFilter(category)}
-                    className={`px-3 sm:px-4 lg:px-6 py-2 lg:py-3 rounded-full font-semibold transition-all duration-300 text-xs sm:text-sm lg:text-base whitespace-nowrap ${
+                    className={`px-4 lg:px-6 py-2 lg:py-3 rounded-full font-semibold transition-all duration-300 text-sm lg:text-base whitespace-nowrap ${
                       activeFilter === category
                         ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg scale-105'
                         : 'bg-white/70 text-slate-600 hover:bg-white hover:text-slate-800 border border-slate-200 hover:scale-105'
