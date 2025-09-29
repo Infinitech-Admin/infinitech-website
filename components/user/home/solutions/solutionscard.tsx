@@ -38,7 +38,7 @@ const solutionsdata: Solution[] = [
     description: "Comprehensive hiring and manpower platform with job matching and recruitment management across the Philippines.",
     link: "https://abicmanpower.com/",
     image: "/websites/abicmanpower.png",
-    category: "Recruitment Platform",
+    category: "Manpower Platform",
     technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"]
   },
   {
