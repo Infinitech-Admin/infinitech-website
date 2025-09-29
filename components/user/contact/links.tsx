@@ -6,7 +6,7 @@ import { LuMail, LuPhone, LuSmartphone } from "react-icons/lu";
 
 const Links = () => {
   const links = [
-    "02 7001 6157",
+    "02 8846 1636",
     "0962 253 0149",
     "infinitechadvertisingcorp@gmail.com",
   ];
