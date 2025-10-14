@@ -71,45 +71,7 @@ export const members = [
     facebookname: "Justin De Castro",
     href: "https://www.facebook.com/tine.tainy",
   },
-  {
-    name: "Kasandra Carise Jurquia",
-    position: "Digital Marketing Staff",
-    image: "jurquia.png",
-    email: "Infinitech.Kasandra@gmail.com",
-    phone: "09151934556",
-     telegram: {
-      title: "09486672069",
-      href: "https://web.telegram.org/k/#7207919572"
-    },
-    facebookname: "Kasandra Carise Jurquia",
-    href: "https://www.facebook.com/share/1FJ35D4XQc/",
-  },
-  {
-    name: "Ayen Marriane Milante",
-    position: "Digital Marketing Staff",
-    image: "milante.png",
-    email: "infinitech.ayen@gmail.com",
-    phone: "09128352623",
-     telegram: {
-      title: "09128352623",
-      href: "https://web.telegram.org/k/#5711049742"
-    },
-    facebookname: "Ayen Marriane Milante ",
-    href: "https://www.facebook.com/ayenmarriane.milante.3",
-  },
-  {
-    name: "Kristia Marie Borbe",
-    position: "Digital Marketing Staff",
-    image: "borbe.png",
-    email: "kristiaborbe85@gmail.com",
-    phone: "09512780279",
-     telegram: {
-      title: "09512780279",
-      href: "https://web.telegram.org/k/#1413683475"
-    },
-    facebookname: "Kristia Marie Borbe",
-    href: "https://www.facebook.com/share/1D32bWA1he/?mibextid=wwXIfr",
-  },
+  
   {
     name: "Michael Tapec",
     position: "Digital Marketing Staff",
