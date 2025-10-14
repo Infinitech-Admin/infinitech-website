@@ -6,12 +6,19 @@ export type Inquiry = {
 };
 
 export type Plans = {
-  [key: string]: Service[];
+  [key: string]: {
+    [category: string]: Service[];
+  };
 };
+
 
 export type Service = {
   name: string;
-  description: string;
+  description: string | string[]; // support string OR array
   price: number;
+  monthly?: number;
   isSelected?: boolean;
 };
+
+
+
