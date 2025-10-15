@@ -86,6 +86,19 @@ export const members = [
     href: "https://www.facebook.com/share/1Rg9NYHbRL/",
   },
   {
+    name: "Armand M. Cajucom",
+    position: "Digital Marketing Staff",
+    image: "armans.png",
+    email: " Infinitech.armandcajucom@gmail.com",
+    phone: "09940244223",
+     telegram: {
+      title: "09940244223",
+      href: "https://web.telegram.org/k/#8303557841"
+    },
+    facebookname: "Armand M. Cajucom",
+    href: "https://www.facebook.com/armand.cajucom.7?mibextid=ZbWKwL",
+  },
+  {
     name: "Jose Dexter Anyayahan",
     position: "Digital Marketing Staff",
     image: "anyayahan.png",
