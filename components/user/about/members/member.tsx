@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card, CardBody, Image } from "@heroui/react";
+import { Card, CardBody, Image, Button } from "@heroui/react";
 import { members } from "@/data/members";
 import { removeSpaces } from "@/utils/formatters";
 import {
@@ -13,9 +13,51 @@ import {
 } from "react-icons/lu";
 import { FaViber } from "react-icons/fa";
 import { RiTelegram2Line } from "react-icons/ri";
+import { toast } from "sonner";
 
 const Member = ({ id }: { id: number }) => {
   const member = members[id];
+
+  const handleSaveContact = () => {
+    if (!member) return;
+
+    // Basic vCard fields
+    let vcard = `
+BEGIN:VCARD
+VERSION:3.0
+FN:${member.name || ""}
+EMAIL;TYPE=INTERNET:${member.email || ""}
+TEL;TYPE=CELL:${member.phone || ""}
+URL:${member.company?.includes("abicrealtyph.com") ? "https://abicrealtyph.com" : ""}
+ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila;;;
+`;
+
+    // Add Facebook or socials
+    if (member.facebookname)
+      vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.href || ""}\n`;
+    if (member.facebooknames)
+      vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.hrefs || ""}\n`;
+    if (member.telegram)
+      vcard += `X-SOCIALPROFILE;TYPE=telegram:${
+        typeof member.telegram === "string"
+          ? member.telegram
+          : member.telegram.href
+      }\n`;
+    if (member.viber)
+      vcard += `X-SOCIALPROFILE;TYPE=viber:${member.viber.href}\n`;
+
+    vcard += "END:VCARD";
+
+    // Download the vCard
+    const blob = new Blob([vcard.trim()], { type: "text/vcard" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${member.name?.replace(/\s+/g, "_") || "contact"}.vcf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    toast.success(`${member.name} saved to your contacts!`);
+  };
 
   return (
     <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] mt-24 mb-12">
@@ -35,13 +77,16 @@ const Member = ({ id }: { id: number }) => {
 
                 {/* Info Section */}
                 <div className="flex flex-col justify-start gap-4 w-full sm:w-[60%]">
-                  <div className="text-center sm:text-left uppercase">
+                  <div className="text-center sm:text-left uppercase mb-4">
                     <h3 className="text-2xl font-semibold text-accent">
                       {member.name}
                     </h3>
                     <h3 className="text-xl font-semibold text-primary">
                       {member.position}
                     </h3>
+
+                    {/* Save Contact Button */}
+                    
                   </div>
 
                   {/* Details Grid */}
@@ -86,18 +131,17 @@ const Member = ({ id }: { id: number }) => {
                     <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                       <LuBriefcaseBusiness size={20} />
                     </div>
-                   <div>
-  <a
-    href="https://www.google.com/maps?q=Unit+311,+Campos+Rueda+Building,+101+Urban+Ave,+Makati,+Metro+Manila"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="hover:underline"
-  >
-    Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
-    Metro Manila
-  </a>
-</div>
-
+                    <div>
+                      <a
+                        href="https://www.google.com/maps?q=Unit+311,+Campos+Rueda+Building,+101+Urban+Ave,+Makati,+Metro+Manila"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        Unit 311, Campos Rueda Building, 101 Urban Ave, Makati,
+                        Metro Manila
+                      </a>
+                    </div>
 
                     {/* Email */}
                     <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
@@ -219,12 +263,23 @@ const Member = ({ id }: { id: number }) => {
                 </div>
               </div>
             </CardBody>
+             <div className="mt-4 flex justify-end sm:justify-end">
+                      <Button
+                        color="primary"
+                        className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
+                        onPress={handleSaveContact}
+                      >
+                        Save Contact
+                      </Button>
+                    </div>
           </Card>
+          
         ) : (
           <div className="flex justify-center py-8">
             <h3 className="font-semibold">Member Not Found</h3>
           </div>
         )}
+       
       </div>
     </section>
   );
