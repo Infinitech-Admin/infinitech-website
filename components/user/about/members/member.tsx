@@ -263,15 +263,15 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                 </div>
               </div>
             </CardBody>
-             <div className="mt-4 flex justify-end sm:justify-end">
-                      <Button
-                        color="primary"
-                        className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
-                        onPress={handleSaveContact}
-                      >
-                        Save Contact
-                      </Button>
-                    </div>
+             <div className="mt-4 flex justify-end sm:hidden">
+  <Button
+    color="primary"
+    className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
+    onPress={handleSaveContact}
+  >
+    Save Contact
+  </Button>
+</div>
           </Card>
           
         ) : (
