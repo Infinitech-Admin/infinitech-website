@@ -3,10 +3,19 @@ import nodemailer from "nodemailer"
 
 export async function POST(request: NextRequest) {
   try {
-    const { ticketId, email, message, subject, status } = await request.json()
+    const body = await request.json()
+    const { ticketId, email, message, subject, status } = body
+    
+    console.log("📧 Reply request received:", { ticketId, email, subject, status })
 
     if (!email || !message) {
+      console.error("❌ Missing required fields:", { email: !!email, message: !!message })
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
+    }
+
+    if (!ticketId) {
+      console.error("❌ Missing ticketId")
+      return NextResponse.json({ message: "Ticket ID is required" }, { status: 400 })
     }
 
     // Create transporter with correct settings
