@@ -190,7 +190,7 @@ ${message}
       attachments: [
         {
           filename: "logo.png",
-          path: "./public/images/logo.png",
+          path: "/images/logo.png",
           cid: "logo",
         },
       ],
