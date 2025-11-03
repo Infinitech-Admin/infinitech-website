@@ -112,9 +112,8 @@ ${message}
                           <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td width="50%" style="padding-right: 10px;">
-                               // In the email HTML content, update the Ticket ID section:
-<p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</p>
-<p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">${ticketId}</p>
+                                <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</p>
+                                <p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">#${ticketId}</p>
                               </td>
                               <td width="50%" style="padding-left: 10px; text-align: right;">
                                 <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Status</p>
@@ -199,13 +198,13 @@ ${message}
     })
 
     if (!updateResponse.ok) {
-      console.error("[v0] Failed to update ticket status in backend")
+      console.error("Failed to update ticket status in backend")
     }
 
     return NextResponse.json({ message: "Reply sent successfully" }, { status: 200 })
   } catch (error) {
-    console.error("[v0] Error sending reply:", error)
-    console.error("[v0] Error details:", {
+    console.error("Error sending reply:", error)
+    console.error("Error details:", {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     })
