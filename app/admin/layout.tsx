@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Menu, X, LogOut, LayoutDashboard, Ticket } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,8 +12,31 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
+
+  useEffect(() => {
+    // Skip auth check for login page
+    if (pathname === "/admin/login") {
+      setIsChecking(false)
+      return
+    }
+
+    // Check authentication for all other admin pages
+    const token = localStorage.getItem("adminToken")
+    
+    if (!token) {
+      router.push("/admin/login")
+      return
+    }
+
+    // Optionally verify token with your API
+    // For now, just check if it exists
+    setIsAuthenticated(true)
+    setIsChecking(false)
+  }, [pathname, router])
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken")
@@ -25,6 +48,15 @@ export default function AdminLayout({
   // If on login page, render children without layout
   if (pathname === "/admin/login") {
     return <>{children}</>
+  }
+
+  // Show nothing while checking authentication (prevents layout flash)
+  if (isChecking || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+      </div>
+    )
   }
 
   return (
