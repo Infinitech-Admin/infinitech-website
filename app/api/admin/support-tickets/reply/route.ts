@@ -4,9 +4,9 @@ import nodemailer from "nodemailer"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { ticketId, email, message, subject, status } = body
+    const { ticketId, ticketNumber, email, message, subject, status } = body
     
-    console.log("📧 Reply request received:", { ticketId, email, subject, status })
+    console.log("📧 Reply request received:", { ticketId, ticketNumber, email, subject, status })
 
     if (!email || !message) {
       console.error("❌ Missing required fields:", { email: !!email, message: !!message })
@@ -240,4 +240,4 @@ ${message}
       { status: 500 },
     )
   }
-}
+} 
