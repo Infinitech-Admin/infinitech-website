@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 import Providers from "./providers";
-import NavBar from "@/components/user/layout/navbar";
-import Footer from "@/components/user/layout/footer/footer";
+import ConditionalLayout from "@/components/conditional-layout";
 import { poppins } from "@/config/fonts";
 import { Toaster } from "react-hot-toast";
 
@@ -77,12 +76,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <body className={`antialiased ${poppins.className}`}>
         <Providers>
           <Toaster position="top-right" />
-
-          <div className="flex flex-col min-h-screen">
-            <NavBar />
-            <main>{children}</main>
-            <Footer />
-          </div>
+          <ConditionalLayout>{children}</ConditionalLayout>
         </Providers>
       </body>
     </html>
