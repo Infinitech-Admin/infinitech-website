@@ -110,6 +110,7 @@ export default function AdminSupportTicketsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ticketId: selectedTicket.id,
+          ticketNumber: selectedTicket.ticket_number,
           email: selectedTicket.email,
           message: replyMessage,
           subject: selectedTicket.subject,
