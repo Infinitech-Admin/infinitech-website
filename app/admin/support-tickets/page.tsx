@@ -42,6 +42,7 @@ interface SupportTicket {
   subject: string
   message: string
   status: string
+ticket_number: string
   current_page: string
   domain: string
   created_at: string
@@ -361,6 +362,7 @@ export default function AdminSupportTicketsPage() {
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <TableHead className="font-semibold">Priority</TableHead>
+                      <TableHead className="font-semibold">Ticket Number</TableHead>
                     <TableHead className="font-semibold">Subject</TableHead>
                     <TableHead className="font-semibold hidden md:table-cell">From</TableHead>
                     <TableHead className="font-semibold hidden xl:table-cell">Domain</TableHead>
@@ -395,6 +397,13 @@ export default function AdminSupportTicketsPage() {
                               Normal
                             </Badge>
                           )}
+                        </TableCell>
+                         <TableCell className="font-medium max-w-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
+                            <span className="truncate">{ticket.ticket_number}</span>
+                          </div>
+                          <div className="md:hidden text-xs text-muted-foreground mt-1">{ticket.name}</div>
                         </TableCell>
                         <TableCell className="font-medium max-w-xs">
                           <div className="flex items-center gap-2">
@@ -444,7 +453,7 @@ export default function AdminSupportTicketsPage() {
                         </TableCell>
                         <TableCell>
                           <Dialog
-                            open={selectedTicket?.id === ticket.id}
+                            open={selectedTicket?.ticket_number === ticket.ticket_number}
                             onOpenChange={(open) => !open && setSelectedTicket(null)}
                           >
                             <DialogTrigger asChild>
@@ -464,7 +473,7 @@ export default function AdminSupportTicketsPage() {
                                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm flex-shrink-0">
                                       #{ticket.id}
                                     </div>
-                                    <span className="truncate">Ticket #{ticket.id}</span>
+                                    <span className="truncate">Ticket #{ticket.ticket_number}</span>
                                     {isVIPTicket(ticket.domain) && (
                                       <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1">
                                         <Crown className="h-3 w-3" />
