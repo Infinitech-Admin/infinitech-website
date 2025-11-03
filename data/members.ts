@@ -111,36 +111,36 @@ export const members = [
     facebookname: "Jd Anyayahan",
     href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
   },
-  {
-    name: "Janine Santos",
-    position: "Junior Web Developer",
-    image: "santos.png",
-    email: "infinitech.janine@gmail.com",
-    phone: "09517407062",
-     telegram: {
-      title: "09517407062",
-      href: "https://web.telegram.org/k/#7182482046"
-    },
-    facebookname: "Janine Santos",
-    href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
-  },
-  {
-    name: "Shekinah Anisette Valdez",
-    position: "Junior Web Developer",
-    image: "valdez.png",
-    email: "infinitech.shekinah@gmail.com",
-    phone: "09854031332",
-     telegram: {
-      title: "09854031332",
-      href: "https://web.telegram.org/k/#7984703534"
+  // {
+  //   name: "Janine Santos",
+  //   position: "Junior Web Developer",
+  //   image: "santos.png",
+  //   email: "infinitech.janine@gmail.com",
+  //   phone: "09517407062",
+  //    telegram: {
+  //     title: "09517407062",
+  //     href: "https://web.telegram.org/k/#7182482046"
+  //   },
+  //   facebookname: "Janine Santos",
+  //   href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
+  // },
+  // {
+  //   name: "Shekinah Anisette Valdez",
+  //   position: "Junior Web Developer",
+  //   image: "valdez.png",
+  //   email: "infinitech.shekinah@gmail.com",
+  //   phone: "09854031332",
+  //    telegram: {
+  //     title: "09854031332",
+  //     href: "https://web.telegram.org/k/#7984703534"
     
-    },
-    viber: {
-      title: "09854031332",
-      href: "https://msng.link/o?09854031332=vi"
-    },
-    facebookname: "Shekinah Anisette Valdez",
-    href: "https://www.facebook.com/share/1YcxRTQkEH/",
-  },
+  //   },
+  //   viber: {
+  //     title: "09854031332",
+  //     href: "https://msng.link/o?09854031332=vi"
+  //   },
+  //   facebookname: "Shekinah Anisette Valdez",
+  //   href: "https://www.facebook.com/share/1YcxRTQkEH/",
+  // },
   
 ];
