@@ -42,7 +42,7 @@ interface SupportTicket {
   subject: string
   message: string
   status: string
-ticket_number: string
+  ticket_number: string
   current_page: string
   domain: string
   created_at: string
@@ -104,6 +104,7 @@ export default function AdminSupportTicketsPage() {
 
     setSending(true)
     try {
+      console.log("📤 Sending reply for ticket:", selectedTicket.ticket_number)
       const response = await fetch("/api/admin/support-tickets/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,15 +120,21 @@ export default function AdminSupportTicketsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message)
+        console.error("❌ Reply failed:", data)
+        throw new Error(data.message || "Failed to send reply")
       }
 
+      console.log("✅ Reply sent successfully")
       setMessage("Reply sent successfully!")
       setReplyMessage("")
       setNewStatus("")
       fetchTickets()
-      setTimeout(() => setSelectedTicket(null), 1500)
+      setTimeout(() => {
+        setSelectedTicket(null)
+        setMessage("")
+      }, 2000)
     } catch (error) {
+      console.error("💥 Error in handleReply:", error)
       setMessage(error instanceof Error ? error.message : "Failed to send reply")
     } finally {
       setSending(false)
@@ -362,7 +369,7 @@ export default function AdminSupportTicketsPage() {
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <TableHead className="font-semibold">Priority</TableHead>
-                      <TableHead className="font-semibold">Ticket Number</TableHead>
+                    <TableHead className="font-semibold">Ticket Number</TableHead>
                     <TableHead className="font-semibold">Subject</TableHead>
                     <TableHead className="font-semibold hidden md:table-cell">From</TableHead>
                     <TableHead className="font-semibold hidden xl:table-cell">Domain</TableHead>
@@ -375,7 +382,7 @@ export default function AdminSupportTicketsPage() {
                 <TableBody>
                   {paginatedTickets.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12">
+                      <TableCell colSpan={9} className="text-center py-12">
                         <div className="flex flex-col items-center gap-2">
                           <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
                           <p className="text-muted-foreground font-medium">No tickets found</p>
@@ -398,7 +405,7 @@ export default function AdminSupportTicketsPage() {
                             </Badge>
                           )}
                         </TableCell>
-                         <TableCell className="font-medium max-w-xs">
+                        <TableCell className="font-medium max-w-xs">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
                             <span className="truncate">{ticket.ticket_number}</span>
@@ -466,7 +473,7 @@ export default function AdminSupportTicketsPage() {
                                 View &amp; Reply
                               </Button>
                             </DialogTrigger>
-                            {selectedTicket?.id === ticket.id && (
+                            {selectedTicket?.ticket_number === ticket.ticket_number && (
                               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2">
                                 <DialogHeader>
                                   <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
