@@ -1,16 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number.parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
-
 export async function POST(request: NextRequest) {
   try {
     const { ticketId, email, message, subject, status } = await request.json()
@@ -19,7 +9,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
     }
 
-    // Send email to user
+    // Create transporter with correct settings
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number.parseInt(process.env.SMTP_PORT || "465"),
+      secure: true, // Use SSL for port 465
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
+
+    // Verify transporter configuration
+    await transporter.verify()
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(to right, #06b6d4, #0c4a6e); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -43,8 +46,9 @@ export async function POST(request: NextRequest) {
       </div>
     `
 
+    // Send email to user
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: email,
       subject: `Re: ${subject}`,
       html: htmlContent,
@@ -67,6 +71,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Reply sent successfully" }, { status: 200 })
   } catch (error) {
     console.error("[v0] Error sending reply:", error)
+    console.error("[v0] Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Failed to send reply" },
       { status: 500 },
