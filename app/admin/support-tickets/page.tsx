@@ -18,19 +18,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Mail, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
   BarChart3,
   MessageSquare,
   Filter,
   Search,
   Calendar,
-  Crown
+  Crown,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -160,33 +160,34 @@ export default function AdminSupportTicketsPage() {
     }
   }
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ticket.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTickets = tickets.filter((ticket) => {
+    const matchesSearch =
+      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.email.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === "all" || ticket.status === filterStatus
     return matchesSearch && matchesStatus
   })
 
   // Sort tickets: VIP (izakaya domains) first, then by creation date
   const sortedTickets = [...filteredTickets].sort((a, b) => {
-    const aIsVIP = a.domain.toLowerCase().includes('izakaya')
-    const bIsVIP = b.domain.toLowerCase().includes('izakaya')
-    
+    const aIsVIP = a.domain.toLowerCase().includes("izakaya")
+    const bIsVIP = b.domain.toLowerCase().includes("izakaya")
+
     // VIP tickets come first
     if (aIsVIP && !bIsVIP) return -1
     if (!aIsVIP && bIsVIP) return 1
-    
+
     // If both are VIP or both are normal, sort by date (newest first)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
   const stats = {
     total: tickets.length,
-    open: tickets.filter(t => t.status === "open").length,
-    inProgress: tickets.filter(t => t.status === "in_progress").length,
-    resolved: tickets.filter(t => t.status === "resolved").length,
-    vip: tickets.filter(t => t.domain.toLowerCase().includes('izakaya')).length,
+    open: tickets.filter((t) => t.status === "open").length,
+    inProgress: tickets.filter((t) => t.status === "in_progress").length,
+    resolved: tickets.filter((t) => t.status === "resolved").length,
+    vip: tickets.filter((t) => t.domain.toLowerCase().includes("izakaya")).length,
   }
 
   if (loading) {
@@ -209,7 +210,8 @@ export default function AdminSupportTicketsPage() {
     const colors: Record<string, string> = {
       bug_report: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
       feature_request: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-      general_feedback: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+      general_feedback:
+        "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800",
       menu_question: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
       other: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-800",
     }
@@ -217,7 +219,7 @@ export default function AdminSupportTicketsPage() {
   }
 
   const isVIPTicket = (domain: string) => {
-    return domain.toLowerCase().includes('izakaya')
+    return domain.toLowerCase().includes("izakaya")
   }
 
   return (
@@ -337,7 +339,7 @@ export default function AdminSupportTicketsPage() {
                   Showing {startIndex + 1}-{Math.min(endIndex, sortedTickets.length)} of {sortedTickets.length}
                 </CardDescription>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1 sm:min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -393,7 +395,10 @@ export default function AdminSupportTicketsPage() {
                     </TableRow>
                   ) : (
                     paginatedTickets.map((ticket) => (
-                      <TableRow key={ticket.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isVIPTicket(ticket.domain) ? 'bg-amber-50/30 dark:bg-amber-950/10' : ''}`}>
+                      <TableRow
+                        key={ticket.id}
+                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isVIPTicket(ticket.domain) ? "bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
+                      >
                         <TableCell>
                           {isVIPTicket(ticket.domain) ? (
                             <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1 w-fit">
@@ -401,7 +406,10 @@ export default function AdminSupportTicketsPage() {
                               VIP
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 font-medium">
+                            <Badge
+                              variant="outline"
+                              className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 font-medium"
+                            >
                               Normal
                             </Badge>
                           )}
@@ -430,13 +438,19 @@ export default function AdminSupportTicketsPage() {
                         </TableCell>
                         <TableCell className="hidden xl:table-cell">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 font-medium whitespace-nowrap">
-                              {ticket.domain || 'N/A'}
+                            <Badge
+                              variant="outline"
+                              className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 font-medium whitespace-nowrap"
+                            >
+                              {ticket.domain || "N/A"}
                             </Badge>
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          <Badge className={`${getCategoryBadgeColor(ticket.category)} border font-medium whitespace-nowrap`} variant="outline">
+                          <Badge
+                            className={`${getCategoryBadgeColor(ticket.category)} border font-medium whitespace-nowrap`}
+                            variant="outline"
+                          >
                             {ticket.category.replace("_", " ")}
                           </Badge>
                         </TableCell>
@@ -465,9 +479,9 @@ export default function AdminSupportTicketsPage() {
                             onOpenChange={(open) => !open && setSelectedTicket(null)}
                           >
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => setSelectedTicket(ticket)}
                                 className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20 text-xs sm:text-sm whitespace-nowrap"
                               >
@@ -503,20 +517,28 @@ export default function AdminSupportTicketsPage() {
                                         <p className="text-sm text-muted-foreground truncate">{ticket.email}</p>
                                       </div>
                                     </div>
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">{ticket.message}</p>
+                                    <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                      {ticket.message}
+                                    </p>
                                     {ticket.current_page && (
                                       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                                         <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
                                           <span className="font-medium">Page:</span>
-                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">{ticket.current_page}</span>
+                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
+                                            {ticket.current_page}
+                                          </span>
                                         </p>
                                       </div>
                                     )}
                                     {ticket.domain && (
-                                      <div className={`${ticket.current_page ? 'mt-2' : 'mt-4 pt-4 border-t border-slate-200 dark:border-slate-700'}`}>
+                                      <div
+                                        className={`${ticket.current_page ? "mt-2" : "mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"}`}
+                                      >
                                         <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
                                           <span className="font-medium">Domain:</span>
-                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">{ticket.domain}</span>
+                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
+                                            {ticket.domain}
+                                          </span>
                                           {isVIPTicket(ticket.domain) && (
                                             <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-xs font-semibold flex items-center gap-1">
                                               <Crown className="h-3 w-3" />
