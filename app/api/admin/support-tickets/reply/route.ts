@@ -4,9 +4,9 @@ import nodemailer from "nodemailer"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { ticketId, ticketNumber, email, message, subject, status } = body
-    
-    console.log("📧 Reply request received:", { ticketId, ticketNumber, email, subject, status })
+    const { ticketId, ticket_number, email, message, subject, status } = body
+
+    console.log("📧 Reply request received:", { ticketId, ticket_number, email, subject, status })
 
     if (!email || !message) {
       console.error("❌ Missing required fields:", { email: !!email, message: !!message })
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
                           <!-- Ticket Number -->
                           <div style="margin-bottom: 25px;">
                             <p style="margin: 0 0 6px 0; color: #e0f2fe; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">TICKET NUMBER</p>
-                            <p style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: 1.5px; font-family: 'Courier New', monospace; word-break: break-all; line-height: 1.2;">${ticketNumber}</p>
+                            <p style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: 1.5px; font-family: 'Courier New', monospace; word-break: break-all; line-height: 1.2;">${ticket_number}</p>
                           </div>
                           
                           <!-- Status Badge -->
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
                           
                           <!-- Date -->
                           <p style="margin: 0; color: #e0f2fe; font-size: 10px; font-weight: 600;">
-                            ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                           </p>
                         </td>
                         
@@ -186,14 +186,14 @@ export async function POST(request: NextRequest) {
 
     // Send email to user with logo attachment
     console.log("📨 Sending email to:", email)
-    
+
     const logoPath = `${process.cwd()}/public/images/logo.png`
     console.log("📁 Logo path:", logoPath)
-    
+
     await transporter.sendMail({
       from: `"Infinitech Support Team" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: email,
-      subject: `Re: ${subject} [Ticket: ${ticketNumber}]`,
+      subject: `Re: ${subject} [Ticket: ${ticket_number}]`,
       html: htmlContent,
       attachments: [
         {
