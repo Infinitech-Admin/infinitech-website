@@ -128,7 +128,7 @@ ${message}
                             <tr>
                               <td width="50%" style="padding-right: 10px;">
                                 <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</p>
-                                <p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">#${ticketId}</p>
+                                <p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">${ticketNumber}</p>
                               </td>
                               <td width="50%" style="padding-left: 10px; text-align: right;">
                                 <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Status</p>
@@ -240,4 +240,4 @@ ${message}
       { status: 500 },
     )
   }
-} 
+}
