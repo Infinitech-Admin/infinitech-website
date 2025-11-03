@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Menu, X, LogOut, LayoutDashboard, Ticket } from "lucide-react"
@@ -22,6 +21,11 @@ export default function AdminLayout({
   }
 
   const isActive = (path: string) => pathname === path
+
+  // If on login page, render children without layout
+  if (pathname === "/admin/login") {
+    return <>{children}</>
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex relative">
