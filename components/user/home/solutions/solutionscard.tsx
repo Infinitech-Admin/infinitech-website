@@ -148,7 +148,17 @@ const solutionsdata: Solution[] = [
     image: "/websites/janina.png",
     category: "Property Specialist",
     technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
-  }
+  },
+   {
+  id: 16,
+  project: "Izakaya Tori Ichizu",
+  description: "E-commerce website for a Japanese restaurant featuring an online menu, ordering system, and seamless customer experience.",
+  link: "https://izakayatoriichizu.com/",
+  image: "/websites/izakaya.png",
+  category: "E-Commerce",
+  technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"]
+},
+
 ];
 
 const SolutionsPage: React.FC = () => {
