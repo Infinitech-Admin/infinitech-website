@@ -112,8 +112,9 @@ ${message}
                           <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td width="50%" style="padding-right: 10px;">
-                                <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</p>
-                                <p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">#${ticketId}</p>
+                               // In the email HTML content, update the Ticket ID section:
+<p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ticket ID</p>
+<p style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">${ticketId}</p>
                               </td>
                               <td width="50%" style="padding-left: 10px; text-align: right;">
                                 <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Status</p>
