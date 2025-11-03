@@ -30,7 +30,13 @@ export async function POST(request: NextRequest) {
     })
 
     // Verify transporter configuration
-    await transporter.verify()
+    try {
+      await transporter.verify()
+      console.log("✅ SMTP connection verified")
+    } catch (verifyError) {
+      console.error("❌ SMTP verification failed:", verifyError)
+      throw new Error("Email service configuration error")
+    }
 
     // Status badge color
     const getStatusColor = (status: string) => {
@@ -182,6 +188,12 @@ ${message}
     `
 
     // Send email to user with logo attachment
+    console.log("📨 Sending email to:", email)
+    
+    // Use absolute path or process.cwd() for proper file resolution
+    const logoPath = `${process.cwd()}/public/images/logo.png`
+    console.log("📁 Logo path:", logoPath)
+    
     await transporter.sendMail({
       from: `"Infinitech Support Team" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: email,
@@ -190,13 +202,15 @@ ${message}
       attachments: [
         {
           filename: "logo.png",
-          path: "/images/logo.png",
+          path: logoPath,
           cid: "logo",
         },
       ],
     })
+    console.log("✅ Email sent successfully")
 
     // Update ticket status in Laravel backend
+    console.log("🔄 Updating ticket status in backend:", { ticketId, status })
     const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/support-tickets/${ticketId}`, {
       method: "PUT",
       headers: {
@@ -207,12 +221,16 @@ ${message}
     })
 
     if (!updateResponse.ok) {
-      console.error("Failed to update ticket status in backend")
+      const errorText = await updateResponse.text()
+      console.error("❌ Failed to update ticket status:", errorText)
+      // Don't throw - email was sent successfully
+    } else {
+      console.log("✅ Ticket status updated successfully")
     }
 
     return NextResponse.json({ message: "Reply sent successfully" }, { status: 200 })
   } catch (error) {
-    console.error("Error sending reply:", error)
+    console.error("💥 Error sending reply:", error)
     console.error("Error details:", {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
