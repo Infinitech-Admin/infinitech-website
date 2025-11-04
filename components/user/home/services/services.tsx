@@ -34,6 +34,12 @@ const Services = () => {
       description: `Our professional photography and videography services bring your brand to life through compelling visual content. From product shoots to promotional videos, we create stunning media that resonates with your audience and elevates your brand presence.`,
       image: "photo_video.png"
     },
+    {
+      title: "JUANTAP DIGITAL BUSINESS CARD",
+      subtitle: "Modern Networking Made Simple",
+      description: `Transform the way you network with JuanTap, our innovative digital business card solution. Share your contact information instantly with a single tap, making connections effortless and eco-friendly. Stand out in the digital age while keeping all your professional details accessible anytime, anywhere.`,
+      image: "juantap.png"
+    },
   ];
 
   return (
