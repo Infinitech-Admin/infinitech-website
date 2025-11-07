@@ -51,7 +51,7 @@ export async function POST(req: Request) {
             Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, 1206 Metro Manila<br/>
             LandLine: (02) 7001-6157 | Mobile: +63962-253-0149<br/>
             Email: infinitechadvertisingcorp@gmail.com | Website: 
-            <a href="https://infinitech-2025.vercel.app" style="color:#556cd6;">infinitech-2025.vercel.app</a><br/>
+            <a href="https://infinitechphil.com" style="color:#556cd6;">infinitech-2025.vercel.app</a><br/>
             Office Hours: Monday to Friday, 8:00 AM - 5:00 PM
           </p>
         </div>
