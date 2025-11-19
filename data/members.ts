@@ -1,4 +1,6 @@
+
 export const members = [
+  // CEO
   {
     name: "Angelle Sarmiento",
     facebookname: "ABIC Realty & Consultancy Corporation",
@@ -19,6 +21,7 @@ export const members = [
     hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
     company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
+  // Executive Assistant
   {
     name: "Maria Krissa Charez Bongon",
     position: "Executive Assistant",
@@ -36,6 +39,7 @@ export const members = [
     facebookname: "Maria Krissa Charez Bongon",
     href: "https://www.facebook.com/charizr1",
   },
+  // Accounting Assistant
   {
     name: "Darlene Angel Fajarito",
     position: "Accounting Assistant",
@@ -53,6 +57,7 @@ export const members = [
     facebookname: "Darlene Angel Fajarito",
     href: "https://www.facebook.com/darlenefajarito",
   },
+  // IT Supervisor
   {
     name: "Justin De Castro",
     position: "IT Supervisor",
@@ -70,11 +75,12 @@ export const members = [
     facebookname: "Justin De Castro",
     href: "https://www.facebook.com/tine.tainy",
   },
+  // Digital Marketing Staff
   {
     name: "Michael Tapec",
     position: "Digital Marketing Staff",
     image: "madriaga.png",
-    email: "Infinitech.mike@gmail.com",
+    email: "Infinitech.mike@gmail.com ",
     phone: "09566423715",
     telegram: {
       title: "09566423715",
@@ -87,7 +93,7 @@ export const members = [
     name: "Armand M. Cajucom",
     position: "Digital Marketing Staff",
     image: "armans.png",
-    email: "Infinitech.armandcajucom@gmail.com",
+    email: " Infinitech.armandcajucom@gmail.com",
     phone: "09940244223",
     telegram: {
       title: "09940244223",
@@ -109,31 +115,78 @@ export const members = [
     facebookname: "Jd Anyayahan",
     href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
   },
-  {
-    name: "Hazel Anne Mendoza",
-    position: "Junior Web Developer",
-    image: "hazel.png",
-    email: "infinitech.hazel@gmail.com",
-    phone: "09943400836",
-    facebookname: "Hazel Anne Mendoza",
-    href: "",
-  },
-  {
-    name: "Raiza Habaña",
-    position: "Junior Web Developer",
-    image: "raiza.png",
-    email: "infinitech.raiza@gmail.com",
-    phone: "09386226278",
-    facebookname: "Raiza Habaña",
-    href: "",
-  },
+  // Junior Web Developers
   {
     name: "Eirene Grace Armilla",
     position: "Junior Web Developer",
     image: "eirine.png",
     email: "infinitech.eirene@gmail.com",
-    phone: "09281446745",
+    phone: "09668830150",
+    telegram: {
+      title: "09668830150",
+      href: "https://t.me/EireneArmilla"
+    },
     facebookname: "Eirene Grace Armilla",
-    href: "",
+    href: "https://www.facebook.com/share/1Dfj2gvpyf/",
   },
+  {
+    name: "Hazel Anne Mendoza",
+    position: "Junior Web Developer",
+    image: "hazel.png",
+    email: "infinitech.hazel@gmail.com",
+    phone: "09668830150",
+    telegram: {
+      title: "09668830150",
+      href: "https://t.me/infinitech_hazel"
+    },
+    facebookname: "Hazel Anne Mendoza",
+    href: "https://www.facebook.com/share/17K45vBsgz/",
+  },
+  {
+    name: "Raiza Mae Habaña",
+    position: "Junior Web Developer",
+    image: "raiza.png",
+    email: "infinitech.raiza@gmail.com",
+    phone: "09668830150",
+    telegram: {
+      title: "09386226278",
+      href: "https://web.telegram.org/k/#5736999446"
+    },
+    facebookname: "Raiza Mae Habaña",
+    href: "https://www.facebook.com/share/1FJfpM3ig9/",
+  },
+
+
+  // {
+  //   name: "Janine Santos",
+  //   position: "Junior Web Developer",
+  //   image: "santos.png",
+  //   email: "infinitech.janine@gmail.com",
+  //   phone: "09517407062",
+  //    telegram: {
+  //     title: "09517407062",
+  //     href: "https://web.telegram.org/k/#7182482046"
+  //   },
+  //   facebookname: "Janine Santos",
+  //   href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
+  // },
+  // {
+  //   name: "Shekinah Anisette Valdez",
+  //   position: "Junior Web Developer",
+  //   image: "valdez.png",
+  //   email: "infinitech.shekinah@gmail.com",
+  //   phone: "09854031332",
+  //    telegram: {
+  //     title: "09854031332",
+  //     href: "https://web.telegram.org/k/#7984703534"
+
+  //   },
+  //   viber: {
+  //     title: "09854031332",
+  //     href: "https://msng.link/o?09854031332=vi"
+  //   },
+  //   facebookname: "Shekinah Anisette Valdez",
+  //   href: "https://www.facebook.com/share/1YcxRTQkEH/",
+  // },
+
 ];
