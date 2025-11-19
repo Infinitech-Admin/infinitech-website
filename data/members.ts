@@ -19,7 +19,7 @@ export const members = [
     hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
     company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
- {
+  {
     name: "Maria Krissa Charez Bongon",
     position: "Executive Assistant",
     image: "maria.png",
@@ -36,14 +36,13 @@ export const members = [
     facebookname: "Maria Krissa Charez Bongon",
     href: "https://www.facebook.com/charizr1",
   },
-  
   {
     name: "Darlene Angel Fajarito",
     position: "Accounting Assistant",
     image: "darlene.png",
     email: "infinitech.darlene@gmail.com",
     phone: "09667515747",
-     telegram: {
+    telegram: {
       title: "09667515747",
       href: "https://web.telegram.org/a/#7307476341"
     },
@@ -71,14 +70,13 @@ export const members = [
     facebookname: "Justin De Castro",
     href: "https://www.facebook.com/tine.tainy",
   },
-  
   {
     name: "Michael Tapec",
     position: "Digital Marketing Staff",
     image: "madriaga.png",
-    email: "Infinitech.mike@gmail.com ",
+    email: "Infinitech.mike@gmail.com",
     phone: "09566423715",
-     telegram: {
+    telegram: {
       title: "09566423715",
       href: "https://web.telegram.org/k/#@Mike_madriaga"
     },
@@ -89,9 +87,9 @@ export const members = [
     name: "Armand M. Cajucom",
     position: "Digital Marketing Staff",
     image: "armans.png",
-    email: " Infinitech.armandcajucom@gmail.com",
+    email: "Infinitech.armandcajucom@gmail.com",
     phone: "09940244223",
-     telegram: {
+    telegram: {
       title: "09940244223",
       href: "https://web.telegram.org/k/#8303557841"
     },
@@ -104,43 +102,38 @@ export const members = [
     image: "anyayahan.png",
     email: "infinitech.jd@gmail.com",
     phone: "09668830150",
-     telegram: {
+    telegram: {
       title: "09668830150",
       href: "https://web.telegram.org/k/#5736999446"
     },
     facebookname: "Jd Anyayahan",
     href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
   },
-  // {
-  //   name: "Janine Santos",
-  //   position: "Junior Web Developer",
-  //   image: "santos.png",
-  //   email: "infinitech.janine@gmail.com",
-  //   phone: "09517407062",
-  //    telegram: {
-  //     title: "09517407062",
-  //     href: "https://web.telegram.org/k/#7182482046"
-  //   },
-  //   facebookname: "Janine Santos",
-  //   href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
-  // },
-  // {
-  //   name: "Shekinah Anisette Valdez",
-  //   position: "Junior Web Developer",
-  //   image: "valdez.png",
-  //   email: "infinitech.shekinah@gmail.com",
-  //   phone: "09854031332",
-  //    telegram: {
-  //     title: "09854031332",
-  //     href: "https://web.telegram.org/k/#7984703534"
-    
-  //   },
-  //   viber: {
-  //     title: "09854031332",
-  //     href: "https://msng.link/o?09854031332=vi"
-  //   },
-  //   facebookname: "Shekinah Anisette Valdez",
-  //   href: "https://www.facebook.com/share/1YcxRTQkEH/",
-  // },
-  
+  {
+    name: "Hazel Anne Mendoza",
+    position: "Junior Web Developer",
+    image: "hazel.png",
+    email: "infinitech.hazel@gmail.com",
+    phone: "09943400836",
+    facebookname: "Hazel Anne Mendoza",
+    href: "",
+  },
+  {
+    name: "Raiza Habaña",
+    position: "Junior Web Developer",
+    image: "raiza.png",
+    email: "infinitech.raiza@gmail.com",
+    phone: "09386226278",
+    facebookname: "Raiza Habaña",
+    href: "",
+  },
+  {
+    name: "Eirene Grace Armilla",
+    position: "Junior Web Developer",
+    image: "eirine.png",
+    email: "infinitech.eirene@gmail.com",
+    phone: "09281446745",
+    facebookname: "Eirene Grace Armilla",
+    href: "",
+  },
 ];
