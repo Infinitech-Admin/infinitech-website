@@ -129,12 +129,7 @@ export default function SurveyForm() {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-white">Business Needs Assessment</h1>
-        <p className="text-blue-200 text-sm md:text-base">
-          Help us understand your needs so we can deliver the perfect solution
-        </p>
-      </div>
+     
 
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -653,3 +648,4 @@ export default function SurveyForm() {
     </div>
   )
 }
+
