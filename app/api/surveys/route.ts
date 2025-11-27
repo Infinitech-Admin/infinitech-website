@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const page = searchParams.get('page') || '1'
 
-    const response = await fetch(`${API_URL}/surveys?page=${page}`, {
+    const response = await fetch(`${API_URL}/api/surveys?page=${page}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const response = await fetch(`${API_URL}/surveys`, {
+    const response = await fetch(`${API_URL}/api/surveys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
