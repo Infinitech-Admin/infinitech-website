@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Menu, X, LogOut, LayoutDashboard, Ticket } from "lucide-react"
+import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function AdminLayout({
@@ -88,26 +88,38 @@ export default function AdminLayout({
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2">
           <a
-            href="/admin/dashboard"
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/admin/dashboard") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-            }`}
-          >
-            <LayoutDashboard size={20} />
-            <span>Dashboard</span>
-          </a>
+  href="/admin/dashboard"
+  onClick={() => setSidebarOpen(false)}
+  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    isActive("/admin/dashboard") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+  }`}
+>
+  <LayoutDashboard size={20} />
+  <span>Dashboard</span>
+</a>
 
-          <a
-            href="/admin/support-tickets"
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-            }`}
-          >
-            <Ticket size={20} />
-            <span>Support Tickets</span>
-          </a>
+<a
+  href="/admin/support-tickets"
+  onClick={() => setSidebarOpen(false)}
+  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+  }`}
+>
+  <Ticket size={20} />
+  <span>Support Tickets</span>
+</a>
+
+<a
+  href="/admin/survey"
+  onClick={() => setSidebarOpen(false)}
+  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    isActive("/admin/survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+  }`}
+>
+  <ClipboardList size={20} />
+  <span>Survey</span>
+</a>
+
         </nav>
 
         {/* Logout Button */}
