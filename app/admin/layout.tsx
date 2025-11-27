@@ -18,22 +18,18 @@ export default function AdminLayout({
   const pathname = usePathname()
 
   useEffect(() => {
-    // Skip auth check for login page
     if (pathname === "/admin/login") {
       setIsChecking(false)
       return
     }
 
-    // Check authentication for all other admin pages
     const token = localStorage.getItem("adminToken")
-    
+
     if (!token) {
       router.push("/admin/login")
       return
     }
 
-    // Optionally verify token with your API
-    // For now, just check if it exists
     setIsAuthenticated(true)
     setIsChecking(false)
   }, [pathname, router])
@@ -45,12 +41,10 @@ export default function AdminLayout({
 
   const isActive = (path: string) => pathname === path
 
-  // If on login page, render children without layout
   if (pathname === "/admin/login") {
     return <>{children}</>
   }
 
-  // Show nothing while checking authentication (prevents layout flash)
   if (isChecking || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
@@ -60,19 +54,16 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex relative">
+    <div className="h-screen bg-slate-50 dark:bg-slate-950 flex overflow-hidden">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside
         className={`${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-gradient-to-b from-cyan-900 to-blue-900 dark:from-cyan-950 dark:to-blue-950 text-white transition-transform duration-300 flex flex-col fixed left-0 top-0 h-screen shadow-lg z-50 lg:translate-x-0 lg:relative lg:z-auto`}
+        } w-64 bg-gradient-to-b from-cyan-900 to-blue-900 dark:from-cyan-950 dark:to-blue-950 text-white transition-transform duration-300 flex flex-col fixed left-0 top-0 h-full shadow-lg z-50 lg:translate-x-0 lg:sticky lg:z-auto lg:flex-shrink-0`}
       >
         {/* Header */}
         <div className="p-6 border-b border-cyan-700/50 flex items-center justify-between">
@@ -88,38 +79,37 @@ export default function AdminLayout({
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2">
           <a
-  href="/admin/dashboard"
-  onClick={() => setSidebarOpen(false)}
-  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    isActive("/admin/dashboard") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-  }`}
->
-  <LayoutDashboard size={20} />
-  <span>Dashboard</span>
-</a>
+            href="/admin/dashboard"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/dashboard") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <LayoutDashboard size={20} />
+            <span>Dashboard</span>
+          </a>
 
-<a
-  href="/admin/support-tickets"
-  onClick={() => setSidebarOpen(false)}
-  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-  }`}
->
-  <Ticket size={20} />
-  <span>Support Tickets</span>
-</a>
+          <a
+            href="/admin/support-tickets"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Ticket size={20} />
+            <span>Support Tickets</span>
+          </a>
 
-<a
-  href="/admin/survey"
-  onClick={() => setSidebarOpen(false)}
-  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    isActive("/admin/survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-  }`}
->
-  <ClipboardList size={20} />
-  <span>Survey</span>
-</a>
-
+          <a
+            href="/admin/survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <ClipboardList size={20} />
+            <span>Survey</span>
+          </a>
         </nav>
 
         {/* Logout Button */}
@@ -134,8 +124,7 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full overflow-auto">
+      <main className="flex-1 flex flex-col overflow-auto">
         {/* Top Bar */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-4 flex items-center justify-between">
           <button
@@ -148,7 +137,7 @@ export default function AdminLayout({
         </div>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6">{children}</div>
+        <div className="flex-1 p-4 lg:p-6">{children}</div>
       </main>
     </div>
   )
