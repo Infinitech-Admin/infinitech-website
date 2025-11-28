@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TOTAL_STEPS = 6
-
 const stepTitles = ["Company & Contact", "Current Systems", "Challenges", "Hidden Needs", "Customization", "Feedback"]
 
 export default function SurveyForm() {
@@ -25,6 +25,7 @@ export default function SurveyForm() {
   const [formData, setFormData] = useState({
     // Step 1: Company & Contact
     company_name: "",
+    no_of_employees: "", // Added no_of_employees field
     location: "",
     industries: [] as string[],
     industry_other: "",
@@ -118,49 +119,48 @@ export default function SurveyForm() {
 
   const handleOtherToggle = (field: "industry" | "system" | "interest", checked: boolean) => {
     setOtherSelections((prev) => ({ ...prev, [field]: checked }))
-    
-    // Add or remove "Other" from the respective array
+
     if (field === "industry") {
       if (checked) {
-        setFormData((prev) => ({ 
-          ...prev, 
-          industries: [...prev.industries, "Other"]
+        setFormData((prev) => ({
+          ...prev,
+          industries: [...prev.industries, "Other"],
         }))
       } else {
-        setFormData((prev) => ({ 
-          ...prev, 
-          industries: prev.industries.filter(item => item !== "Other"),
-          industry_other: "" 
+        setFormData((prev) => ({
+          ...prev,
+          industries: prev.industries.filter((item) => item !== "Other"),
+          industry_other: "",
         }))
       }
     }
-    
+
     if (field === "system") {
       if (checked) {
-        setFormData((prev) => ({ 
-          ...prev, 
-          current_systems: [...prev.current_systems, "Other"]
+        setFormData((prev) => ({
+          ...prev,
+          current_systems: [...prev.current_systems, "Other"],
         }))
       } else {
-        setFormData((prev) => ({ 
-          ...prev, 
-          current_systems: prev.current_systems.filter(item => item !== "Other"),
-          current_system_other: "" 
+        setFormData((prev) => ({
+          ...prev,
+          current_systems: prev.current_systems.filter((item) => item !== "Other"),
+          current_system_other: "",
         }))
       }
     }
-    
+
     if (field === "interest") {
       if (checked) {
-        setFormData((prev) => ({ 
-          ...prev, 
-          systems_of_interest: [...prev.systems_of_interest, "Other"]
+        setFormData((prev) => ({
+          ...prev,
+          systems_of_interest: [...prev.systems_of_interest, "Other"],
         }))
       } else {
-        setFormData((prev) => ({ 
-          ...prev, 
-          systems_of_interest: prev.systems_of_interest.filter(item => item !== "Other"),
-          system_of_interest_other: "" 
+        setFormData((prev) => ({
+          ...prev,
+          systems_of_interest: prev.systems_of_interest.filter((item) => item !== "Other"),
+          system_of_interest_other: "",
         }))
       }
     }
@@ -284,7 +284,7 @@ export default function SurveyForm() {
               <CardDescription>Tell us about your organization</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="companyName" className="text-slate-700">
                     Company Name
@@ -296,6 +296,27 @@ export default function SurveyForm() {
                     value={formData.company_name}
                     onChange={(e) => handleInputChange("company_name", e.target.value)}
                   />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="noOfEmployees" className="text-slate-700">
+                    Number of Employees
+                  </Label>
+                  <Select
+                    value={formData.no_of_employees}
+                    onValueChange={(value) => handleInputChange("no_of_employees", value)}
+                  >
+                    <SelectTrigger id="noOfEmployees" className="border-slate-300 bg-white">
+                      <SelectValue placeholder="Select range" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="1-10" className="hover:bg-slate-100 cursor-pointer">1-10</SelectItem>
+                      <SelectItem value="11-50" className="hover:bg-slate-100 cursor-pointer">11-50</SelectItem>
+                      <SelectItem value="51-200" className="hover:bg-slate-100 cursor-pointer">51-200</SelectItem>
+                      <SelectItem value="201-500" className="hover:bg-slate-100 cursor-pointer">201-500</SelectItem>
+                      <SelectItem value="501-1000" className="hover:bg-slate-100 cursor-pointer">501-1000</SelectItem>
+                      <SelectItem value="1000+" className="hover:bg-slate-100 cursor-pointer">1000+</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location" className="text-slate-700">
@@ -330,9 +351,7 @@ export default function SurveyForm() {
                         <Checkbox
                           id={`industry-${industry}`}
                           checked={
-                            industry === "Other"
-                              ? otherSelections.industry
-                              : formData.industries.includes(industry)
+                            industry === "Other" ? otherSelections.industry : formData.industries.includes(industry)
                           }
                           onCheckedChange={(checked) => {
                             if (industry === "Other") {
@@ -449,9 +468,7 @@ export default function SurveyForm() {
                         <Checkbox
                           id={`system-${system}`}
                           checked={
-                            system === "Other"
-                              ? otherSelections.system
-                              : formData.current_systems.includes(system)
+                            system === "Other" ? otherSelections.system : formData.current_systems.includes(system)
                           }
                           onCheckedChange={(checked) => {
                             if (system === "Other") {
@@ -787,7 +804,6 @@ export default function SurveyForm() {
                   onChange={(e) => handleInputChange("pain_points", e.target.value)}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="idealSystem" className="text-slate-700">
                   What would an ideal system look like for your company?
@@ -801,7 +817,6 @@ export default function SurveyForm() {
                   onChange={(e) => handleInputChange("ideal_system", e.target.value)}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="comments" className="text-slate-700">
                   Any additional comments or suggestions?
