@@ -730,7 +730,7 @@ The Team`)
                                             variant="outline"
                                             className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
                                           >
-                                            Other: {survey.industry_other}
+                                            {survey.industry_other}
                                           </Badge>
                                         )}
                                       </div>
@@ -758,7 +758,7 @@ The Team`)
                                               variant="outline"
                                               className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
                                             >
-                                              Other: {survey.current_system_other}
+                                              {survey.current_system_other}
                                             </Badge>
                                           )}
                                         </div>
@@ -788,7 +788,7 @@ The Team`)
                                           variant="outline"
                                           className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
                                         >
-                                          Other: {survey.system_of_interest_other}
+                                           {survey.system_of_interest_other}
                                         </Badge>
                                       )}
                                     </div>
