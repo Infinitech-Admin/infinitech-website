@@ -39,6 +39,7 @@ import jsPDF from "jspdf"
 
 interface Survey {
   id: number
+  survey_id: string
   company_name: string
   no_of_employees: string
   location: string
@@ -181,7 +182,10 @@ export default function AdminSurveyPage() {
         doc.setTextColor(...colors.textMuted)
         doc.setFontSize(8)
         doc.setFont("helvetica", "normal")
-        doc.text("Survey Response Report", pageWidth / 2, 39, { align: "center" })
+       doc.text("Survey Response Report", pageWidth / 2, 39, { align: "center" });
+
+// Add the survey ID under the title
+doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" });
       }
 
       const addFooter = (pageNum: number, totalPages: number) => {
@@ -423,7 +427,7 @@ export default function AdminSurveyPage() {
       }
 
       // Auto-download
-      doc.save(`survey-${survey.id}-${survey.company_name?.replace(/\s+/g, "_") || "report"}.pdf`)
+      doc.save(`survey-${survey.survey_id}-${survey.company_name?.replace(/\s+/g, "_") || "report"}.pdf`)
 
       setMessage("PDF downloaded successfully!")
       setTimeout(() => setMessage(""), 3000)
@@ -610,7 +614,7 @@ The Team`)
                 <TableBody>
                   {paginatedSurveys.map((survey) => (
                     <TableRow key={survey.id} className="hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20 border-b">
-                      <TableCell className="font-bold text-cyan-600">#{survey.id}</TableCell>
+                      <TableCell className="font-bold text-cyan-600">{survey.survey_id}</TableCell>
                       <TableCell className="font-medium">{survey.company_name}</TableCell>
                         <TableCell className="font-medium">{survey.no_of_employees}</TableCell>
                       <TableCell className="text-sm">{survey.contact_person}</TableCell>
@@ -655,6 +659,9 @@ The Team`)
                                     <Building2 className="h-6 w-6 text-cyan-600" />
                                     Survey Response 
                                   </DialogTitle>
+                                   <DialogDescription>
+                                    Survey ID {survey.survey_id}
+                                  </DialogDescription>
                                   <DialogDescription>
                                     Submitted on {new Date(survey.created_at).toLocaleDateString()}
                                   </DialogDescription>
