@@ -40,6 +40,7 @@ import jsPDF from "jspdf"
 interface Survey {
   id: number
   company_name: string
+  no_of_employees: string
   location: string
   industries: string[]
   industry_other: string
@@ -320,6 +321,7 @@ export default function AdminSurveyPage() {
       // SECTION 1: COMPANY INFORMATION
       addSectionHeader("COMPANY INFORMATION")
       addTableRow("Company Name", survey.company_name, false)
+       addTableRow("No. of Employees", survey.no_of_employees, false)
       addTableRow("Location", survey.location, true)
       addTableRow("Contact Person", survey.contact_person, false)
       addTableRow("Role / Position", survey.role, true)
@@ -597,6 +599,7 @@ The Team`)
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead className="font-bold">ID</TableHead>
                     <TableHead className="font-bold">Company</TableHead>
+                       <TableHead className="font-bold">Employees</TableHead>
                     <TableHead className="font-bold">Contact</TableHead>
                     <TableHead className="font-bold">Email</TableHead>
                     <TableHead className="font-bold">Industry</TableHead>
@@ -609,6 +612,7 @@ The Team`)
                     <TableRow key={survey.id} className="hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20 border-b">
                       <TableCell className="font-bold text-cyan-600">#{survey.id}</TableCell>
                       <TableCell className="font-medium">{survey.company_name}</TableCell>
+                        <TableCell className="font-medium">{survey.no_of_employees}</TableCell>
                       <TableCell className="text-sm">{survey.contact_person}</TableCell>
                       <TableCell className="text-sm text-blue-600 dark:text-blue-400">{survey.email}</TableCell>
                       <TableCell>
@@ -667,6 +671,10 @@ The Team`)
                                       <div>
                                         <p className="text-sm text-muted-foreground">Company Name</p>
                                         <p className="font-medium">{survey.company_name || "N/A"}</p>
+                                      </div>
+                                       <div>
+                                        <p className="text-sm text-muted-foreground">No. of Employees</p>
+                                        <p className="font-medium">{survey.no_of_employees || "N/A"}</p>
                                       </div>
                                       <div>
                                         <p className="text-sm text-muted-foreground">Location</p>
