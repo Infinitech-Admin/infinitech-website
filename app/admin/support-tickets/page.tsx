@@ -69,7 +69,6 @@ export default function AdminSupportTicketsPage() {
       router.push("/admin/login")
       return
     }
-
     fetchTickets()
   }, [router])
 
@@ -81,11 +80,9 @@ export default function AdminSupportTicketsPage() {
           Authorization: `Bearer ${token}`,
         },
       })
-
       if (!response.ok) {
         throw new Error("Failed to fetch tickets")
       }
-
       const data = await response.json()
       setTickets(data.data || [])
     } catch (error) {
@@ -119,7 +116,6 @@ export default function AdminSupportTicketsPage() {
       })
 
       const data = await response.json()
-
       if (!response.ok) {
         console.error("❌ Reply failed:", data)
         throw new Error(data.message || "Failed to send reply")
@@ -149,11 +145,9 @@ export default function AdminSupportTicketsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       })
-
       if (!response.ok) {
         throw new Error("Failed to update status")
       }
-
       fetchTickets()
     } catch (error) {
       console.error("Error updating status:", error)
@@ -173,11 +167,9 @@ export default function AdminSupportTicketsPage() {
   const sortedTickets = [...filteredTickets].sort((a, b) => {
     const aIsVIP = a.domain.toLowerCase().includes("izakaya")
     const bIsVIP = b.domain.toLowerCase().includes("izakaya")
-
     // VIP tickets come first
     if (aIsVIP && !bIsVIP) return -1
     if (!aIsVIP && bIsVIP) return 1
-
     // If both are VIP or both are normal, sort by date (newest first)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
@@ -339,7 +331,6 @@ export default function AdminSupportTicketsPage() {
                   Showing {startIndex + 1}-{Math.min(endIndex, sortedTickets.length)} of {sortedTickets.length}
                 </CardDescription>
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1 sm:min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -397,7 +388,9 @@ export default function AdminSupportTicketsPage() {
                     paginatedTickets.map((ticket) => (
                       <TableRow
                         key={ticket.id}
-                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isVIPTicket(ticket.domain) ? "bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
+                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${
+                          isVIPTicket(ticket.domain) ? "bg-amber-50/30 dark:bg-amber-950/10" : ""
+                        }`}
                       >
                         <TableCell>
                           {isVIPTicket(ticket.domain) ? (
@@ -455,17 +448,22 @@ export default function AdminSupportTicketsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Select value={ticket.status} onValueChange={(value) => handleStatusChange(ticket.id, value)}>
-                            <SelectTrigger className="w-28 sm:w-36 border-2 text-xs sm:text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="open">Open</SelectItem>
-                              <SelectItem value="in_progress">In Progress</SelectItem>
-                              <SelectItem value="resolved">Resolved</SelectItem>
-                              <SelectItem value="closed">Closed</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="relative z-10">
+                            <Select
+                              value={ticket.status}
+                              onValueChange={(value) => handleStatusChange(ticket.id, value)}
+                            >
+                              <SelectTrigger className="w-28 sm:w-36 border-2 text-xs sm:text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="z-[9999]">
+                                <SelectItem value="open">Open</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="resolved">Resolved</SelectItem>
+                                <SelectItem value="closed">Closed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -489,7 +487,7 @@ export default function AdminSupportTicketsPage() {
                               </Button>
                             </DialogTrigger>
                             {selectedTicket?.ticket_number === ticket.ticket_number && (
-                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2">
+                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2 z-[9999]">
                                 <DialogHeader>
                                   <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
                                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm flex-shrink-0">
@@ -505,7 +503,6 @@ export default function AdminSupportTicketsPage() {
                                   </DialogTitle>
                                   <DialogDescription className="text-base">{ticket.subject}</DialogDescription>
                                 </DialogHeader>
-
                                 <div className="space-y-4">
                                   <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-900/10 p-4 sm:p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700">
                                     <div className="flex items-start gap-3 mb-4">
@@ -549,7 +546,6 @@ export default function AdminSupportTicketsPage() {
                                       </div>
                                     )}
                                   </div>
-
                                   <div className="space-y-3">
                                     <label className="text-sm font-semibold flex items-center gap-2">
                                       <CheckCircle2 className="h-4 w-4" />
@@ -559,7 +555,7 @@ export default function AdminSupportTicketsPage() {
                                       <SelectTrigger className="border-2">
                                         <SelectValue />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="z-[9999]">
                                         <SelectItem value="open">Open</SelectItem>
                                         <SelectItem value="in_progress">In Progress</SelectItem>
                                         <SelectItem value="resolved">Resolved</SelectItem>
@@ -567,7 +563,6 @@ export default function AdminSupportTicketsPage() {
                                       </SelectContent>
                                     </Select>
                                   </div>
-
                                   <div className="space-y-3">
                                     <label htmlFor="reply" className="text-sm font-semibold flex items-center gap-2">
                                       <Mail className="h-4 w-4" />
@@ -581,7 +576,6 @@ export default function AdminSupportTicketsPage() {
                                       className="min-h-32 border-2 focus:ring-2 focus:ring-cyan-500"
                                     />
                                   </div>
-
                                   <Button
                                     onClick={handleReply}
                                     disabled={sending || !replyMessage.trim()}
