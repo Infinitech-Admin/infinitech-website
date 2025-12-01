@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
       ...(status && { status }),
     })
 
+    console.log('🔍 Fetching inquiries from:', `${API_URL}/inquiries?${queryParams}`)
+
     const response = await fetch(`${API_URL}/inquiries?${queryParams}`, {
       method: 'GET',
       headers: {
@@ -23,10 +25,19 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     })
 
+    if (!response.ok) {
+      console.error('❌ Laravel API error:', response.status, response.statusText)
+      const errorText = await response.text()
+      console.error('Error details:', errorText)
+      throw new Error(`Laravel API returned ${response.status}`)
+    }
+
     const data = await response.json()
+    console.log('✅ Inquiries fetched successfully:', data)
 
     return NextResponse.json(data, { status: response.status })
   } catch (error) {
+    console.error('💥 Error in GET /api/inquiries:', error)
     return NextResponse.json(
       { success: false, message: 'Failed to fetch inquiries', error: String(error) },
       { status: 500 }
@@ -38,6 +49,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, phone, message } = body
+
+    console.log('📝 Creating new inquiry:', { name, email, phone })
 
     // 1. Save to Laravel database
     const dbResponse = await fetch(`${API_URL}/inquiries`, {
@@ -52,8 +65,11 @@ export async function POST(request: NextRequest) {
     const dbData = await dbResponse.json()
 
     if (!dbData.success) {
+      console.error('❌ Database save failed:', dbData)
       return NextResponse.json(dbData, { status: dbResponse.status })
     }
+
+    console.log('✅ Inquiry saved to database')
 
     // 2. Send email via nodemailer
     try {
@@ -140,6 +156,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
+    console.error('💥 Error in POST /api/inquiries:', error)
     return NextResponse.json(
       { success: false, message: 'Failed to submit inquiry', error: String(error) },
       { status: 500 }
