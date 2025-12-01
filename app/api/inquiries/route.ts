@@ -25,22 +25,50 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     })
 
+    console.log('📡 Response status:', response.status)
+
     if (!response.ok) {
       console.error('❌ Laravel API error:', response.status, response.statusText)
       const errorText = await response.text()
       console.error('Error details:', errorText)
-      throw new Error(`Laravel API returned ${response.status}`)
+      
+      // Return empty data instead of throwing
+      return NextResponse.json({
+        success: false,
+        message: `Laravel API returned ${response.status}`,
+        data: []
+      }, { status: 200 }) // Return 200 to prevent frontend errors
     }
 
     const data = await response.json()
     console.log('✅ Inquiries fetched successfully:', data)
 
-    return NextResponse.json(data, { status: response.status })
+    // Ensure consistent response format
+    if (data.success && Array.isArray(data.data)) {
+      return NextResponse.json(data, { status: 200 })
+    } else if (Array.isArray(data)) {
+      return NextResponse.json({
+        success: true,
+        data: data
+      }, { status: 200 })
+    } else {
+      return NextResponse.json({
+        success: true,
+        data: []
+      }, { status: 200 })
+    }
   } catch (error) {
     console.error('💥 Error in GET /api/inquiries:', error)
+    
+    // Return empty data instead of error to prevent frontend crash
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch inquiries', error: String(error) },
-      { status: 500 }
+      { 
+        success: false, 
+        message: 'Failed to fetch inquiries', 
+        error: String(error),
+        data: [] // Important: return empty array
+      },
+      { status: 200 } // Return 200 instead of 500
     )
   }
 }
