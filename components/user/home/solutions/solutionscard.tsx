@@ -131,15 +131,15 @@ const solutionsdata: Solution[] = [
     category: "Property Specialist",
     technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"]
   },
-  {
-    id: 14,
-    project: "Lloyd Property Specialist",
-    description: "Professional real estate consultant website with property showcase and comprehensive lead generation tools.",
-    link: "https://abicrealtyphlloyd.com/",
-    image: "/websites/lloyd.png",
-    category: "Property Specialist",
-    technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"]
-  },
+  // {
+  //   id: 14,
+  //   project: "Lloyd Property Specialist",
+  //   description: "Professional real estate consultant website with property showcase and comprehensive lead generation tools.",
+  //   link: "https://abicrealtyphlloyd.com/",
+  //   image: "/websites/lloyd.png",
+  //   category: "Property Specialist",
+  //   technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"]
+  // },
   {
     id: 15,
     project: "Janina Property Specialist",
