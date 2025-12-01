@@ -31,8 +31,10 @@ import {
   Search,
   Calendar,
   Crown,
+  Check,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 interface SupportTicket {
   id: number
@@ -214,8 +216,31 @@ export default function AdminSupportTicketsPage() {
     return domain.toLowerCase().includes("izakaya")
   }
 
+  const getStatusBadgeColor = (status: string) => {
+    const colors: Record<string, string> = {
+      open: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
+      in_progress: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+      resolved: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+      closed: "bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800",
+    }
+    return colors[status] || colors.open
+  }
+
+  const getStatusTriggerColor = (status: string) => {
+    const colors: Record<string, string> = {
+      open: "bg-red-100 hover:bg-red-200 dark:bg-red-950 dark:hover:bg-red-900 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800",
+      in_progress:
+        "bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-950 dark:hover:bg-yellow-900 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800",
+      resolved:
+        "bg-green-100 hover:bg-green-200 dark:bg-green-950 dark:hover:bg-green-900 text-green-700 dark:text-green-400 border-green-300 dark:border-green-800",
+      closed:
+        "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700",
+    }
+    return colors[status] || colors.open
+  }
+
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-50/20 dark:from-slate-950 dark:via-cyan-950/10 dark:to-blue-950/10">
+    <div className="h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-50/20 dark:from-slate-950 dark:via-cyan-900/10 dark:to-blue-950/10">
       <div className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-900 dark:to-blue-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -447,22 +472,65 @@ export default function AdminSupportTicketsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="relative">
-                              <Select
-                                value={ticket.status}
-                                onValueChange={(value) => handleStatusChange(ticket.id, value)}
-                              >
-                                <SelectTrigger className="w-28 sm:w-36 border-2 text-xs sm:text-sm">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="z-[9999]">
-                                  <SelectItem value="open">Open</SelectItem>
-                                  <SelectItem value="in_progress">In Progress</SelectItem>
-                                  <SelectItem value="resolved">Resolved</SelectItem>
-                                  <SelectItem value="closed">Closed</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={`w-28 sm:w-36 border-2 text-xs sm:text-sm font-medium justify-between ${getStatusTriggerColor(ticket.status)}`}
+                                >
+                                  <span className="capitalize">{ticket.status.replace("_", " ")}</span>
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48 p-2 z-[9999]" align="start">
+                                <div className="space-y-1">
+                                  <button
+                                    onClick={() => handleStatusChange(ticket.id, "open")}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                      ticket.status === "open"
+                                        ? "bg-red-500 text-white"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                    }`}
+                                  >
+                                    {ticket.status === "open" && <Check className="h-4 w-4" />}
+                                    Open
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusChange(ticket.id, "in_progress")}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                      ticket.status === "in_progress"
+                                        ? "bg-yellow-500 text-white"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                    }`}
+                                  >
+                                    {ticket.status === "in_progress" && <Check className="h-4 w-4" />}
+                                    In Progress
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusChange(ticket.id, "resolved")}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                      ticket.status === "resolved"
+                                        ? "bg-green-500 text-white"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                    }`}
+                                  >
+                                    {ticket.status === "resolved" && <Check className="h-4 w-4" />}
+                                    Resolved
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusChange(ticket.id, "closed")}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                      ticket.status === "closed"
+                                        ? "bg-slate-500 text-white"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                    }`}
+                                  >
+                                    {ticket.status === "closed" && <Check className="h-4 w-4" />}
+                                    Closed
+                                  </button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -489,7 +557,7 @@ export default function AdminSupportTicketsPage() {
                                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2 z-[9999]">
                                   <DialogHeader>
                                     <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm flex-shrink-0">
+                                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
                                         #{ticket.id}
                                       </div>
                                       <span className="truncate">Ticket #{ticket.ticket_number}</span>
