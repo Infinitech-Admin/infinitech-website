@@ -357,252 +357,252 @@ export default function AdminSupportTicketsPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <TableHead className="font-semibold">Priority</TableHead>
-                    <TableHead className="font-semibold">Ticket Number</TableHead>
-                    <TableHead className="font-semibold">Subject</TableHead>
-                    <TableHead className="font-semibold hidden md:table-cell">From</TableHead>
-                    <TableHead className="font-semibold hidden xl:table-cell">Domain</TableHead>
-                    <TableHead className="font-semibold hidden lg:table-cell">Category</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold hidden sm:table-cell">Date</TableHead>
-                    <TableHead className="font-semibold">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedTickets.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12">
-                        <div className="flex flex-col items-center gap-2">
-                          <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-muted-foreground font-medium">No tickets found</p>
-                          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
-                        </div>
-                      </TableCell>
+          <CardContent className="p-0 overflow-hidden">
+            <div className="w-full overflow-x-auto">
+              <div className="overflow-visible">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <TableHead className="font-semibold">Priority</TableHead>
+                      <TableHead className="font-semibold">Ticket Number</TableHead>
+                      <TableHead className="font-semibold">Subject</TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell">From</TableHead>
+                      <TableHead className="font-semibold hidden xl:table-cell">Domain</TableHead>
+                      <TableHead className="font-semibold hidden lg:table-cell">Category</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="font-semibold hidden sm:table-cell">Date</TableHead>
+                      <TableHead className="font-semibold">Action</TableHead>
                     </TableRow>
-                  ) : (
-                    paginatedTickets.map((ticket) => (
-                      <TableRow
-                        key={ticket.id}
-                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${
-                          isVIPTicket(ticket.domain) ? "bg-amber-50/30 dark:bg-amber-950/10" : ""
-                        }`}
-                      >
-                        <TableCell>
-                          {isVIPTicket(ticket.domain) ? (
-                            <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1 w-fit">
-                              <Crown className="h-3 w-3" />
-                              VIP
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 font-medium"
-                            >
-                              Normal
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium max-w-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
-                            <span className="truncate">{ticket.ticket_number}</span>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedTickets.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
+                            <p className="text-muted-foreground font-medium">No tickets found</p>
+                            <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
                           </div>
-                          <div className="md:hidden text-xs text-muted-foreground mt-1">{ticket.name}</div>
-                        </TableCell>
-                        <TableCell className="font-medium max-w-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
-                            <span className="truncate">{ticket.subject}</span>
-                          </div>
-                          <div className="md:hidden text-xs text-muted-foreground mt-1">{ticket.name}</div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                              {ticket.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-sm truncate">{ticket.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden xl:table-cell">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 font-medium whitespace-nowrap"
-                            >
-                              {ticket.domain || "N/A"}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <Badge
-                            className={`${getCategoryBadgeColor(ticket.category)} border font-medium whitespace-nowrap`}
-                            variant="outline"
-                          >
-                            {ticket.category.replace("_", " ")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="relative z-10">
-                            <Select
-                              value={ticket.status}
-                              onValueChange={(value) => handleStatusChange(ticket.id, value)}
-                            >
-                              <SelectTrigger className="w-28 sm:w-36 border-2 text-xs sm:text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="z-[9999]">
-                                <SelectItem value="open">Open</SelectItem>
-                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                <SelectItem value="resolved">Resolved</SelectItem>
-                                <SelectItem value="closed">Closed</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(ticket.created_at).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Dialog
-                            open={selectedTicket?.ticket_number === ticket.ticket_number}
-                            onOpenChange={(open) => !open && setSelectedTicket(null)}
-                          >
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedTicket(ticket)}
-                                className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20 text-xs sm:text-sm whitespace-nowrap"
-                              >
-                                View &amp; Reply
-                              </Button>
-                            </DialogTrigger>
-                            {selectedTicket?.ticket_number === ticket.ticket_number && (
-                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2 z-[9999]">
-                                <DialogHeader>
-                                  <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm flex-shrink-0">
-                                      #{ticket.id}
-                                    </div>
-                                    <span className="truncate">Ticket #{ticket.ticket_number}</span>
-                                    {isVIPTicket(ticket.domain) && (
-                                      <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1">
-                                        <Crown className="h-3 w-3" />
-                                        VIP
-                                      </Badge>
-                                    )}
-                                  </DialogTitle>
-                                  <DialogDescription className="text-base">{ticket.subject}</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-900/10 p-4 sm:p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700">
-                                    <div className="flex items-start gap-3 mb-4">
-                                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
-                                        {ticket.name.charAt(0).toUpperCase()}
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <h3 className="font-semibold text-base sm:text-lg truncate">{ticket.name}</h3>
-                                        <p className="text-sm text-muted-foreground truncate">{ticket.email}</p>
-                                      </div>
-                                    </div>
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">
-                                      {ticket.message}
-                                    </p>
-                                    {ticket.current_page && (
-                                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                                        <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                                          <span className="font-medium">Page:</span>
-                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
-                                            {ticket.current_page}
-                                          </span>
-                                        </p>
-                                      </div>
-                                    )}
-                                    {ticket.domain && (
-                                      <div
-                                        className={`${ticket.current_page ? "mt-2" : "mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"}`}
-                                      >
-                                        <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                                          <span className="font-medium">Domain:</span>
-                                          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
-                                            {ticket.domain}
-                                          </span>
-                                          {isVIPTicket(ticket.domain) && (
-                                            <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-xs font-semibold flex items-center gap-1">
-                                              <Crown className="h-3 w-3" />
-                                              VIP Priority
-                                            </Badge>
-                                          )}
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="space-y-3">
-                                    <label className="text-sm font-semibold flex items-center gap-2">
-                                      <CheckCircle2 className="h-4 w-4" />
-                                      Update Status
-                                    </label>
-                                    <Select value={newStatus || ticket.status} onValueChange={setNewStatus}>
-                                      <SelectTrigger className="border-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="z-[9999]">
-                                        <SelectItem value="open">Open</SelectItem>
-                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="resolved">Resolved</SelectItem>
-                                        <SelectItem value="closed">Closed</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-3">
-                                    <label htmlFor="reply" className="text-sm font-semibold flex items-center gap-2">
-                                      <Mail className="h-4 w-4" />
-                                      Reply Message
-                                    </label>
-                                    <Textarea
-                                      id="reply"
-                                      placeholder="Type your reply here..."
-                                      value={replyMessage}
-                                      onChange={(e) => setReplyMessage(e.target.value)}
-                                      className="min-h-32 border-2 focus:ring-2 focus:ring-cyan-500"
-                                    />
-                                  </div>
-                                  <Button
-                                    onClick={handleReply}
-                                    disabled={sending || !replyMessage.trim()}
-                                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white h-12 text-base font-semibold"
-                                  >
-                                    {sending ? (
-                                      <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Sending...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Mail className="h-4 w-4 mr-2" />
-                                        Send Reply
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            )}
-                          </Dialog>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      paginatedTickets.map((ticket) => (
+                        <TableRow
+                          key={ticket.id}
+                          className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${isVIPTicket(ticket.domain) ? "bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
+                        >
+                          <TableCell>
+                            {isVIPTicket(ticket.domain) ? (
+                              <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1 w-fit">
+                                <Crown className="h-3 w-3" />
+                                VIP
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 font-medium"
+                              >
+                                Normal
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium max-w-xs">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
+                              <span className="truncate">{ticket.ticket_number}</span>
+                            </div>
+                            <div className="md:hidden text-xs text-muted-foreground mt-1">{ticket.name}</div>
+                          </TableCell>
+                          <TableCell className="font-medium max-w-xs">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-cyan-500 flex-shrink-0"></div>
+                              <span className="truncate">{ticket.subject}</span>
+                            </div>
+                            <div className="md:hidden text-xs text-muted-foreground mt-1">{ticket.name}</div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                                {ticket.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-sm truncate">{ticket.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 font-medium whitespace-nowrap"
+                              >
+                                {ticket.domain || "N/A"}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <Badge
+                              className={`${getCategoryBadgeColor(ticket.category)} border font-medium whitespace-nowrap`}
+                              variant="outline"
+                            >
+                              {ticket.category.replace("_", " ")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative">
+                              <Select
+                                value={ticket.status}
+                                onValueChange={(value) => handleStatusChange(ticket.id, value)}
+                              >
+                                <SelectTrigger className="w-28 sm:w-36 border-2 text-xs sm:text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="z-[9999]">
+                                  <SelectItem value="open">Open</SelectItem>
+                                  <SelectItem value="in_progress">In Progress</SelectItem>
+                                  <SelectItem value="resolved">Resolved</SelectItem>
+                                  <SelectItem value="closed">Closed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(ticket.created_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Dialog
+                              open={selectedTicket?.ticket_number === ticket.ticket_number}
+                              onOpenChange={(open) => !open && setSelectedTicket(null)}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedTicket(ticket)}
+                                  className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20 text-xs sm:text-sm whitespace-nowrap"
+                                >
+                                  View &amp; Reply
+                                </Button>
+                              </DialogTrigger>
+                              {selectedTicket?.ticket_number === ticket.ticket_number && (
+                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2 z-[9999]">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-sm flex-shrink-0">
+                                        #{ticket.id}
+                                      </div>
+                                      <span className="truncate">Ticket #{ticket.ticket_number}</span>
+                                      {isVIPTicket(ticket.domain) && (
+                                        <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 font-semibold flex items-center gap-1">
+                                          <Crown className="h-3 w-3" />
+                                          VIP
+                                        </Badge>
+                                      )}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-base">{ticket.subject}</DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-900/10 p-4 sm:p-6 rounded-xl border-2 border-slate-200 dark:border-slate-700">
+                                      <div className="flex items-start gap-3 mb-4">
+                                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                                          {ticket.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <h3 className="font-semibold text-base sm:text-lg truncate">{ticket.name}</h3>
+                                          <p className="text-sm text-muted-foreground truncate">{ticket.email}</p>
+                                        </div>
+                                      </div>
+                                      <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                        {ticket.message}
+                                      </p>
+                                      {ticket.current_page && (
+                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                          <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                                            <span className="font-medium">Page:</span>
+                                            <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
+                                              {ticket.current_page}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      )}
+                                      {ticket.domain && (
+                                        <div
+                                          className={`${ticket.current_page ? "mt-2" : "mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"}`}
+                                        >
+                                          <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                                            <span className="font-medium">Domain:</span>
+                                            <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded break-all">
+                                              {ticket.domain}
+                                            </span>
+                                            {isVIPTicket(ticket.domain) && (
+                                              <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 text-xs font-semibold flex items-center gap-1">
+                                                <Crown className="h-3 w-3" />
+                                                VIP Priority
+                                              </Badge>
+                                            )}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="space-y-3">
+                                      <label className="text-sm font-semibold flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Update Status
+                                      </label>
+                                      <Select value={newStatus || ticket.status} onValueChange={setNewStatus}>
+                                        <SelectTrigger className="border-2">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="z-[9999]">
+                                          <SelectItem value="open">Open</SelectItem>
+                                          <SelectItem value="in_progress">In Progress</SelectItem>
+                                          <SelectItem value="resolved">Resolved</SelectItem>
+                                          <SelectItem value="closed">Closed</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="space-y-3">
+                                      <label htmlFor="reply" className="text-sm font-semibold flex items-center gap-2">
+                                        <Mail className="h-4 w-4" />
+                                        Reply Message
+                                      </label>
+                                      <Textarea
+                                        id="reply"
+                                        placeholder="Type your reply here..."
+                                        value={replyMessage}
+                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                        className="min-h-32 border-2 focus:ring-2 focus:ring-cyan-500"
+                                      />
+                                    </div>
+                                    <Button
+                                      onClick={handleReply}
+                                      disabled={sending || !replyMessage.trim()}
+                                      className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white h-12 text-base font-semibold"
+                                    >
+                                      {sending ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                          Sending...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Mail className="h-4 w-4 mr-2" />
+                                          Send Reply
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              )}
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {totalPages > 1 && (
