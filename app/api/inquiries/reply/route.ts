@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Update status in database if provided
     if (status) {
-      await fetch(`${API_URL}/inquiries/${inquiryId}`, {
+      await fetch(`${API_URL}/api/inquiries/${inquiryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
