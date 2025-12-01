@@ -7,7 +7,6 @@ import { Inquiry as Values } from "@/types/user";
 import { Inquiry as validationSchema } from "@/schemas/user";
 import { Formik, Form, Field, FieldProps } from "formik";
 import toast from "react-hot-toast";
-import { sendInquiry } from "@/actions/user";
 
 const InquiryForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,13 +24,26 @@ const InquiryForm = () => {
   ) => {
     setIsSubmitting(true);
 
-    const { code, message } = await sendInquiry(values);
+    try {
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
 
-    if (code === 200) {
-      actions.resetForm();
-      toast.success(message);
-    } else {
-      toast.error(message);
+      const data = await response.json();
+
+      if (data.success) {
+        actions.resetForm();
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || 'Failed to submit inquiry');
+      }
+    } catch (error) {
+      toast.error('An error occurred. Please try again.');
+      console.error('Inquiry submission error:', error);
     }
 
     setIsSubmitting(false);
