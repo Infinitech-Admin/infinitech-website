@@ -2,38 +2,72 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
-export async function PATCH(
+export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
+    const response = await fetch(`${API_URL}/inquiries/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    const data = await response.json()
+
+    return NextResponse.json(data, { status: response.status })
+  } catch (error) {
+    console.error('GET Error:', error)
+    return NextResponse.json(
+      { success: false, message: 'Failed to fetch inquiry', error: String(error) },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
     const body = await request.json()
-    const { status } = body
 
-    console.log(`🔄 Updating inquiry ${params.id} status to:`, status)
+    console.log('📝 PATCH Request:', {
+      url: `${API_URL}/inquiries/${id}/updatestatus`,
+      body
+    })
 
-    const response = await fetch(`${API_URL}/inquiries/${params.id}/status`, {
+    const response = await fetch(`${API_URL}/inquiries/${id}/updatestatus`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     })
 
     const data = await response.json()
+    
+    console.log('📥 Laravel Response:', {
+      status: response.status,
+      data
+    })
 
     if (!response.ok) {
-      console.error('❌ Status update failed:', data)
-      return NextResponse.json(data, { status: response.status })
+      console.error('❌ Laravel returned error:', data)
     }
 
-    console.log('✅ Status updated successfully')
-    return NextResponse.json(data, { status: 200 })
+    return NextResponse.json(data, { status: response.status })
   } catch (error) {
-    console.error('💥 Error updating status:', error)
+    console.error('💥 PATCH Error:', error)
     return NextResponse.json(
-      { success: false, message: 'Failed to update status', error: String(error) },
+      { success: false, message: 'Failed to update inquiry status', error: String(error) },
       { status: 500 }
     )
   }
@@ -41,12 +75,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log(`🗑️ Deleting inquiry ${params.id}`)
-
-    const response = await fetch(`${API_URL}/inquiries/${params.id}`, {
+    const { id } = await params
+    
+    const response = await fetch(`${API_URL}/inquiries/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -56,15 +90,9 @@ export async function DELETE(
 
     const data = await response.json()
 
-    if (!response.ok) {
-      console.error('❌ Delete failed:', data)
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    console.log('✅ Inquiry deleted successfully')
-    return NextResponse.json(data, { status: 200 })
+    return NextResponse.json(data, { status: response.status })
   } catch (error) {
-    console.error('💥 Error deleting inquiry:', error)
+    console.error('DELETE Error:', error)
     return NextResponse.json(
       { success: false, message: 'Failed to delete inquiry', error: String(error) },
       { status: 500 }
