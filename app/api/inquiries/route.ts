@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
       ...(status && { status }),
     })
 
-    console.log('🔍 Fetching inquiries from:', `${API_URL}/inquiries?${queryParams}`)
+    console.log('🔍 Fetching inquiries from:', `${API_URL}/api/inquiries?${queryParams}`)
 
-    const response = await fetch(`${API_URL}/inquiries?${queryParams}`, {
+    const response = await fetch(`${API_URL}/api/inquiries?${queryParams}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Creating new inquiry:', { name, email, phone })
 
     // 1. Save to Laravel database
-    const dbResponse = await fetch(`${API_URL}/inquiries`, {
+    const dbResponse = await fetch(`${API_URL}/api/inquiries`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
