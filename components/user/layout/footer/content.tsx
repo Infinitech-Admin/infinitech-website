@@ -4,7 +4,11 @@ import React from "react";
 import { Link } from "@heroui/react";
 import { FaEnvelope, FaFacebook } from "react-icons/fa6";
 
-const Content = () => {
+interface ContentProps {
+  onOpenSupport: () => void;
+}
+
+const Content = ({ onOpenSupport }: ContentProps) => {
   return (
     <div className="w-full flex flex-col lg:flex-row justify-between xl:justify-center py-4 md:py-8 gap-8 xl:gap-32">
       <div className="flex flex-col">
@@ -57,7 +61,7 @@ const Content = () => {
         </div>
       </div>
 
-      <div>
+      <div className="flex flex-col">
         <div className="flex justify-center lg:justify-start">
           <h1 className="font-normal text-lg">CONNECT WITH US</h1>
         </div>
@@ -80,6 +84,30 @@ const Content = () => {
             }
           />
         </div>
+      </div>
+
+      <div className="flex flex-col">
+        <div className="flex justify-center lg:justify-start">
+          <h1 className="font-normal text-lg">SUPPORT</h1>
+        </div>
+
+        <p className="text-gray-300 text-sm mt-4 mb-4 text-center lg:text-start">
+          Need help? Contact our support team
+        </p>
+
+        <button
+          onClick={() => {
+            console.log("Support button clicked");
+            onOpenSupport();
+          }}
+          className="px-6 py-3 bg-orange-400 hover:bg-orange-500 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01"/>
+          </svg>
+          Get Support
+        </button>
       </div>
     </div>
   );
