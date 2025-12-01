@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList } from "lucide-react"
+import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList, Inbox } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function AdminLayout({
@@ -109,6 +109,16 @@ export default function AdminLayout({
           >
             <ClipboardList size={20} />
             <span>Survey</span>
+          </a>
+          <a
+            href="/admin/inquiries"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/inquiries") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Inbox size={20} />
+            <span>Inquiries</span>
           </a>
         </nav>
 
