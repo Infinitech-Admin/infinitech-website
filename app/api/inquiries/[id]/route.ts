@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params
     
-    const response = await fetch(`${API_URL}/inquiries/${id}`, {
+    const response = await fetch(`${API_URL}/api/inquiries/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,11 +39,11 @@ export async function PATCH(
     const body = await request.json()
 
     console.log('📝 PATCH Request:', {
-      url: `${API_URL}/inquiries/${id}/updatestatus`,
+      url: `${API_URL}/api/inquiries/${id}/updatestatus`,
       body
     })
 
-    const response = await fetch(`${API_URL}/inquiries/${id}/updatestatus`, {
+    const response = await fetch(`${API_URL}/api/inquiries/${id}/updatestatus`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export async function DELETE(
   try {
     const { id } = await params
     
-    const response = await fetch(`${API_URL}/inquiries/${id}`, {
+    const response = await fetch(`${API_URL}/api/inquiries/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
