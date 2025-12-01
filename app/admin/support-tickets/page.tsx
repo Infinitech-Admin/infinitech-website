@@ -482,14 +482,14 @@ export default function AdminSupportTicketsPage() {
                                   <ChevronRight className="h-4 w-4" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-48 p-2 z-[9999]" align="start">
+                              <PopoverContent className="w-48 p-2 z-[9999] bg-white dark:bg-slate-900 border-2 shadow-xl" align="start">
                                 <div className="space-y-1">
                                   <button
                                     onClick={() => handleStatusChange(ticket.id, "open")}
                                     className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                                       ticket.status === "open"
                                         ? "bg-red-500 text-white"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900"
                                     }`}
                                   >
                                     {ticket.status === "open" && <Check className="h-4 w-4" />}
@@ -500,7 +500,7 @@ export default function AdminSupportTicketsPage() {
                                     className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                                       ticket.status === "in_progress"
                                         ? "bg-yellow-500 text-white"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900"
                                     }`}
                                   >
                                     {ticket.status === "in_progress" && <Check className="h-4 w-4" />}
@@ -511,7 +511,7 @@ export default function AdminSupportTicketsPage() {
                                     className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                                       ticket.status === "resolved"
                                         ? "bg-green-500 text-white"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900"
                                     }`}
                                   >
                                     {ticket.status === "resolved" && <Check className="h-4 w-4" />}
@@ -522,7 +522,7 @@ export default function AdminSupportTicketsPage() {
                                     className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                                       ticket.status === "closed"
                                         ? "bg-slate-500 text-white"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900"
                                     }`}
                                   >
                                     {ticket.status === "closed" && <Check className="h-4 w-4" />}
