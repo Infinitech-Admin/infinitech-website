@@ -88,6 +88,45 @@ export const members = [
     facebookname: "Justin De Castro",
     href: "https://www.facebook.com/tine.tainy",
   },
+  {
+    name: "Eirene Grace Armilla",
+    position: "Junior Web Developer",
+    image: "eirine.png",
+    email: "infinitech.eirene@gmail.com",
+    phone: "09668830150",
+    telegram: {
+      title: "09668830150",
+      href: "https://t.me/EireneArmilla"
+    },
+    facebookname: "Eirene Grace Armilla",
+    href: "https://www.facebook.com/share/1Dfj2gvpyf/",
+  },
+  {
+    name: "Hazel Anne Mendoza",
+    position: "Junior Web Developer",
+    image: "hazel.png",
+    email: "infinitech.hazel@gmail.com",
+    phone: "09668830150",
+    telegram: {
+      title: "09668830150",
+      href: "https://t.me/infinitech_hazel"
+    },
+    facebookname: "Hazel Anne Mendoza",
+    href: "https://www.facebook.com/share/17K45vBsgz/",
+  },
+  {
+    name: "Raiza Mae Habaña",
+    position: "Junior Web Developer",
+    image: "raiza.png",
+    email: "infinitech.raiza@gmail.com",
+    phone: "09668830150",
+    telegram: {
+      title: "09386226278",
+      href: "https://web.telegram.org/k/#5736999446"
+    },
+    facebookname: "Raiza Mae Habaña",
+    href: "https://www.facebook.com/share/1FJfpM3ig9/",
+  },
   // Digital Marketing Staff
   {
     name: "Michael Tapec",
@@ -129,45 +168,7 @@ export const members = [
     href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
   },
   // Junior Web Developers
-  {
-    name: "Eirene Grace Armilla",
-    position: "Junior Web Developer",
-    image: "eirine.png",
-    email: "infinitech.eirene@gmail.com",
-    phone: "09668830150",
-    telegram: {
-      title: "09668830150",
-      href: "https://t.me/EireneArmilla"
-    },
-    facebookname: "Eirene Grace Armilla",
-    href: "https://www.facebook.com/share/1Dfj2gvpyf/",
-  },
-  {
-    name: "Hazel Anne Mendoza",
-    position: "Junior Web Developer",
-    image: "hazel.png",
-    email: "infinitech.hazel@gmail.com",
-    phone: "09668830150",
-    telegram: {
-      title: "09668830150",
-      href: "https://t.me/infinitech_hazel"
-    },
-    facebookname: "Hazel Anne Mendoza",
-    href: "https://www.facebook.com/share/17K45vBsgz/",
-  },
-  {
-    name: "Raiza Mae Habaña",
-    position: "Junior Web Developer",
-    image: "raiza.png",
-    email: "infinitech.raiza@gmail.com",
-    phone: "09668830150",
-    telegram: {
-      title: "09386226278",
-      href: "https://web.telegram.org/k/#5736999446"
-    },
-    facebookname: "Raiza Mae Habaña",
-    href: "https://www.facebook.com/share/1FJfpM3ig9/",
-  },
+  
   {
     name: "Jayvee Valeriano",
     position: "Digital Marketing Staff",
