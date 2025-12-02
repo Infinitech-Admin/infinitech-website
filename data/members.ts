@@ -155,38 +155,87 @@ export const members = [
     facebookname: "Raiza Mae Habaña",
     href: "https://www.facebook.com/share/1FJfpM3ig9/",
   },
+  {
+    name: "Jayvee Valeriano",
+    position: "Digital Marketing Staff",
+    image: "jayvee.png",
+    email: "infinitech.jayvee@gmail.com",
+    phone: "09384715225",
+    telegram: {
+      title: "09384715225",
+      href: "https://web.telegram.org/k/#@Jayveevaleriano20"
+    },
+    facebookname: "Jayvee Valeriano",
+    href: "https://www.facebook.com/Abic.jayvee",
+  },
+  {
+    name: "Janina Jerusalem",
+    position: "Digital Marketing Staff",
+    image: "janina.png",
+    email: "infinitech.janina@gmail.com",
+    phone: "09489294296",
+    telegram: {
+      title: "09489294296",
+      href: "https://web.telegram.org/k/#63948929429"
+    },
+    facebookname: "Janina Jerusalem",
+    href: "https://www.facebook.com/iamjaninajerusalem/",
+  },
+  {
+    name: "Angely Victoriano",
+    position: "Digital Marketing Staff",
+    image: "angely.png",
+    email: "infinitech.angely@gmail.com",
+    phone: "09487191557",
+    telegram: {
+      title: "09487191557",
+      href: "https://web.telegram.org/k/#09487191557"
+    },
+    facebookname: "Angely Victoriano",
+    href: "https://www.facebook.com/angely.victoriano/",
+  },
+  {
+    name: "Kaila Dapiaoen",
+    position: "Digital Marketing Staff",
+    image: "kaila.png",
+    email: "infinitech.kaila@gmail.com",
+    phone: "09919875397",
+    telegram: {
+      title: "09919875397",
+      href: "https://web.telegram.org/k/#09919875397"
+    },
+    facebookname: "Kaila Dapiaoen",
+    href: "https://www.facebook.com/krdapiaoen",
+  },
+  {
+    name: "Joe Rendon",
+    position: "Digital Marketing Staff",
+    image: "joe.png",
+    email: "infinitech.joe@gmail.com",
+    phone: "09470445574",
+    telegram: {
+      title: "09470445574",
+      href: "https://t.me/09470445574"
+    },
+    facebookname: "Joe Rendon",
+    href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO",
+  },
+  {
+    name: "Rose",
+    position: "Staff",
+    image: "rose.png",
+    email: "infinitech.rose@gmail.com",
+    phone: "09651983796",
+    telegram: {
+      title: "09651983796",
+      href: "https://web.telegram.org/k/#3965198379"
+    },
+    facebookname: "ABIC Realty & Consultancy Corporation",
+    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+  },
 
 
-  // {
-  //   name: "Janine Santos",
-  //   position: "Junior Web Developer",
-  //   image: "santos.png",
-  //   email: "infinitech.janine@gmail.com",
-  //   phone: "09517407062",
-  //    telegram: {
-  //     title: "09517407062",
-  //     href: "https://web.telegram.org/k/#7182482046"
-  //   },
-  //   facebookname: "Janine Santos",
-  //   href: "https://www.facebook.com/keiljaenin412?mibextid=ZbWKwL",
-  // },
-  // {
-  //   name: "Shekinah Anisette Valdez",
-  //   position: "Junior Web Developer",
-  //   image: "valdez.png",
-  //   email: "infinitech.shekinah@gmail.com",
-  //   phone: "09854031332",
-  //    telegram: {
-  //     title: "09854031332",
-  //     href: "https://web.telegram.org/k/#7984703534"
-
-  //   },
-  //   viber: {
-  //     title: "09854031332",
-  //     href: "https://msng.link/o?09854031332=vi"
-  //   },
-  //   facebookname: "Shekinah Anisette Valdez",
-  //   href: "https://www.facebook.com/share/1YcxRTQkEH/",
-  // },
-
+ 
 ];
+
+ 
