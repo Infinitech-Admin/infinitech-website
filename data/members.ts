@@ -40,7 +40,7 @@ export const members = [
     href: "https://www.facebook.com/charizr1",
   },
    {
-    name: "Rose",
+    name: "Baby Rose Hernandez",
     position: "Sales Director",
     image: "rose.png",
     email: "infinitech.rose@gmail.com",
