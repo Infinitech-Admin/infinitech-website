@@ -39,6 +39,19 @@ export const members = [
     facebookname: "Maria Krissa Charez Bongon",
     href: "https://www.facebook.com/charizr1",
   },
+   {
+    name: "Rose",
+    position: "Sales Director",
+    image: "rose.png",
+    email: "infinitech.rose@gmail.com",
+    phone: "09651983796",
+    telegram: {
+      title: "09651983796",
+      href: "https://web.telegram.org/k/#3965198379"
+    },
+    facebookname: "ABIC Realty & Consultancy Corporation",
+    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+  },
   // Accounting Assistant
   {
     name: "Darlene Angel Fajarito",
@@ -220,19 +233,7 @@ export const members = [
     facebookname: "Joe Rendon",
     href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO",
   },
-  {
-    name: "Rose",
-    position: "Sales Director",
-    image: "rose.png",
-    email: "infinitech.rose@gmail.com",
-    phone: "09651983796",
-    telegram: {
-      title: "09651983796",
-      href: "https://web.telegram.org/k/#3965198379"
-    },
-    facebookname: "ABIC Realty & Consultancy Corporation",
-    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
-  },
+ 
 
 
  
