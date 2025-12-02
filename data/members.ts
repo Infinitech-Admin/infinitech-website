@@ -222,7 +222,7 @@ export const members = [
   },
   {
     name: "Rose",
-    position: "Staff",
+    position: "Sales Director",
     image: "rose.png",
     email: "infinitech.rose@gmail.com",
     phone: "09651983796",
