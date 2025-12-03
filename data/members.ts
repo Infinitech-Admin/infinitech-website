@@ -87,6 +87,23 @@ export const members = [
     facebookname: "Aizle Marie Atienza",
     href: "https://www.facebook.com/share/17XC8hgRZH/?mibextid=wwXIfr",
   },
+     {
+    name: "Jhoanna Mae Papio",
+    position: "Admin Assistant",
+    image: "JHO.png",
+    email: "infinitech.jhoanna@gmail.com",
+    phone: "009455837887",
+    telegram: {
+      title: "09455837887 ",
+      href: "https://web.telegram.org/a/#1852459873"
+    },
+    // viber: {
+    //   title: "09667515747",
+    //   href: "https://msng.link/o?09667515747=vi"
+    // },
+    facebookname: "Jhoanna Mae Papio",
+    href: "https://www.facebook.com/share/1CvLXJM1S4/",
+  },
   // IT Supervisor
   {
     name: "Justin De Castro",
