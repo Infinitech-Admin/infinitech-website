@@ -49,8 +49,8 @@ export const members = [
       title: "09651983796",
       href: "https://web.telegram.org/k/#3965198379"
     },
-    facebookname: "ABIC Realty & Consultancy Corporation",
-    href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/",
+    facebookname: "Baby Rose Hernandez",
+    href: "https://www.facebook.com/share/1FFxbQz9Gc/",
   },
   // Accounting Assistant
   {
