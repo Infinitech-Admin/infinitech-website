@@ -70,6 +70,23 @@ export const members = [
     facebookname: "Darlene Angel Fajarito",
     href: "https://www.facebook.com/darlenefajarito",
   },
+    {
+    name: "Aizle Marie Atienza",
+    position: "Admin Assistant",
+    image: "aizle.png",
+    email: "inifinitech.aizle@gmail.com",
+    phone: "09619570430",
+    telegram: {
+      title: "09619570430 ",
+      href: "https://web.telegram.org/a/#2054180343"
+    },
+    // viber: {
+    //   title: "09667515747",
+    //   href: "https://msng.link/o?09667515747=vi"
+    // },
+    facebookname: "Aizle Marie Atienza",
+    href: "https://www.facebook.com/share/17XC8hgRZH/?mibextid=wwXIfr",
+  },
   // IT Supervisor
   {
     name: "Justin De Castro",
