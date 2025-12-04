@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import PricingCard from "@/components/pricing-card"
+import PricingCard from "@/components/pricingCard"
 import ContactModal from "@/components/contact-modal"
 
 const PricingPage = () => {
