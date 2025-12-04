@@ -373,12 +373,12 @@ const PricingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+      {/* <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
         <p className="text-slate-300 mb-6">Ready to get started? Contact us today for a free consultation.</p>
         <button className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-lg hover:shadow-lg transition-shadow">
           Schedule Consultation
         </button>
-      </section>
+      </section> */}
 
       {/* Contact Modal */}
       <ContactModal
