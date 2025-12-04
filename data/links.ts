@@ -20,6 +20,10 @@ export const links = [
     href: "/testimonials",
   },
   {
+    name: "Pricing",
+    href: "/pricing",
+  },
+  {
     name: "Contact Us",
     href: "/contact",
   },
