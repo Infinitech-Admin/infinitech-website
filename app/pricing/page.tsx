@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import PricingCard from "@/components/pricingCard"
+import PricingCard from "@/components/pricing-card"
 import ContactModal from "@/components/contact-modal"
 
 const PricingPage = () => {
@@ -287,12 +287,12 @@ const PricingPage = () => {
           </p>
 
           {/* Service Selector */}
-          <div className="flex justify-center gap-2 mb-8 overflow-x-auto pb-2">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {Object.entries(services).map(([key, service]) => (
               <button
                 key={key}
                 onClick={() => setActiveService(key)}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm sm:text-base ${
+                className={`px-3 py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm md:text-base ${
                   activeService === key
                     ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
                     : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -306,10 +306,10 @@ const PricingPage = () => {
             ))}
           </div>
 
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             <button
               onClick={() => setBillingPeriod("monthly")}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all text-sm sm:text-base ${
                 billingPeriod === "monthly"
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -319,7 +319,7 @@ const PricingPage = () => {
             </button>
             <button
               onClick={() => setBillingPeriod("yearly")}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all text-sm sm:text-base ${
                 billingPeriod === "yearly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
             >
