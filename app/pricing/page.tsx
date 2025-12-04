@@ -277,12 +277,12 @@ const PricingPage = () => {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 lg:py-20">
       {/* Header Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 lg:mb-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 lg:mb-20 w-full">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
             Our Pricing Plans
           </h1>
-          <p className="text-lg sm:text-xl text-slate-300 mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 leading-relaxed px-2">
             Choose the perfect plan for your business. All plans include support and updates.
           </p>
 
@@ -327,7 +327,7 @@ const PricingPage = () => {
             </button>
           </div>
 
-          <p className="text-slate-400 text-sm">{currentService.description}</p>
+          <p className="text-slate-400 text-sm px-2">{currentService.description}</p>
         </div>
       </section>
 
@@ -373,12 +373,12 @@ const PricingPage = () => {
       </section>
 
       {/* CTA Section */}
-      {/* <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
         <p className="text-slate-300 mb-6">Ready to get started? Contact us today for a free consultation.</p>
         <button className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-lg hover:shadow-lg transition-shadow">
           Schedule Consultation
         </button>
-      </section> */}
+      </section>
 
       {/* Contact Modal */}
       <ContactModal
