@@ -32,6 +32,7 @@ import {
   Facebook,
   Instagram,
   MessageCircle,
+  Copy,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -52,6 +53,7 @@ interface JuanTapSurvey {
   display_name: string
   first_name: string
   last_name: string
+  position: string // added position field
   website: string
   social_media: SocialMedia[] | string // support both array and JSON string
   profile_image: string
@@ -310,6 +312,7 @@ export default function JuanTapAdminPage() {
       addTableRow("Display Name", survey.display_name, false)
       addTableRow("First Name", survey.first_name, true)
       addTableRow("Last Name", survey.last_name, false)
+      addTableRow("Position", survey.position, false)
 
       addSectionHeader("CONTACT INFORMATION")
       addTableRow("Phone Number", survey.phone_number, false)
@@ -407,7 +410,8 @@ JuanTap Team`)
           (survey.username?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (survey.display_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (survey.first_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-          (survey.last_name?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+          (survey.last_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.position?.toLowerCase() || "").includes(searchQuery.toLowerCase())
         return matchesSearch
       })
     : []
@@ -428,6 +432,25 @@ JuanTap Team`)
         return <MessageCircle className="h-4 w-4" />
       default:
         return <User className="h-4 w-4" />
+    }
+  }
+
+  const getSocialColor = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case "facebook":
+        return "#3b5998"
+      case "instagram":
+        return "#e4405f"
+      case "whatsapp":
+        return "#25d366"
+      case "wechat":
+        return "#7bc9a8"
+      case "viber":
+        return "#8a7ee4"
+      case "telegram":
+        return "#0088cc"
+      default:
+        return "#ccc"
     }
   }
 
@@ -513,7 +536,7 @@ JuanTap Team`)
                 </TableHeader>
                 <TableBody>
                   {paginatedSurveys.map((survey) => (
-                    <TableRow key={survey.id} className="hover:bg-purple-50/50 dark:hover:bg-purple-950/20 border-b">
+                    <TableRow key={survey.id} className="hover:bg-purple-50/50 dark:hover:bg-purple-900/20 border-b">
                       <TableCell className="font-bold text-purple-600">{survey.id}</TableCell>
                       <TableCell className="font-medium">{survey.display_name || "N/A"}</TableCell>
                       <TableCell className="text-sm">{survey.username || "N/A"}</TableCell>
@@ -537,29 +560,16 @@ JuanTap Team`)
                               </Button>
                             </DialogTrigger>
                             {selectedSurvey?.id === survey.id && (
-                              <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto border-2">
-                                <DialogHeader>
-                                  <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
-                                    JuanTap Profile Details
-                                  </DialogTitle>
-                                  <DialogDescription className="text-xs sm:text-sm">
-                                    Survey ID: {survey.id} | Submitted on{" "}
-                                    {new Date(survey.created_at).toLocaleDateString()}
-                                  </DialogDescription>
-                                </DialogHeader>
-
-                                <div className="space-y-4 sm:space-y-6">
+                              <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-sm max-h-[95vh] overflow-y-auto border-2 p-0">
+                                {/* Digital Business Card Layout */}
+                                <div className="space-y-0">
+                                  {/* Profile Image */}
                                   {survey.profile_image && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-4 sm:p-6 rounded-xl border-2 flex flex-col items-center justify-center">
-                                      <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
-                                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                                        Profile Image
-                                      </h3>
+                                    <div className="relative w-full">
                                       <img
                                         src={getImageUrl(survey.profile_image) || "/placeholder.svg"}
                                         alt={`${survey.display_name || survey.username} profile`}
-                                        className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg object-cover border-2 border-purple-200 dark:border-purple-800"
+                                        className="w-full h-auto rounded-t-xl object-cover aspect-square"
                                         onError={(e) => {
                                           e.currentTarget.src = "/placeholder.svg"
                                         }}
@@ -567,110 +577,163 @@ JuanTap Team`)
                                     </div>
                                   )}
 
-                                  {/* Personal Information */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-4 sm:p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
-                                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                                      Personal Information
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1 break-all">
-                                          <Mail className="h-3 w-3 flex-shrink-0" />
-                                          <span className="break-all">{survey.email || "N/A"}</span>
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Username</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">
-                                          {survey.username || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Display Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">
-                                          {survey.display_name || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">First Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">
-                                          {survey.first_name || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Last Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">
-                                          {survey.last_name || "N/A"}
-                                        </p>
-                                      </div>
-                                    </div>
+                                  {/* Name Section - Black Background */}
+                                  <div className="bg-black text-white px-6 py-4 text-center">
+                                    <h2 className="text-md sm:text-xl font-bold text-balance">
+                                      {survey.display_name || survey.username || survey.first_name || "NO NAME"}
+                                    </h2>
                                   </div>
 
-                                  {/* Contact Information */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-950/10 p-4 sm:p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">
-                                      Contact Information
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1">
-                                          <Phone className="h-3 w-3 flex-shrink-0" />
-                                          {survey.phone_number || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Website</p>
-                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1 break-all">
-                                          <Globe className="h-3 w-3 flex-shrink-0" />
-                                          <span className="break-all">{survey.website || "N/A"}</span>
-                                        </p>
-                                      </div>
-                                      <div className="sm:col-span-2">
-                                        <p className="text-xs sm:text-sm text-muted-foreground">Address</p>
-                                        <p className="font-medium text-sm sm:text-base flex items-start gap-1">
-                                          <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5" />
-                                          <span className="break-words">{survey.address || "N/A"}</span>
-                                        </p>
-                                      </div>
+                                  {/* Position/Role */}
+                                  {survey.position && (
+                                    <div className="text-center py-2 text-muted-foreground text-sm">
+                                      {survey.position}
                                     </div>
-                                  </div>
+                                  )}
 
-                                  {(() => {
-                                    const socialMediaArray = parseSocialMedia(survey.social_media)
-                                    return socialMediaArray && socialMediaArray.length > 0 ? (
-                                      <div className="bg-gradient-to-br from-slate-50 to-green-50/30 dark:from-slate-800 dark:to-green-950/10 p-4 sm:p-6 rounded-xl border-2">
-                                        <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">
-                                          Social Media Accounts
-                                        </h3>
-                                        <div className="space-y-2 sm:space-y-3">
-                                          {socialMediaArray.map((social, idx) => (
+                                  <div className="px-6 pb-6 space-y-6">
+                                    {/* Contact Section */}
+                                    <div className="space-y-3">
+                                      <h3 className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">
+                                        Contact
+                                      </h3>
+
+                                      {/* Emails */}
+                                      {survey.email && (
+                                        <div className="space-y-2 border-b pb-3">
+                                          {survey.email.split(",").map((email, idx) => (
                                             <div
                                               key={idx}
-                                              className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border"
+                                              className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded"
                                             >
-                                              <div className="flex items-center gap-2 flex-shrink-0">
-                                                {getSocialIcon(social.platform)}
-                                                <span className="font-semibold text-xs sm:text-sm">
-                                                  {social.platform}:
-                                                </span>
-                                              </div>
                                               <a
-                                                href={social.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm break-all"
+                                                href={`mailto:${email.trim()}`}
+                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
                                               >
-                                                {social.url}
+                                                <Mail className="h-4 w-4 flex-shrink-0" />
+                                                {email.trim()}
                                               </a>
+                                              <button
+                                                onClick={() => navigator.clipboard.writeText(email.trim())}
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                                              >
+                                                <Copy className="h-3.5 w-3.5 text-slate-500" />
+                                              </button>
                                             </div>
                                           ))}
                                         </div>
-                                      </div>
-                                    ) : null
-                                  })()}
+                                      )}
+
+                                      {/* Phone Numbers */}
+                                      {survey.phone_number && (
+                                        <div className="space-y-2 border-b pb-3">
+                                          {survey.phone_number.split(",").map((phone, idx) => (
+                                            <div
+                                              key={idx}
+                                              className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded"
+                                            >
+                                              <a
+                                                href={`tel:${phone.trim()}`}
+                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                              >
+                                                <Phone className="h-4 w-4 flex-shrink-0" />
+                                                {phone.trim()}
+                                              </a>
+                                              <button
+                                                onClick={() => navigator.clipboard.writeText(phone.trim())}
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                                              >
+                                                <Copy className="h-3.5 w-3.5 text-slate-500" />
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      {/* Websites */}
+                                      {survey.website && (
+                                        <div className="space-y-2 border-b pb-3">
+                                          {survey.website.split(",").map((website, idx) => (
+                                            <div
+                                              key={idx}
+                                              className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded"
+                                            >
+                                              <a
+                                                href={
+                                                  website.trim().startsWith("http")
+                                                    ? website.trim()
+                                                    : `https://${website.trim()}`
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
+                                              >
+                                                <Globe className="h-4 w-4 flex-shrink-0" />
+                                                {website.trim()}
+                                              </a>
+                                              <button
+                                                onClick={() => navigator.clipboard.writeText(website.trim())}
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                                              >
+                                                <Copy className="h-3.5 w-3.5 text-slate-500" />
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      {/* Address */}
+                                      {survey.address && (
+                                        <div className="flex items-start justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded">
+                                          <a
+                                            href={`https://maps.google.com/?q=${encodeURIComponent(survey.address)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-start gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline break-words"
+                                          >
+                                            <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                            {survey.address}
+                                          </a>
+                                          <button
+                                            onClick={() => navigator.clipboard.writeText(survey.address)}
+                                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded flex-shrink-0"
+                                          >
+                                            <Copy className="h-3.5 w-3.5 text-slate-500" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Social Media Icons Only */}
+                                    {(() => {
+                                      const socialMediaArray = parseSocialMedia(survey.social_media)
+                                      return socialMediaArray && socialMediaArray.length > 0 ? (
+                                        <div className="space-y-3">
+                                          <h3 className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">
+                                            Connect With Me
+                                          </h3>
+                                          <div className="flex items-center justify-center gap-3 flex-wrap">
+                                            {socialMediaArray.map((social, idx) => {
+                                              const icon = getSocialIcon(social.platform)
+                                              return icon ? (
+                                                <a
+                                                  key={idx}
+                                                  href={social.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="p-2 rounded-full hover:opacity-80 transition-opacity"
+                                                  style={{ backgroundColor: getSocialColor(social.platform) }}
+                                                  title={social.platform}
+                                                >
+                                                  {icon}
+                                                </a>
+                                              ) : null
+                                            })}
+                                          </div>
+                                        </div>
+                                      ) : null
+                                    })()}
+                                  </div>
                                 </div>
                               </DialogContent>
                             )}
