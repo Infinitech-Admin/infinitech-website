@@ -15,6 +15,7 @@ interface FormData {
   display_name: string;
   first_name: string;
   last_name: string;
+    position: string;
   website: string;
   social_media: SocialMedia[];
   profile_image: File | null;
@@ -29,6 +30,7 @@ export default function JuanTapSurvey() {
     display_name: '',
     first_name: '',
     last_name: '',
+    position:'',
     website: '',
     social_media: [],
     profile_image: null
@@ -201,6 +203,7 @@ export default function JuanTapSurvey() {
       submitFormData.append('display_name', formData.display_name || '');
       submitFormData.append('first_name', formData.first_name || '');
       submitFormData.append('last_name', formData.last_name || '');
+            submitFormData.append('position', formData.position || '');
       submitFormData.append('website', formData.website || '');
       
       // Append social media as JSON string
@@ -419,6 +422,7 @@ export default function JuanTapSurvey() {
                     onChange={(e) => handleInputChange('last_name', e.target.value)}
                   />
                 </div>
+               
                 <div className="space-y-2 md:col-span-2 lg:col-span-1">
                   <label htmlFor="display_name" className="block text-sm font-medium text-slate-700">
                     Display Name
@@ -455,50 +459,68 @@ export default function JuanTapSurvey() {
               </div>
 
               {/* Row 4: Phone & Website */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="phone_number" className="block text-sm font-medium text-slate-700">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <input
-                      type="tel"
-                      id="phone_number"
-                      placeholder="09651983796"
-                      className={`block w-full pl-10 pr-3 py-2.5 border ${
-                        errors.phone_number ? 'border-red-500' : 'border-slate-300'
-                      } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
-                      value={formData.phone_number}
-                      onChange={handlePhoneChange}
-                    />
-                  </div>
-                  {errors.phone_number && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>
-                  )}
-                </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  {/* Phone Number */}
+  <div className="space-y-2">
+    <label htmlFor="phone_number" className="block text-sm font-medium text-slate-700">
+      Phone Number
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Phone className="h-5 w-5 text-slate-400" />
+      </div>
+      <input
+        type="tel"
+        id="phone_number"
+        placeholder="09651983796"
+        className={`block w-full pl-10 pr-3 py-2.5 border ${
+          errors.phone_number ? 'border-red-500' : 'border-slate-300'
+        } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
+        value={formData.phone_number}
+        onChange={handlePhoneChange}
+      />
+    </div>
+    {errors.phone_number && (
+      <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>
+    )}
+  </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="website" className="block text-sm font-medium text-slate-700">
-                    Website
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Globe className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <input
-                      type="url"
-                      id="website"
-                      placeholder="abicealtyph.com"
-                      className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+  {/* Position */}
+  <div>
+    <label htmlFor="position" className="block text-sm font-medium text-foreground mb-2">
+      Position
+    </label>
+    <input
+      id="position"
+      type="text"
+      value={formData.position}
+      onChange={(e) => handleInputChange("position", e.target.value)}
+      placeholder="Enter your job position/title (e.g., Sales Director, Manager, etc.)"
+      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+    />
+  </div>
+
+  {/* Website */}
+  <div className="space-y-2">
+    <label htmlFor="website" className="block text-sm font-medium text-slate-700">
+      Website
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Globe className="h-5 w-5 text-slate-400" />
+      </div>
+      <input
+        type="url"
+        id="website"
+        placeholder="abicealtyph.com"
+        className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+        value={formData.website}
+        onChange={(e) => handleInputChange('website', e.target.value)}
+      />
+    </div>
+  </div>
+</div>
+
 
               {/* Social Media */}
               <div className="space-y-3">
