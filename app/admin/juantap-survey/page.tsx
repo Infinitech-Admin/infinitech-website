@@ -90,29 +90,58 @@ export default function JuanTapAdminPage() {
 
   const fetchSurveys = async () => {
     try {
+      console.log("Fetching surveys from /api/juantap-surveys...")
       const response = await fetch("/api/juantap-surveys")
 
+      console.log("Response status:", response.status)
+      console.log("Response ok:", response.ok)
+
       if (!response.ok) {
-        throw new Error("Failed to fetch surveys")
+        const errorText = await response.text()
+        console.error("Response error:", errorText)
+        throw new Error(`Failed to fetch surveys: ${response.status}`)
       }
 
       const data = await response.json()
-      console.log("API Response:", data)
+      console.log("Full API Response:", data)
+      console.log("Type of data:", typeof data)
+      console.log("Is data an array?", Array.isArray(data))
       
       // Handle different response structures
       let surveysData = []
+      
       if (Array.isArray(data)) {
+        console.log("✅ Data is direct array")
         surveysData = data
-      } else if (data.data && Array.isArray(data.data)) {
-        surveysData = data.data
+      } else if (data.data) {
+        console.log("📦 Data is nested in 'data' property")
+        console.log("Type of data.data:", typeof data.data)
+        console.log("Is data.data an array?", Array.isArray(data.data))
+        
+        if (Array.isArray(data.data)) {
+          surveysData = data.data
+        } else if (data.data.data && Array.isArray(data.data.data)) {
+          console.log("📦📦 Data is nested in 'data.data' property (Laravel pagination)")
+          surveysData = data.data.data
+        }
       } else if (data.surveys && Array.isArray(data.surveys)) {
+        console.log("📋 Data is nested in 'surveys' property")
         surveysData = data.surveys
+      } else {
+        console.warn("⚠️ Unknown data structure:", Object.keys(data))
       }
       
+      console.log("Final surveysData:", surveysData)
+      console.log("Number of surveys:", surveysData.length)
+      
       setSurveys(surveysData)
+      
+      if (surveysData.length === 0) {
+        setMessage("No surveys found. The database might be empty.")
+      }
     } catch (error) {
-      console.error("Error fetching surveys:", error)
-      setMessage("Failed to load surveys")
+      console.error("❌ Error fetching surveys:", error)
+      setMessage(`Failed to load surveys: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setSurveys([]) // Ensure surveys is always an array
     } finally {
       setLoading(false)
