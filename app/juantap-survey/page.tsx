@@ -1,6 +1,6 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle, Upload, Camera } from 'lucide-react';
 
 interface SocialMedia {
   platform: string;
@@ -17,6 +17,7 @@ interface FormData {
   last_name: string;
   website: string;
   social_media: SocialMedia[];
+  profile_image: File | null;
 }
 
 export default function JuanTapSurvey() {
@@ -29,13 +30,18 @@ export default function JuanTapSurvey() {
     first_name: '',
     last_name: '',
     website: '',
-    social_media: []
+    social_media: [],
+    profile_image: null
   });
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentSocial, setCurrentSocial] = useState<SocialMedia>({ platform: '', url: '' });
   const [errors, setErrors] = useState({
     email: '',
-    phone_number: ''
+    phone_number: '',
+    profile_image: '',
+    social_media: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -82,31 +88,72 @@ export default function JuanTapSurvey() {
     }
   };
 
-  const addSocialMedia = () => {
-    console.log('=== ADD SOCIAL MEDIA CLICKED ===');
-    console.log('currentSocial:', currentSocial);
-    console.log('Has platform?', !!currentSocial.platform);
-    console.log('Has url?', !!currentSocial.url);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     
-    if (currentSocial.platform && currentSocial.url) {
-      const newSocialMedia = [...formData.social_media, { ...currentSocial }];
-      console.log('✅ Adding social media:', currentSocial);
-      console.log('New social_media array:', newSocialMedia);
-      setFormData(prev => {
-        const updated = {
-          ...prev,
-          social_media: newSocialMedia
-        };
-        console.log('Updated formData:', updated);
-        return updated;
-      });
-      setCurrentSocial({ platform: '', url: '' });
-    } else {
-      console.log('❌ Cannot add - missing platform or url');
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ 
+          ...prev, 
+          profile_image: 'Please upload a valid image file (JPEG, PNG, GIF, or WebP)' 
+        }));
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setErrors(prev => ({ 
+          ...prev, 
+          profile_image: 'Image size must be less than 5MB' 
+        }));
+        return;
+      }
+
+      setErrors(prev => ({ ...prev, profile_image: '' }));
+      setFormData(prev => ({ ...prev, profile_image: file }));
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // Auto-add social media when both platform and URL are filled
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, profile_image: null }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const addSocialMedia = () => {
+    // Clear previous error
+    setErrors(prev => ({ ...prev, social_media: '' }));
+
+    // Validate both fields are filled
+    if (!currentSocial.platform || !currentSocial.url) {
+      setErrors(prev => ({ 
+        ...prev, 
+        social_media: 'Please select a platform and enter a profile URL before adding' 
+      }));
+      return;
+    }
+
+    // Add the social media
+    const newSocialMedia = [...formData.social_media, { ...currentSocial }];
+    setFormData(prev => ({
+      ...prev,
+      social_media: newSocialMedia
+    }));
+    setCurrentSocial({ platform: '', url: '' });
+  };
+
   useEffect(() => {
     if (currentSocial.platform && currentSocial.url) {
       const timer = setTimeout(() => {
@@ -125,7 +172,7 @@ export default function JuanTapSurvey() {
 
   const handleSubmit = async () => {
     let hasErrors = false;
-    const newErrors = { email: '', phone_number: '' };
+    const newErrors = { email: '', phone_number: '', profile_image: '', social_media: '' };
 
     if (formData.email && !validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
@@ -143,30 +190,36 @@ export default function JuanTapSurvey() {
     setIsSubmitting(true);
 
     try {
-      const submitData = {
-        email: formData.email || null,
-        username: formData.username || null,
-        address: formData.address || null,
-        phone_number: formData.phone_number || null,
-        display_name: formData.display_name || null,
-        first_name: formData.first_name || null,
-        last_name: formData.last_name || null,
-        website: formData.website || null,
-        social_media: formData.social_media && formData.social_media.length > 0 ? formData.social_media : null,
-      };
+      // Create FormData for multipart/form-data submission
+      const submitFormData = new FormData();
+      
+      // Append text fields
+      submitFormData.append('email', formData.email || '');
+      submitFormData.append('username', formData.username || '');
+      submitFormData.append('address', formData.address || '');
+      submitFormData.append('phone_number', formData.phone_number || '');
+      submitFormData.append('display_name', formData.display_name || '');
+      submitFormData.append('first_name', formData.first_name || '');
+      submitFormData.append('last_name', formData.last_name || '');
+      submitFormData.append('website', formData.website || '');
+      
+      // Append social media as JSON string
+      if (formData.social_media && formData.social_media.length > 0) {
+        submitFormData.append('social_media', JSON.stringify(formData.social_media));
+      }
+      
+      // Append image file
+      if (formData.profile_image) {
+        submitFormData.append('profile_image', formData.profile_image);
+      }
 
-      console.log('=== SUBMITTING ===');
-      console.log('Form Data:', formData);
-      console.log('Submit Data:', submitData);
-      console.log('Social Media in submitData:', submitData.social_media);
-      console.log('Submit Data JSON:', JSON.stringify(submitData, null, 2));
+      console.log('=== SUBMITTING WITH IMAGE ===');
+      console.log('Has image?', !!formData.profile_image);
+      console.log('Image name:', formData.profile_image?.name);
 
       const response = await fetch('/api/juantap-surveys', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
+        body: submitFormData, // Note: Don't set Content-Type header, browser will set it with boundary
       });
 
       const data = await response.json();
@@ -187,7 +240,6 @@ export default function JuanTapSurvey() {
     }
   };
 
-  // Scroll to top when form is successfully submitted
   useEffect(() => {
     if (submitted) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -213,7 +265,6 @@ export default function JuanTapSurvey() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Header */}
       <header className="bg-slate-900/50 backdrop-blur-sm border-b border-blue-500/20">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
@@ -228,7 +279,6 @@ export default function JuanTapSurvey() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
@@ -242,6 +292,59 @@ export default function JuanTapSurvey() {
 
           <div className="bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-6 lg:p-8">
             <div className="space-y-5">
+              {/* Profile Image Upload */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Profile Image
+                </label>
+                <div className="flex items-start gap-4">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-32 h-32 object-cover rounded-lg border-2 border-slate-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-slate-50">
+                      <Camera className="w-12 h-12 text-slate-400" />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="profile-image-input"
+                    />
+                    <label
+                      htmlFor="profile-image-input"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all cursor-pointer"
+                    >
+                      <Upload className="w-5 h-5" />
+                      Upload Image
+                    </label>
+                    <p className="text-xs text-slate-500 mt-2">
+                      JPG, PNG, GIF or WebP. Max size 5MB.
+                    </p>
+                    {errors.profile_image && (
+                      <p className="text-red-500 text-xs mt-1">{errors.profile_image}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Row 1: Email & Username */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -403,17 +506,12 @@ export default function JuanTapSurvey() {
                   Social Media
                 </label>
                 
-                {/* Add Social Media */}
                 <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr_auto] gap-2">
                   <select
                     value={currentSocial.platform}
                     onChange={(e) => {
-                      console.log('Platform changed to:', e.target.value);
-                      setCurrentSocial(prev => {
-                        const updated = { ...prev, platform: e.target.value };
-                        console.log('Updated currentSocial:', updated);
-                        return updated;
-                      });
+                      setCurrentSocial(prev => ({ ...prev, platform: e.target.value }));
+                      setErrors(prev => ({ ...prev, social_media: '' }));
                     }}
                     className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                   >
@@ -427,12 +525,8 @@ export default function JuanTapSurvey() {
                     placeholder="Profile URL"
                     value={currentSocial.url}
                     onChange={(e) => {
-                      console.log('URL changed to:', e.target.value);
-                      setCurrentSocial(prev => {
-                        const updated = { ...prev, url: e.target.value };
-                        console.log('Updated currentSocial:', updated);
-                        return updated;
-                      });
+                      setCurrentSocial(prev => ({ ...prev, url: e.target.value }));
+                      setErrors(prev => ({ ...prev, social_media: '' }));
                     }}
                     className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                   />
@@ -445,7 +539,14 @@ export default function JuanTapSurvey() {
                   </button>
                 </div>
 
-                {/* Display Added Social Media */}
+                {/* Error message for social media */}
+                {errors.social_media && (
+                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-600 text-sm">{errors.social_media}</p>
+                  </div>
+                )}
+
                 {formData.social_media.length > 0 && (
                   <div className="space-y-2 mt-3">
                     <p className="text-xs text-slate-600 font-medium">Added ({formData.social_media.length}):</p>
@@ -468,8 +569,6 @@ export default function JuanTapSurvey() {
                 )}
               </div>
 
-             
-              {/* Submit Button */}
               <button
                 type="button"
                 onClick={handleSubmit}
