@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,6 @@ import {
   ChevronRight,
   Download,
   Eye,
-  BarChart3,
   FileText,
   Search,
   User,
@@ -55,7 +53,9 @@ interface JuanTapSurvey {
   first_name: string
   last_name: string
   website: string
-  social_media: SocialMedia[]
+  social_media: SocialMedia[] | string // support both array and JSON string
+  profile_image: string
+  profile_image_url: string
   created_at: string
 }
 
@@ -78,6 +78,28 @@ export default function JuanTapAdminPage() {
   const [emailSubject, setEmailSubject] = useState("")
   const [emailMessage, setEmailMessage] = useState("")
 
+  const parseSocialMedia = (social_media: SocialMedia[] | string): SocialMedia[] => {
+    if (!social_media) return []
+    if (typeof social_media === "string") {
+      try {
+        return JSON.parse(social_media) as SocialMedia[]
+      } catch {
+        console.warn("Failed to parse social_media JSON string:", social_media)
+        return []
+      }
+    }
+    return Array.isArray(social_media) ? social_media : []
+  }
+
+  const getImageUrl = (profile_image: string): string => {
+    if (!profile_image) return "/placeholder.svg"
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    // If already a full URL, return as is
+    if (profile_image.startsWith("http")) return profile_image
+    // Otherwise, prepend API URL
+    return `${apiUrl}/${profile_image}`
+  }
+
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
     if (!token) {
@@ -90,8 +112,8 @@ export default function JuanTapAdminPage() {
 
   const fetchSurveys = async () => {
     try {
-      console.log("Fetching surveys from /api/juantap-surveys...")
-      const response = await fetch("/api/juantap-surveys")
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/juantap-surveys`)
 
       console.log("Response status:", response.status)
       console.log("Response ok:", response.ok)
@@ -106,10 +128,9 @@ export default function JuanTapAdminPage() {
       console.log("Full API Response:", data)
       console.log("Type of data:", typeof data)
       console.log("Is data an array?", Array.isArray(data))
-      
-      // Handle different response structures
+
       let surveysData = []
-      
+
       if (Array.isArray(data)) {
         console.log("✅ Data is direct array")
         surveysData = data
@@ -117,7 +138,7 @@ export default function JuanTapAdminPage() {
         console.log("📦 Data is nested in 'data' property")
         console.log("Type of data.data:", typeof data.data)
         console.log("Is data.data an array?", Array.isArray(data.data))
-        
+
         if (Array.isArray(data.data)) {
           surveysData = data.data
         } else if (data.data.data && Array.isArray(data.data.data)) {
@@ -130,19 +151,19 @@ export default function JuanTapAdminPage() {
       } else {
         console.warn("⚠️ Unknown data structure:", Object.keys(data))
       }
-      
+
       console.log("Final surveysData:", surveysData)
       console.log("Number of surveys:", surveysData.length)
-      
+
       setSurveys(surveysData)
-      
+
       if (surveysData.length === 0) {
         setMessage("No surveys found. The database might be empty.")
       }
     } catch (error) {
       console.error("❌ Error fetching surveys:", error)
-      setMessage(`Failed to load surveys: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      setSurveys([]) // Ensure surveys is always an array
+      setMessage(`Failed to load surveys: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setSurveys([])
     } finally {
       setLoading(false)
     }
@@ -253,7 +274,7 @@ export default function JuanTapAdminPage() {
       const addArrayRow = (label: string, items: SocialMedia[], isAlt = false) => {
         if (!items || items.length === 0) return
 
-        const valueText = items.map(item => `${item.platform}: ${item.url}`).join(", ")
+        const valueText = items.map((item) => `${item.platform}: ${item.url}`).join(", ")
         doc.setFontSize(8)
         const lines = doc.splitTextToSize(valueText, valueWidth - 4)
         const rowHeight = Math.max(7, lines.length * 4 + 3)
@@ -280,11 +301,9 @@ export default function JuanTapAdminPage() {
         y += rowHeight
       }
 
-      // Generate PDF content
       addHeader()
       y = 48
 
-      // SECTION 1: PERSONAL INFORMATION
       addSectionHeader("PERSONAL INFORMATION")
       addTableRow("Email", survey.email, false)
       addTableRow("Username", survey.username, true)
@@ -292,26 +311,23 @@ export default function JuanTapAdminPage() {
       addTableRow("First Name", survey.first_name, true)
       addTableRow("Last Name", survey.last_name, false)
 
-      // SECTION 2: CONTACT INFORMATION
       addSectionHeader("CONTACT INFORMATION")
       addTableRow("Phone Number", survey.phone_number, false)
       addTableRow("Address", survey.address, true)
       addTableRow("Website", survey.website, false)
 
-      // SECTION 3: SOCIAL MEDIA
-      if (survey.social_media && survey.social_media.length > 0) {
+      const socialMediaArray = parseSocialMedia(survey.social_media)
+      if (socialMediaArray && socialMediaArray.length > 0) {
         addSectionHeader("SOCIAL MEDIA ACCOUNTS")
-        addArrayRow("Platforms", survey.social_media, false)
+        addArrayRow("Platforms", socialMediaArray, false)
       }
 
-      // Add footers to all pages
       const pageCount = doc.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
         addFooter(i, pageCount)
       }
 
-      // Auto-download
       doc.save(`juantap-survey-${survey.id}-${survey.username || "profile"}.pdf`)
 
       setMessage("PDF downloaded successfully!")
@@ -384,29 +400,31 @@ JuanTap Team`)
     }
   }
 
-  const filteredSurveys = Array.isArray(surveys) ? surveys.filter((survey) => {
-    const matchesSearch =
-      (survey.email?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (survey.username?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (survey.display_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (survey.first_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (survey.last_name?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-    return matchesSearch
-  }) : []
+  const filteredSurveys = Array.isArray(surveys)
+    ? surveys.filter((survey) => {
+        const matchesSearch =
+          (survey.email?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.username?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.display_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.first_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.last_name?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+        return matchesSearch
+      })
+    : []
 
   const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE)
   const paginatedSurveys = filteredSurveys.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   const getSocialIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
-      case 'facebook':
+      case "facebook":
         return <Facebook className="h-4 w-4" />
-      case 'instagram':
+      case "instagram":
         return <Instagram className="h-4 w-4" />
-      case 'whatsapp':
-      case 'wechat':
-      case 'viber':
-      case 'telegram':
+      case "whatsapp":
+      case "wechat":
+      case "viber":
+      case "telegram":
         return <MessageCircle className="h-4 w-4" />
       default:
         return <User className="h-4 w-4" />
@@ -499,7 +517,9 @@ JuanTap Team`)
                       <TableCell className="font-bold text-purple-600">{survey.id}</TableCell>
                       <TableCell className="font-medium">{survey.display_name || "N/A"}</TableCell>
                       <TableCell className="text-sm">{survey.username || "N/A"}</TableCell>
-                      <TableCell className="text-sm text-blue-600 dark:text-blue-400">{survey.email || "N/A"}</TableCell>
+                      <TableCell className="text-sm text-blue-600 dark:text-blue-400">
+                        {survey.email || "N/A"}
+                      </TableCell>
                       <TableCell className="text-sm">{survey.phone_number || "N/A"}</TableCell>
                       <TableCell className="text-sm">{new Date(survey.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
@@ -524,11 +544,29 @@ JuanTap Team`)
                                     JuanTap Profile Details
                                   </DialogTitle>
                                   <DialogDescription className="text-xs sm:text-sm">
-                                    Survey ID: {survey.id} | Submitted on {new Date(survey.created_at).toLocaleDateString()}
+                                    Survey ID: {survey.id} | Submitted on{" "}
+                                    {new Date(survey.created_at).toLocaleDateString()}
                                   </DialogDescription>
                                 </DialogHeader>
 
                                 <div className="space-y-4 sm:space-y-6">
+                                  {survey.profile_image && (
+                                    <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-4 sm:p-6 rounded-xl border-2 flex flex-col items-center justify-center">
+                                      <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
+                                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                                        Profile Image
+                                      </h3>
+                                      <img
+                                        src={getImageUrl(survey.profile_image) || "/placeholder.svg"}
+                                        alt={`${survey.display_name || survey.username} profile`}
+                                        className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg object-cover border-2 border-purple-200 dark:border-purple-800"
+                                        onError={(e) => {
+                                          e.currentTarget.src = "/placeholder.svg"
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+
                                   {/* Personal Information */}
                                   <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-4 sm:p-6 rounded-xl border-2">
                                     <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
@@ -545,26 +583,36 @@ JuanTap Team`)
                                       </div>
                                       <div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">Username</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">{survey.username || "N/A"}</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">
+                                          {survey.username || "N/A"}
+                                        </p>
                                       </div>
                                       <div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">Display Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">{survey.display_name || "N/A"}</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">
+                                          {survey.display_name || "N/A"}
+                                        </p>
                                       </div>
                                       <div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">First Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">{survey.first_name || "N/A"}</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">
+                                          {survey.first_name || "N/A"}
+                                        </p>
                                       </div>
                                       <div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">Last Name</p>
-                                        <p className="font-medium text-sm sm:text-base break-words">{survey.last_name || "N/A"}</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">
+                                          {survey.last_name || "N/A"}
+                                        </p>
                                       </div>
                                     </div>
                                   </div>
 
                                   {/* Contact Information */}
                                   <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-950/10 p-4 sm:p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Contact Information</h3>
+                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">
+                                      Contact Information
+                                    </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                       <div>
                                         <p className="text-xs sm:text-sm text-muted-foreground">Phone Number</p>
@@ -590,30 +638,39 @@ JuanTap Team`)
                                     </div>
                                   </div>
 
-                                  {/* Social Media */}
-                                  {survey.social_media && survey.social_media.length > 0 && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-green-50/30 dark:from-slate-800 dark:to-green-950/10 p-4 sm:p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Social Media Accounts</h3>
-                                      <div className="space-y-2 sm:space-y-3">
-                                        {survey.social_media.map((social, idx) => (
-                                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border">
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                              {getSocialIcon(social.platform)}
-                                              <span className="font-semibold text-xs sm:text-sm">{social.platform}:</span>
-                                            </div>
-                                            <a 
-                                              href={social.url} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm break-all"
+                                  {(() => {
+                                    const socialMediaArray = parseSocialMedia(survey.social_media)
+                                    return socialMediaArray && socialMediaArray.length > 0 ? (
+                                      <div className="bg-gradient-to-br from-slate-50 to-green-50/30 dark:from-slate-800 dark:to-green-950/10 p-4 sm:p-6 rounded-xl border-2">
+                                        <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">
+                                          Social Media Accounts
+                                        </h3>
+                                        <div className="space-y-2 sm:space-y-3">
+                                          {socialMediaArray.map((social, idx) => (
+                                            <div
+                                              key={idx}
+                                              className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border"
                                             >
-                                              {social.url}
-                                            </a>
-                                          </div>
-                                        ))}
+                                              <div className="flex items-center gap-2 flex-shrink-0">
+                                                {getSocialIcon(social.platform)}
+                                                <span className="font-semibold text-xs sm:text-sm">
+                                                  {social.platform}:
+                                                </span>
+                                              </div>
+                                              <a
+                                                href={social.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm break-all"
+                                              >
+                                                {social.url}
+                                              </a>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
+                                    ) : null
+                                  })()}
                                 </div>
                               </DialogContent>
                             )}
