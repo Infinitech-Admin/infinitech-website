@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send to Laravel backend
-    const laravelResponse = await fetch(`${API_URL}/juantap-surveys`, {
+    const laravelResponse = await fetch(`${API_URL}/api/juantap-surveys`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     
     // Fetch from Laravel backend
-    const laravelResponse = await fetch(`${API_URL}/juantap-surveys?page=${page}`, {
+    const laravelResponse = await fetch(`${API_URL}/api/juantap-surveys?page=${page}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
