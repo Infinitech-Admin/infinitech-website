@@ -718,7 +718,9 @@ JuanTap Team`)
                                               return icon ? (
                                                 <a
                                                   key={idx}
-                                                  href={social.url}
+                                                  href={
+                                                    social.url.startsWith("http") ? social.url : `https://${social.url}`
+                                                  }
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="p-2 rounded-full hover:opacity-80 transition-opacity"
