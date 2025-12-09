@@ -330,12 +330,12 @@ export default function AdminInquiriesPage() {
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="replied">Replied</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                  </SelectContent>
+                    <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
+                       <SelectItem value="all">All Status</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="replied">Replied</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                            </SelectContent>
                 </Select>
               </div>
             </div>
@@ -399,7 +399,7 @@ export default function AdminInquiriesPage() {
                             <SelectTrigger className={`w-28 border-2 ${getStatusBadgeColor(inquiry.status)}`}>
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="replied">Replied</SelectItem>
                               <SelectItem value="resolved">Resolved</SelectItem>
@@ -453,16 +453,21 @@ export default function AdminInquiriesPage() {
                                       <CheckCircle2 className="h-4 w-4" />
                                       Update Status
                                     </label>
-                                    <Select value={newStatus || inquiry.status} onValueChange={setNewStatus}>
-                                      <SelectTrigger className="border-2">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="replied">Replied</SelectItem>
-                                        <SelectItem value="resolved">Resolved</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                    <TableCell>
+                          <Select
+                            value={inquiry.status}
+                            onValueChange={(value) => handleStatusChange(inquiry.id, value)}
+                          >
+                            <SelectTrigger className={`w-28 border-2 ${getStatusBadgeColor(inquiry.status)}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="replied">Replied</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                                   </div>
 
                                   <div className="space-y-3">
