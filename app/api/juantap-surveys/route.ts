@@ -5,12 +5,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // POST - Submit Survey
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Get FormData from request
+    const formData = await request.formData();
 
-    console.log('Received body:', body); // Debug log
-
-    // Validate email format if provided
-    if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+    // Extract and validate email if provided
+    const email = formData.get('email') as string;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         {
           success: false,
@@ -22,36 +22,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate social media array if provided (skip if null)
-    if (body.social_media && Array.isArray(body.social_media) && body.social_media.length > 0) {
-      for (const social of body.social_media) {
-        if (!social.platform || !social.url) {
-          return NextResponse.json(
-            {
-              success: false,
-              errors: {
-                social_media: ['Each social media entry must have platform and url']
-              }
-            },
-            { status: 422 }
-          );
+    // Validate social media array if provided
+    const socialMediaStr = formData.get('social_media') as string;
+    if (socialMediaStr) {
+      try {
+        const socialMedia = JSON.parse(socialMediaStr);
+        if (Array.isArray(socialMedia) && socialMedia.length > 0) {
+          for (const social of socialMedia) {
+            if (!social.platform || !social.url) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  errors: {
+                    social_media: ['Each social media entry must have platform and url']
+                  }
+                },
+                { status: 422 }
+              );
+            }
+          }
         }
+      } catch (e) {
+        return NextResponse.json(
+          {
+            success: false,
+            errors: {
+              social_media: ['Invalid social media format']
+            }
+          },
+          { status: 422 }
+        );
       }
     }
 
-    // Send to Laravel backend
+    // Forward FormData directly to Laravel backend
     const laravelResponse = await fetch(`${API_URL}/api/juantap-surveys`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(body),
+      body: formData,
+      // Add a reasonable timeout
+      signal: AbortSignal.timeout(30000), // 30 seconds
     });
 
     const data = await laravelResponse.json();
-
-    console.log('Laravel response:', data); // Debug log
 
     if (!laravelResponse.ok) {
       return NextResponse.json(data, { status: laravelResponse.status });
@@ -67,12 +79,24 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Error submitting survey:', error);
+    // Check if it's a connection error
+    const isConnectionError = error instanceof Error && (
+      error.message.includes('fetch failed') ||
+      error.message.includes('ECONNREFUSED') ||
+      error.message.includes('ECONNRESET')
+    );
+
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to submit survey',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: isConnectionError 
+          ? 'Cannot connect to backend server. Please ensure Laravel is running on ' + API_URL
+          : 'Failed to submit survey',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        debug: {
+          api_url: API_URL,
+          error_type: error instanceof Error ? error.constructor.name : typeof error
+        }
       },
       { status: 500 }
     );
@@ -91,6 +115,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Accept': 'application/json',
       },
+      signal: AbortSignal.timeout(10000), // 10 seconds
     });
 
     const data = await laravelResponse.json();
@@ -102,17 +127,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, { status: 200 });
 
   } catch (error) {
-    console.error('Error fetching surveys:', error);
+    const isConnectionError = error instanceof Error && (
+      error.message.includes('fetch failed') ||
+      error.message.includes('ECONNREFUSED') ||
+      error.message.includes('ECONNRESET')
+    );
+
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to fetch surveys',
+        message: isConnectionError
+          ? 'Cannot connect to backend server. Please ensure Laravel is running on ' + API_URL
+          : 'Failed to fetch surveys',
         error: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
   }
 }
-
-
-
