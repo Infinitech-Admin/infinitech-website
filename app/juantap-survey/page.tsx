@@ -361,7 +361,7 @@ export default function JuanTapSurvey() {
                     <input
                       type="email"
                       id="email"
-                      placeholder="abicrealtycorporation@gmail.com"
+                      placeholder="youremail@gmail.com"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.email ? 'border-red-500' : 'border-slate-300'
                       } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
