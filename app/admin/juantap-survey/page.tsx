@@ -517,74 +517,74 @@ JuanTap Team`)
                               </Button>
                             </DialogTrigger>
                             {selectedSurvey?.id === survey.id && (
-                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border-2">
+                              <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto border-2">
                                 <DialogHeader>
-                                  <DialogTitle className="text-2xl flex items-center gap-2">
-                                    <User className="h-6 w-6 text-purple-600" />
+                                  <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                                     JuanTap Profile Details
                                   </DialogTitle>
-                                  <DialogDescription>
+                                  <DialogDescription className="text-xs sm:text-sm">
                                     Survey ID: {survey.id} | Submitted on {new Date(survey.created_at).toLocaleDateString()}
                                   </DialogDescription>
                                 </DialogHeader>
 
-                                <div className="space-y-6">
+                                <div className="space-y-4 sm:space-y-6">
                                   {/* Personal Information */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                      <User className="h-5 w-5 text-purple-600" />
+                                  <div className="bg-gradient-to-br from-slate-50 to-purple-50/30 dark:from-slate-800 dark:to-purple-950/10 p-4 sm:p-6 rounded-xl border-2">
+                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
+                                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                                       Personal Information
                                     </h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <Mail className="h-3 w-3" />
-                                          {survey.email || "N/A"}
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Email</p>
+                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1 break-all">
+                                          <Mail className="h-3 w-3 flex-shrink-0" />
+                                          <span className="break-all">{survey.email || "N/A"}</span>
                                         </p>
                                       </div>
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Username</p>
-                                        <p className="font-medium">{survey.username || "N/A"}</p>
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Username</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">{survey.username || "N/A"}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Display Name</p>
-                                        <p className="font-medium">{survey.display_name || "N/A"}</p>
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Display Name</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">{survey.display_name || "N/A"}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm text-muted-foreground">First Name</p>
-                                        <p className="font-medium">{survey.first_name || "N/A"}</p>
+                                        <p className="text-xs sm:text-sm text-muted-foreground">First Name</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">{survey.first_name || "N/A"}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Last Name</p>
-                                        <p className="font-medium">{survey.last_name || "N/A"}</p>
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Last Name</p>
+                                        <p className="font-medium text-sm sm:text-base break-words">{survey.last_name || "N/A"}</p>
                                       </div>
                                     </div>
                                   </div>
 
                                   {/* Contact Information */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
+                                  <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-950/10 p-4 sm:p-6 rounded-xl border-2">
+                                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Contact Information</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Phone Number</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <Phone className="h-3 w-3" />
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Phone Number</p>
+                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1">
+                                          <Phone className="h-3 w-3 flex-shrink-0" />
                                           {survey.phone_number || "N/A"}
                                         </p>
                                       </div>
                                       <div>
-                                        <p className="text-sm text-muted-foreground">Website</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <Globe className="h-3 w-3" />
-                                          {survey.website || "N/A"}
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Website</p>
+                                        <p className="font-medium text-sm sm:text-base flex items-center gap-1 break-all">
+                                          <Globe className="h-3 w-3 flex-shrink-0" />
+                                          <span className="break-all">{survey.website || "N/A"}</span>
                                         </p>
                                       </div>
-                                      <div className="md:col-span-2">
-                                        <p className="text-sm text-muted-foreground">Address</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <MapPin className="h-3 w-3" />
-                                          {survey.address || "N/A"}
+                                      <div className="sm:col-span-2">
+                                        <p className="text-xs sm:text-sm text-muted-foreground">Address</p>
+                                        <p className="font-medium text-sm sm:text-base flex items-start gap-1">
+                                          <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                                          <span className="break-words">{survey.address || "N/A"}</span>
                                         </p>
                                       </div>
                                     </div>
@@ -592,20 +592,20 @@ JuanTap Team`)
 
                                   {/* Social Media */}
                                   {survey.social_media && survey.social_media.length > 0 && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-green-50/30 dark:from-slate-800 dark:to-green-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Social Media Accounts</h3>
-                                      <div className="space-y-3">
+                                    <div className="bg-gradient-to-br from-slate-50 to-green-50/30 dark:from-slate-800 dark:to-green-950/10 p-4 sm:p-6 rounded-xl border-2">
+                                      <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Social Media Accounts</h3>
+                                      <div className="space-y-2 sm:space-y-3">
                                         {survey.social_media.map((social, idx) => (
-                                          <div key={idx} className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border">
-                                            <div className="flex items-center gap-2">
+                                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border">
+                                            <div className="flex items-center gap-2 flex-shrink-0">
                                               {getSocialIcon(social.platform)}
-                                              <span className="font-semibold text-sm">{social.platform}:</span>
+                                              <span className="font-semibold text-xs sm:text-sm">{social.platform}:</span>
                                             </div>
                                             <a 
                                               href={social.url} 
                                               target="_blank" 
                                               rel="noopener noreferrer"
-                                              className="text-blue-600 dark:text-blue-400 hover:underline text-sm truncate flex-1"
+                                              className="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm break-all"
                                             >
                                               {social.url}
                                             </a>
