@@ -52,6 +52,7 @@ interface SocialMedia {
 
 interface JuanTapSurvey {
   id: number
+  juantap_survey_id:number
   email: string
   username: string
   address: string
@@ -214,7 +215,7 @@ export default function JuanTapAdminPage() {
         doc.text("Digital Profile Information", pageWidth / 2, 25, { align: "center" })
 
         doc.setFontSize(8)
-        doc.text(`Survey ID: ${survey.id}`, pageWidth / 2, 32, { align: "center" })
+        doc.text(`Survey ID: ${survey.juantap_survey_id}`, pageWidth / 2, 32, { align: "center" })
         doc.text(`Date: ${new Date(survey.created_at).toLocaleDateString()}`, pageWidth / 2, 38, { align: "center" })
       }
 
@@ -348,7 +349,7 @@ export default function JuanTapAdminPage() {
         addFooter(i, pageCount)
       }
 
-      doc.save(`juantap-survey-${survey.id}-${survey.username || "profile"}.pdf`)
+      doc.save(`juantap-survey-${survey.juantap_survey_id}-${survey.username || "profile"}.pdf`)
 
       setMessage("PDF downloaded successfully!")
       setTimeout(() => setMessage(""), 3000)
@@ -384,7 +385,7 @@ JuanTap Team`)
       return
     }
 
-    setSendingEmailId(emailSurvey.id)
+    setSendingEmailId(emailSurvey.juantap_survey_id)
     try {
       const response = await fetch("/api/send-juantap-email", {
         method: "POST",
@@ -395,7 +396,7 @@ JuanTap Team`)
           to: emailSurvey.email,
           subject: emailSubject,
           message: emailMessage,
-          surveyId: emailSurvey.id,
+          juantap_survey_id: emailSurvey.juantap_survey_id,
           displayName: emailSurvey.display_name,
           surveyData: emailSurvey,
         }),
@@ -628,7 +629,7 @@ JuanTap Team`)
                 <TableBody>
                   {paginatedSurveys.map((survey) => (
                     <TableRow key={survey.id} className="hover:bg-purple-50/50 dark:hover:bg-purple-900/20 border-b">
-                      <TableCell className="font-bold text-purple-600">{survey.id}</TableCell>
+                      <TableCell className="font-bold text-purple-600">{survey.juantap_survey_id}</TableCell>
                       <TableCell className="font-medium">{survey.display_name || "N/A"}</TableCell>
                       <TableCell className="text-sm">{survey.username || "N/A"}</TableCell>
                       <TableCell className="text-sm text-blue-600 dark:text-blue-400">
