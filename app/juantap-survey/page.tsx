@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle, Upload, Camera, Package, PhoneCall } from 'lucide-react';
+import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle, Upload, Camera, Package, PhoneCall, AlertCircle } from 'lucide-react';
 
 interface SocialMedia {
   platform: string;
@@ -15,10 +15,10 @@ interface FormData {
   display_name: string;
   first_name: string;
   last_name: string;
-    position: string;
+  position: string;
   website: string;
-    receiver_phone_number: string;
-      delivery_address: string;
+  receiver_phone_number: string;
+  delivery_address: string;
   social_media: SocialMedia[];
   profile_image: File | null;
 }
@@ -34,8 +34,8 @@ export default function JuanTapSurvey() {
     last_name: '',
     position:'',
     website: '',
-        receiver_phone_number: '',
-            delivery_address: '',
+    receiver_phone_number: '',
+    delivery_address: '',
     social_media: [],
     profile_image: null
   });
@@ -46,6 +46,7 @@ export default function JuanTapSurvey() {
   const [errors, setErrors] = useState({ email: '', phone_number: '', receiver_phone_number: '', profile_image: '', social_media: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const socialPlatforms = [
     { name: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
@@ -88,17 +89,18 @@ export default function JuanTapSurvey() {
       setErrors(prev => ({ ...prev, phone_number: '' }));
     }
   };
+
   const handleReceiverPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const sanitized = value.replace(/[a-zA-Z]/g, '');
     setFormData(prev => ({ ...prev, receiver_phone_number: sanitized }));
     setErrors(prev => ({ ...prev, receiver_phone_number: value !== sanitized ? 'Phone number cannot contain letters' : '' }));
   };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     
     if (file) {
-      // Validate file type
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         setErrors(prev => ({ 
@@ -108,8 +110,7 @@ export default function JuanTapSurvey() {
         return;
       }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         setErrors(prev => ({ 
           ...prev, 
@@ -121,7 +122,6 @@ export default function JuanTapSurvey() {
       setErrors(prev => ({ ...prev, profile_image: '' }));
       setFormData(prev => ({ ...prev, profile_image: file }));
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -139,10 +139,8 @@ export default function JuanTapSurvey() {
   };
 
   const addSocialMedia = () => {
-    // Clear previous error
     setErrors(prev => ({ ...prev, social_media: '' }));
 
-    // Validate both fields are filled
     if (!currentSocial.platform || !currentSocial.url) {
       setErrors(prev => ({ 
         ...prev, 
@@ -151,7 +149,6 @@ export default function JuanTapSurvey() {
       return;
     }
 
-    // Add the social media
     const newSocialMedia = [...formData.social_media, { ...currentSocial }];
     setFormData(prev => ({
       ...prev,
@@ -180,14 +177,24 @@ export default function JuanTapSurvey() {
     let hasErrors = false;
     const newErrors = { email: '', phone_number: '', receiver_phone_number: '', profile_image: '', social_media: '' };
 
-    if (formData.email && !validateEmail(formData.email)) { newErrors.email = 'Please enter a valid email address'; hasErrors = true; }
-    if (formData.phone_number && /[a-zA-Z]/.test(formData.phone_number)) { newErrors.phone_number = 'Phone number cannot contain letters'; hasErrors = true; }
-    if (formData.receiver_phone_number && /[a-zA-Z]/.test(formData.receiver_phone_number)) { newErrors.receiver_phone_number = 'Phone number cannot contain letters'; hasErrors = true; }
+    if (formData.email && !validateEmail(formData.email)) { 
+      newErrors.email = 'Please enter a valid email address'; 
+      hasErrors = true; 
+    }
+    if (formData.phone_number && /[a-zA-Z]/.test(formData.phone_number)) { 
+      newErrors.phone_number = 'Phone number cannot contain letters'; 
+      hasErrors = true; 
+    }
+    if (formData.receiver_phone_number && /[a-zA-Z]/.test(formData.receiver_phone_number)) { 
+      newErrors.receiver_phone_number = 'Phone number cannot contain letters'; 
+      hasErrors = true; 
+    }
 
     setErrors(newErrors);
     if (hasErrors) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const submitFormData = new FormData();
@@ -203,29 +210,74 @@ export default function JuanTapSurvey() {
       submitFormData.append('delivery_address', formData.delivery_address || '');
       submitFormData.append('receiver_phone_number', formData.receiver_phone_number || '');
       
-      if (formData.social_media?.length > 0) submitFormData.append('social_media', JSON.stringify(formData.social_media));
-      if (formData.profile_image) submitFormData.append('profile_image', formData.profile_image);
+      if (formData.social_media?.length > 0) {
+        submitFormData.append('social_media', JSON.stringify(formData.social_media));
+      }
+      if (formData.profile_image) {
+        submitFormData.append('profile_image', formData.profile_image);
+      }
 
-      const response = await fetch('/api/juantap-surveys', { method: 'POST', body: submitFormData });
-      const data = await response.json();
+      const response = await fetch('/api/juantap-surveys', { 
+        method: 'POST', 
+        body: submitFormData 
+      });
+
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type');
+      let data;
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // Server returned HTML or plain text (likely an error page)
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
 
       if (data.success) {
         setSubmitted(true);
       } else {
-        alert('Failed to submit survey. Please try again.');
+        // Handle API error response
+        const errorMsg = data.message || 'Failed to submit survey. Please try again.';
+        setSubmitError(errorMsg);
+        console.error('API Error:', data);
       }
     } catch (error) {
       console.error('Error submitting survey:', error);
-      alert('An error occurred. Please try again.');
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('504') || error.message.includes('Gateway Timeout')) {
+          errorMessage = 'Server timeout. The image may be too large or the server is busy. Please try with a smaller image or try again later.';
+        } else if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+          errorMessage = 'Server connection error. Please try again in a moment.';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Server error. Please contact support if this persists.';
+        } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network connection error. Please check your internet connection.';
+        }
+      }
+      
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   useEffect(() => {
     if (submitted) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [submitted]);
+
+  useEffect(() => {
+    if (submitError) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [submitError]);
 
   if (submitted) {
     return (
@@ -270,6 +322,25 @@ export default function JuanTapSurvey() {
               Help us build your digital profile
             </p>
           </div>
+
+          {/* Error Alert */}
+          {submitError && (
+            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+              <div className="flex items-start">
+                <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-red-800 font-semibold mb-1">Submission Failed</h3>
+                  <p className="text-red-700 text-sm">{submitError}</p>
+                  <button
+                    onClick={() => setSubmitError(null)}
+                    className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-6 lg:p-8">
             <div className="space-y-5">
@@ -436,85 +507,97 @@ export default function JuanTapSurvey() {
                 </div>
               </div>
 
-              {/* Row 4: Phone & Website */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-  {/* Phone Number */}
-  <div className="space-y-2">
-    <label htmlFor="phone_number" className="block text-sm font-medium text-slate-700">
-      Phone Number
-    </label>
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Phone className="h-5 w-5 text-slate-400" />
-      </div>
-      <input
-        type="tel"
-        id="phone_number"
-        placeholder="09651983796"
-        className={`block w-full pl-10 pr-3 py-2.5 border ${
-          errors.phone_number ? 'border-red-500' : 'border-slate-300'
-        } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
-        value={formData.phone_number}
-        onChange={handlePhoneChange}
-      />
-    </div>
-    {errors.phone_number && (
-      <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>
-    )}
-  </div>
+              {/* Row 4: Phone, Position & Website */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="phone_number" className="block text-sm font-medium text-slate-700">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      id="phone_number"
+                      placeholder="09651983796"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.phone_number ? 'border-red-500' : 'border-slate-300'
+                      } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
+                      value={formData.phone_number}
+                      onChange={handlePhoneChange}
+                    />
+                  </div>
+                  {errors.phone_number && (
+                    <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>
+                  )}
+                </div>
 
-  {/* Position */}
-  <div>
-    <label htmlFor="position" className="block text-sm font-medium text-foreground mb-2">
-      Position
-    </label>
-    <input
-      id="position"
-      type="text"
-      value={formData.position}
-      onChange={(e) => handleInputChange("position", e.target.value)}
-      placeholder="Enter your job position/title (e.g., Sales Director, Manager, etc.)"
-      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-    />
-  </div>
+                <div className="space-y-2">
+                  <label htmlFor="position" className="block text-sm font-medium text-slate-700">
+                    Position
+                  </label>
+                  <input
+                    id="position"
+                    type="text"
+                    value={formData.position}
+                    onChange={(e) => handleInputChange("position", e.target.value)}
+                    placeholder="Sales Director"
+                    className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                  />
+                </div>
 
-  {/* Website */}
-  <div className="space-y-2">
-    <label htmlFor="website" className="block text-sm font-medium text-slate-700">
-      Website
-    </label>
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Globe className="h-5 w-5 text-slate-400" />
-      </div>
-      <input
-        type="url"
-        id="website"
-        placeholder="abicealtyph.com"
-        className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-        value={formData.website}
-        onChange={(e) => handleInputChange('website', e.target.value)}
-      />
-    </div>
-  </div>
-</div>
-<div className="border-t border-slate-200 pt-5 mt-6">
+                <div className="space-y-2">
+                  <label htmlFor="website" className="block text-sm font-medium text-slate-700">
+                    Website
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Globe className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="url"
+                      id="website"
+                      placeholder="abicealtyph.com"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                      value={formData.website}
+                      onChange={(e) => handleInputChange('website', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Information */}
+              <div className="border-t border-slate-200 pt-5 mt-6">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-orange-500" />Delivery Information
+                  <Package className="w-5 h-5 text-orange-500" />
+                  Delivery Information
                 </h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700">Delivery Address</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                      <input type="text" placeholder="Delivery address" className="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm" value={formData.delivery_address} onChange={(e) => handleInputChange('delivery_address', e.target.value)} />
+                      <input 
+                        type="text" 
+                        placeholder="Delivery address" 
+                        className="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm" 
+                        value={formData.delivery_address} 
+                        onChange={(e) => handleInputChange('delivery_address', e.target.value)} 
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700">Receiver Phone Number</label>
                     <div className="relative">
                       <PhoneCall className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                      <input type="tel" placeholder="09123456789" className={`w-full pl-10 pr-3 py-2.5 border ${errors.receiver_phone_number ? 'border-red-500' : 'border-slate-300'} rounded-lg focus:ring-2 focus:ring-orange-500 text-sm`} value={formData.receiver_phone_number} onChange={handleReceiverPhoneChange} />
+                      <input 
+                        type="tel" 
+                        placeholder="09123456789" 
+                        className={`w-full pl-10 pr-3 py-2.5 border ${errors.receiver_phone_number ? 'border-red-500' : 'border-slate-300'} rounded-lg focus:ring-2 focus:ring-orange-500 text-sm`} 
+                        value={formData.receiver_phone_number} 
+                        onChange={handleReceiverPhoneChange} 
+                      />
                     </div>
                     {errors.receiver_phone_number && <p className="text-red-500 text-xs">{errors.receiver_phone_number}</p>}
                   </div>
@@ -560,7 +643,6 @@ export default function JuanTapSurvey() {
                   </button>
                 </div>
 
-                {/* Error message for social media */}
                 {errors.social_media && (
                   <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
