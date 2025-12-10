@@ -14,18 +14,20 @@ const FloatingSocialMedia = () => {
       bgColor: "bg-blue-600 hover:bg-blue-700",
       title: "Facebook"
     },
-    {
-      href: "https://wa.me/",
-      icon: MessageCircle,
-      bgColor: "bg-green-600 hover:bg-green-700",
-      title: "WhatsApp"
-    },
-    {
-      href: "https://maps.google.com/?q=Campos Rueda Building, 311 Urban Ave, Makati, 1206 Metro Manila",
-      icon: Send,
-      bgColor: "bg-sky-500 hover:bg-sky-600",
-      title: "Location"
-    },
+{
+  href: "https://wa.me/639456754591",
+  icon: MessageCircle,
+  bgColor: "bg-green-600 hover:bg-green-700",
+  title: "WhatsApp"
+},
+
+   {
+  href: "https://t.me/Developer_Justin",
+  icon: Send,   // you can replace this with a Telegram icon if you have one
+  bgColor: "bg-sky-500 hover:bg-sky-600",
+  title: "Telegram"
+},
+
     {
       href: "mailto:infinitechcorp.ph@gmail.com",
       icon: Mail,
@@ -137,3 +139,4 @@ const FloatingSocialMedia = () => {
 
 
 export default FloatingSocialMedia;
+
