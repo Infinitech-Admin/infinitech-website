@@ -22,19 +22,17 @@ import {
   Download,
   Eye,
   BarChart3,
-  FileText,
-  Search,
   Building2,
   Mail,
   Phone,
   MapPin,
   Send,
   Loader,
+  ExternalLink,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import jsPDF from "jspdf"
 
 interface Survey {
@@ -72,6 +70,20 @@ interface Survey {
 
 const ITEMS_PER_PAGE = 10
 
+interface PlanModalState {
+  isOpen: boolean
+  survey: Survey | null
+  planType: "juan-tap" | "video" | "photo" | null
+}
+
+interface EmailPreviewState {
+  isOpen: boolean
+  survey: Survey | null
+  subject: string
+  message: string
+  htmlContent?: string
+}
+
 export default function AdminSurveyPage() {
   const router = useRouter()
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -85,10 +97,28 @@ export default function AdminSurveyPage() {
   const [sendingEmailId, setSendingEmailId] = useState<number | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
-  const [emailSurvey, setEmailSurvey] = useState<Survey | null>(null)
-  const [emailSubject, setEmailSubject] = useState("")
-  const [emailMessage, setEmailMessage] = useState("")
+  const [emailPreview, setEmailPreview] = useState<EmailPreviewState>({
+    isOpen: false,
+    survey: null,
+    subject: "",
+    message: "",
+    htmlContent: "",
+  })
+
+  const [planModal, setPlanModal] = useState<PlanModalState>({
+    isOpen: false,
+    survey: null,
+    planType: null,
+  })
+  const [selectedPlan, setSelectedPlan] = useState<string>("")
+  const [sendingChallengeEmailId, setSendingChallengeEmailId] = useState<number | null>(null)
+  const [challengeEmailPreview, setChallengeEmailPreview] = useState<EmailPreviewState>({
+    isOpen: false,
+    survey: null,
+    subject: "",
+    message: "",
+    htmlContent: "",
+  })
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
@@ -118,6 +148,243 @@ export default function AdminSurveyPage() {
     }
   }
 
+  const openEmailDialog = (survey: Survey) => {
+    setEmailPreview({
+      isOpen: true,
+      survey,
+      subject: `Follow-up: Survey Response - ${survey.company_name}`,
+      message: `Dear ${survey.contact_person || "Valued Customer"},
+
+Thank you for taking the time to complete our survey. We appreciate your feedback regarding your business needs and challenges.
+
+Based on your responses, we would like to schedule a call to discuss how we can better assist ${survey.company_name || "your organization"} with your requirements.
+
+Please let us know your availability for a brief consultation.
+
+Best regards,
+The Team`,
+    })
+  }
+
+  const sendEmailFromPreview = async () => {
+    if (!emailPreview.survey?.email) {
+      setMessage("Survey has no email address!")
+      setTimeout(() => setMessage(""), 3000)
+      return
+    }
+
+    setSendingEmailId(emailPreview.survey.id)
+    try {
+      const response = await fetch("/api/send-survey-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: emailPreview.survey.email,
+          subject: emailPreview.subject,
+          message: emailPreview.message,
+          surveyId: emailPreview.survey.id,
+          companyName: emailPreview.survey.company_name,
+          contactPerson: emailPreview.survey.contact_person,
+          surveyData: emailPreview.survey,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send email")
+      }
+
+      setMessage("Email sent successfully!")
+      setEmailPreview({
+        isOpen: false,
+        survey: null,
+        subject: "",
+        message: "",
+      })
+      setTimeout(() => setMessage(""), 3000)
+    } catch (error) {
+      console.error("Error sending email:", error)
+      setMessage("Failed to send email. Check SMTP configuration.")
+      setTimeout(() => setMessage(""), 3000)
+    } finally {
+      setSendingEmailId(null)
+    }
+  }
+
+  const openPlanModal = (survey: Survey, planType: "juan-tap" | "video" | "photo") => {
+    setPlanModal({
+      isOpen: true,
+      survey,
+      planType,
+    })
+    setSelectedPlan("")
+  }
+
+  const generateChallengeEmailPreview = async () => {
+    if (!planModal.survey || !selectedPlan) {
+      setMessage("Please select a plan")
+      setTimeout(() => setMessage(""), 3000)
+      return
+    }
+
+    const survey = planModal.survey
+    const planType = planModal.planType
+
+    // Identify challenges from survey data
+    const challenges: string[] = []
+
+    if (survey.system_performance_issues?.length) {
+      challenges.push(...survey.system_performance_issues.map((issue) => `System Performance: ${issue}`))
+    }
+    if (survey.process_workflow_issues?.length) {
+      challenges.push(...survey.process_workflow_issues.map((issue) => `Process & Workflow: ${issue}`))
+    }
+    if (survey.reporting_data_issues?.length) {
+      challenges.push(...survey.reporting_data_issues.map((issue) => `Reporting & Data: ${issue}`))
+    }
+    if (survey.hr_payroll_issues?.length) {
+      challenges.push(...survey.hr_payroll_issues.map((issue) => `HR & Payroll: ${issue}`))
+    }
+    if (survey.customer_sales_issues?.length) {
+      challenges.push(...survey.customer_sales_issues.map((issue) => `Customer & Sales: ${issue}`))
+    }
+    if (survey.inventory_supply_chain_issues?.length) {
+      challenges.push(...survey.inventory_supply_chain_issues.map((issue) => `Inventory & Supply Chain: ${issue}`))
+    }
+    if (survey.digital_marketing_issues?.length) {
+      challenges.push(...survey.digital_marketing_issues.map((issue) => `Digital Marketing: ${issue}`))
+    }
+
+    let planName = ""
+    let planDescription = ""
+
+    if (planType === "juan-tap") {
+      planName = "Free JuanTap Card"
+      if (selectedPlan === "standard") {
+        planDescription =
+          "Standard JuanTap Card - Access to basic digital profile features with essential business card capabilities"
+      } else if (selectedPlan === "premium") {
+        planDescription =
+          "Premium JuanTap Card - Enhanced digital profile with advanced features, analytics, and priority support"
+      } else if (selectedPlan === "elite") {
+        planDescription =
+          "Elite JuanTap Card - Premium metal NFC digital business card with white glove service and exclusive features"
+      }
+    } else if (planType === "video") {
+      planName = "Free Video Shoot"
+      planDescription = "Professional video production package ideal for business promotion"
+    } else if (planType === "photo") {
+      planName = "Free Photo Shoot"
+      planDescription = "Professional photography session with edited digital copies for business use"
+    }
+
+    const subject = `${planName} - ${survey.company_name || "Your Organization"} - Survey Follow-up`
+
+    const challengesText =
+      challenges.length > 0 ? challenges.map((c) => `• ${c}`).join("\n") : "• No specific challenges identified"
+
+    const surveyLink =
+      planType === "juan-tap" ? `\n\nTo proceed, please visit: https://infinitechphil.com/juantap-survey` : ""
+
+    const message = `Good day ${survey.contact_person || "Valued Customer"}! 👋
+
+Thank you for taking the time to visit our booth at AIM last November 29, 2025 and for completing our website survey. We truly appreciate the opportunity to learn more about ${survey.company_name || "your organization"} and your current operational setup.
+
+🎯 Identified Challenges from Your Survey:
+Based on your responses, we've identified the following areas where we can assist:
+
+${challengesText}
+
+As a token of appreciation, we would like to offer you the following complimentary package:
+
+🎁 ${planName}
+${planDescription}
+
+${surveyLink}
+
+📋 Your Information on File:
+Company: ${survey.company_name || "N/A"}
+Contact Person: ${survey.contact_person || "N/A"}
+Position: ${survey.role || "N/A"}
+Email: ${survey.email || "N/A"}
+Phone: ${survey.phone || "N/A"}
+Location: ${survey.location || "N/A"}
+
+📞 Next Steps:
+We would love to schedule a consultation at your convenience to discuss how our solutions can help address the challenges you've identified and improve your operations. Please let us know your availability.
+
+Thank you for your interest in our services!
+
+Best regards,
+The Team
+
+© ${new Date().getFullYear()} INFINITECH Advertising Corporation. All rights reserved.`
+
+    setChallengeEmailPreview({
+      isOpen: true,
+      survey: survey,
+      subject: subject,
+      message: message,
+      htmlContent: message,
+    })
+
+    // Close the plan modal
+    setPlanModal({
+      isOpen: false,
+      survey: null,
+      planType: null,
+    })
+  }
+
+  const sendChallengeEmailFromPreview = async () => {
+    if (!challengeEmailPreview.survey?.email) {
+      setMessage("Survey has no email address!")
+      setTimeout(() => setMessage(""), 3000)
+      return
+    }
+
+    setSendingChallengeEmailId(challengeEmailPreview.survey.id)
+    try {
+      const response = await fetch("/api/send-challenge-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: challengeEmailPreview.survey.email,
+          contactPerson: challengeEmailPreview.survey.contact_person,
+          companyName: challengeEmailPreview.survey.company_name,
+          surveyData: challengeEmailPreview.survey,
+          planType: planModal.planType,
+          selectedPlan: selectedPlan,
+          message: challengeEmailPreview.message,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send challenge email")
+      }
+
+      setMessage("Challenge email sent successfully!")
+      setChallengeEmailPreview({
+        isOpen: false,
+        survey: null,
+        subject: "",
+        message: "",
+      })
+      setSelectedPlan("")
+      setTimeout(() => setMessage(""), 3000)
+    } catch (error) {
+      console.error("Error sending challenge email:", error)
+      setMessage("Failed to send challenge email. Check SMTP configuration.")
+      setTimeout(() => setMessage(""), 3000)
+    } finally {
+      setSendingChallengeEmailId(null)
+    }
+  }
+
+  // ... existing code for generatePDF ...
   const generatePDF = async (survey: Survey) => {
     setDownloadingId(survey.id)
     try {
@@ -182,10 +449,9 @@ export default function AdminSurveyPage() {
         doc.setTextColor(...colors.textMuted)
         doc.setFontSize(8)
         doc.setFont("helvetica", "normal")
-       doc.text("Survey Response Report", pageWidth / 2, 39, { align: "center" });
+        doc.text("Survey Response Report", pageWidth / 2, 39, { align: "center" })
 
-// Add the survey ID under the title
-doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" });
+        doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" })
       }
 
       const addFooter = (pageNum: number, totalPages: number) => {
@@ -318,14 +584,12 @@ doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" 
         y += rowHeight
       }
 
-      // Generate PDF content
       await addHeader()
       y = 48
 
-      // SECTION 1: COMPANY INFORMATION
       addSectionHeader("COMPANY INFORMATION")
       addTableRow("Company Name", survey.company_name, false)
-       addTableRow("No. of Employees", survey.no_of_employees, false)
+      addTableRow("No. of Employees", survey.no_of_employees, false)
       addTableRow("Location", survey.location, true)
       addTableRow("Contact Person", survey.contact_person, false)
       addTableRow("Role / Position", survey.role, true)
@@ -333,34 +597,28 @@ doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" 
       addTableRow("Phone Number", survey.phone, true)
       addArrayRow("Industries", survey.industries, survey.industry_other, false)
 
-      // SECTION 2: CURRENT SYSTEMS & SATISFACTION
       addSectionHeader("CURRENT SYSTEMS & SATISFACTION")
       addArrayRow("Systems in Use", survey.current_systems, survey.current_system_other, false)
       addTableRow("Satisfaction Level", survey.satisfaction_level, true)
 
-      // SECTION 3: SYSTEMS OF INTEREST
       addSectionHeader("SYSTEMS OF INTEREST")
       addArrayRow("Interested Systems", survey.systems_of_interest, survey.system_of_interest_other, false)
 
-      // SECTION 4: AREAS TO IMPROVE
       if (survey.improvement_areas?.length > 0) {
         addSectionHeader("AREAS TO IMPROVE")
         addArrayRow("Improvement Areas", survey.improvement_areas, undefined, false)
       }
 
-      // SECTION 5: PREFERRED FEATURES
       if (survey.preferred_features?.length > 0) {
         addSectionHeader("PREFERRED FEATURES")
         addArrayRow("Features", survey.preferred_features, undefined, false)
       }
 
-      // SECTION 6: HIDDEN NEEDS / DAILY SITUATIONS
       if (survey.daily_situations?.length > 0) {
         addSectionHeader("HIDDEN NEEDS / DAILY SITUATIONS")
         addArrayRow("Daily Situations", survey.daily_situations, undefined, false)
       }
 
-      // SECTION 7: OPERATIONAL CHALLENGES
       const hasOperationalChallenges =
         survey.system_performance_issues?.length ||
         survey.process_workflow_issues?.length ||
@@ -402,7 +660,6 @@ doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" 
         }
       }
 
-      // SECTION 8: FEEDBACK & COMMENTS
       if (survey.pain_points || survey.ideal_system || survey.additional_comments) {
         addSectionHeader("FEEDBACK & COMMENTS")
         let altRow = false
@@ -419,14 +676,12 @@ doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" 
         }
       }
 
-      // Add footers to all pages
       const pageCount = doc.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
         addFooter(i, pageCount)
       }
 
-      // Auto-download
       doc.save(`survey-${survey.survey_id}-${survey.company_name?.replace(/\s+/g, "_") || "report"}.pdf`)
 
       setMessage("PDF downloaded successfully!")
@@ -437,66 +692,6 @@ doc.text(`Survey ID: ${survey.survey_id}`, pageWidth / 2, 45, { align: "center" 
       setTimeout(() => setMessage(""), 3000)
     } finally {
       setDownloadingId(null)
-    }
-  }
-
-  const openEmailDialog = (survey: Survey) => {
-    setEmailSurvey(survey)
-    setEmailSubject(`Follow-up: Survey Response  - ${survey.company_name}`)
-    setEmailMessage(`Dear ${survey.contact_person || "Valued Customer"},
-
-Thank you for taking the time to complete our survey. We appreciate your feedback regarding your business needs and challenges.
-
-Based on your responses, we would like to schedule a call to discuss how we can better assist ${survey.company_name || "your organization"} with your requirements.
-
-Please let us know your availability for a brief consultation.
-
-Best regards,
-The Team`)
-    setEmailDialogOpen(true)
-  }
-
-  const sendSurveyEmail = async () => {
-    if (!emailSurvey?.email) {
-      setMessage("Survey has no email address!")
-      setTimeout(() => setMessage(""), 3000)
-      return
-    }
-
-    setSendingEmailId(emailSurvey.id)
-    try {
-      const response = await fetch("/api/send-survey-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: emailSurvey.email,
-          subject: emailSubject,
-          message: emailMessage,
-          surveyId: emailSurvey.id,
-          companyName: emailSurvey.company_name,
-          contactPerson: emailSurvey.contact_person,
-          surveyData: emailSurvey,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to send email")
-      }
-
-      setMessage("Email sent successfully!")
-      setEmailDialogOpen(false)
-      setEmailSurvey(null)
-      setEmailSubject("")
-      setEmailMessage("")
-      setTimeout(() => setMessage(""), 3000)
-    } catch (error) {
-      console.error("Error sending email:", error)
-      setMessage("Failed to send email. Check SMTP configuration.")
-      setTimeout(() => setMessage(""), 3000)
-    } finally {
-      setSendingEmailId(null)
     }
   }
 
@@ -514,541 +709,474 @@ The Team`)
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin mb-4 inline-block">
-            <FileText className="h-8 w-8 text-cyan-600" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-96">
+            <div className="text-center">
+              <Loader className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-muted-foreground">Loading surveys...</p>
+            </div>
           </div>
-          <p className="text-muted-foreground">Loading surveys...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <BarChart3 className="h-8 w-8 text-cyan-600" />
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Survey Management</h1>
-          </div>
-          <p className="text-muted-foreground">View and manage all survey responses</p>
-        </div>
-
-        {/* Message Alert */}
         {message && (
-          <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <AlertDescription className="text-blue-800 dark:text-blue-200">{message}</AlertDescription>
+          <Alert className="mb-6 bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800">
+            <AlertDescription className="text-green-800 dark:text-green-200">{message}</AlertDescription>
           </Alert>
         )}
 
-        {/* Search and Filter */}
-        <Card className="mb-6 border-2">
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by company, contact, or email..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                  className="pl-10"
-                />
-              </div>
-              <Select
-                value={filterIndustry}
-                onValueChange={(value) => {
-                  setFilterIndustry(value)
-                  setCurrentPage(1)
-                }}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Industries</SelectItem>
-                  <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                  <SelectItem value="Retail">Retail</SelectItem>
-                  <SelectItem value="Services">Services</SelectItem>
-                  <SelectItem value="Technology">Technology</SelectItem>
-                  <SelectItem value="Healthcare">Healthcare</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Results */}
-        <Card className="border-2 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950 dark:to-blue-950 border-b-2">
+        <Card className="bg-white dark:bg-slate-800 shadow-lg border-0">
+          <CardHeader className="border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Survey Responses</CardTitle>
-                <CardDescription>
-                  Showing {paginatedSurveys.length} of {filteredSurveys.length} surveys
+                <CardTitle className="text-3xl font-bold text-slate-900 dark:text-white">Survey Responses</CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400 mt-2">
+                  Manage survey data and send follow-up emails with tailored offers
                 </CardDescription>
               </div>
+              <BarChart3 className="h-8 w-8 text-blue-600" />
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+
+          <CardContent className="p-6">
+            <div className="mb-6 space-y-4">
+              <div>
+                <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                  Search Surveys
+                </Label>
+                <Input
+                  placeholder="Search by company name, contact person, or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600"
+                />
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800">
-                    <TableHead className="font-bold">ID</TableHead>
-                    <TableHead className="font-bold">Company</TableHead>
-                       <TableHead className="font-bold">Employees</TableHead>
-                    <TableHead className="font-bold">Contact</TableHead>
-                    <TableHead className="font-bold">Email</TableHead>
-                    <TableHead className="font-bold">Industry</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="font-bold text-center">Actions</TableHead>
+                  <TableRow className="hover:bg-transparent border-b-2 border-slate-200 dark:border-slate-700">
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Company</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Contact</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Email</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Phone</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedSurveys.map((survey) => (
-                    <TableRow key={survey.id} className="hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20 border-b">
-                      <TableCell className="font-bold text-cyan-600">{survey.survey_id}</TableCell>
-                      <TableCell className="font-medium">{survey.company_name}</TableCell>
-                        <TableCell className="font-medium">{survey.no_of_employees}</TableCell>
-                      <TableCell className="text-sm">{survey.contact_person}</TableCell>
-                      <TableCell className="text-sm text-blue-600 dark:text-blue-400">{survey.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950">
-                          {survey.industries?.[0] || "N/A"}
-                        </Badge>
+                    <TableRow
+                      key={survey.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700"
+                    >
+                      <TableCell className="font-semibold text-slate-900 dark:text-white">
+                        {survey.company_name}
                       </TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.contact_person}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.email}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.phone}</TableCell>
                       <TableCell>
-                        <Badge
-                          className={
-                            survey.satisfaction_level?.includes("satisfied") ? "bg-green-500" : "bg-yellow-500"
-                          }
-                        >
-                          {survey.satisfaction_level
-                            ? survey.satisfaction_level
-                                .split("-")
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(" ")
-                            : "N/A"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 justify-center">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedSurvey(survey)}
-                                className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20"
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                            </DialogTrigger>
-                            {selectedSurvey?.id === survey.id && (
-                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border-2">
-                                <DialogHeader>
-                                  <DialogTitle className="text-2xl flex items-center gap-2">
-                                    <Building2 className="h-6 w-6 text-cyan-600" />
-                                    Survey Response 
-                                  </DialogTitle>
-                                   <DialogDescription>
-                                    Survey ID {survey.survey_id}
-                                  </DialogDescription>
-                                  <DialogDescription>
-                                    Submitted on {new Date(survey.created_at).toLocaleDateString()}
-                                  </DialogDescription>
-                                </DialogHeader>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-2 border-slate-200 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700 bg-transparent"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          {survey && (
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-2xl">
+                                  <Building2 className="h-6 w-6 text-blue-600" />
+                                  {survey.company_name}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Survey ID: {survey.survey_id} | Submitted:{" "}
+                                  {new Date(survey.created_at).toLocaleDateString()}
+                                </DialogDescription>
+                              </DialogHeader>
 
-                                <div className="space-y-6">
-                                  {/* Company Info */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                      <Building2 className="h-5 w-5 text-cyan-600" />
-                                      Company Information
-                                    </h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Company Name</p>
-                                        <p className="font-medium">{survey.company_name || "N/A"}</p>
-                                      </div>
-                                       <div>
-                                        <p className="text-sm text-muted-foreground">No. of Employees</p>
-                                        <p className="font-medium">{survey.no_of_employees || "N/A"}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Location</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <MapPin className="h-3 w-3" />
-                                          {survey.location || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Contact Person</p>
-                                        <p className="font-medium">{survey.contact_person || "N/A"}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Role / Position</p>
-                                        <p className="font-medium">{survey.role || "N/A"}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <Mail className="h-3 w-3" />
-                                          {survey.email || "N/A"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Phone</p>
-                                        <p className="font-medium flex items-center gap-1">
-                                          <Phone className="h-3 w-3" />
-                                          {survey.phone || "N/A"}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="mt-4">
-                                      <p className="text-sm text-muted-foreground mb-2">Industries</p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {survey.industries?.map((ind, idx) => (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                                          >
-                                            {ind}
-                                          </Badge>
-                                        ))}
-                                        {survey.industry_other && (
-                                          <Badge
-                                            variant="outline"
-                                            className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
-                                          >
-                                            {survey.industry_other}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Current Systems */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4">Current Systems</h3>
+                              <div className="space-y-6 py-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                                    <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
                                     <div className="space-y-3">
-                                      <div>
-                                        <p className="text-sm text-muted-foreground mb-2">Systems in Use</p>
-                                        <div className="flex flex-wrap gap-2">
-                                          {survey.current_systems?.map((sys, idx) => (
-                                            <Badge
-                                              key={idx}
-                                              variant="outline"
-                                              className="text-slate-700 dark:text-slate-300"
-                                            >
-                                              {sys}
-                                            </Badge>
-                                          ))}
-                                          {survey.current_system_other && (
-                                            <Badge
-                                              variant="outline"
-                                              className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
-                                            >
-                                              {survey.current_system_other}
-                                            </Badge>
-                                          )}
+                                      <div className="flex items-start gap-2">
+                                        <Building2 className="h-4 w-4 text-blue-600 mt-1" />
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground">Company</p>
+                                          <p className="text-sm">{survey.company_name}</p>
                                         </div>
                                       </div>
-                                      <div>
-                                        <p className="text-sm text-muted-foreground">Satisfaction Level</p>
-                                        <Badge className="mt-1">{survey.satisfaction_level || "N/A"}</Badge>
+                                      <div className="flex items-start gap-2">
+                                        <Mail className="h-4 w-4 text-blue-600 mt-1" />
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground">Email</p>
+                                          <p className="text-sm">{survey.email}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-start gap-2">
+                                        <Phone className="h-4 w-4 text-blue-600 mt-1" />
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground">Phone</p>
+                                          <p className="text-sm">{survey.phone}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-start gap-2">
+                                        <MapPin className="h-4 w-4 text-blue-600 mt-1" />
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground">Location</p>
+                                          <p className="text-sm">{survey.location}</p>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
 
-                                  {/* Systems of Interest */}
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4">Systems of Interest</h3>
+                                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-800">
+                                    <h3 className="font-semibold text-lg mb-4">Business Profile</h3>
+                                    <div className="space-y-3">
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                          Contact Person
+                                        </p>
+                                        <p className="text-sm">{survey.contact_person}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Role</p>
+                                        <p className="text-sm">{survey.role}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Employees</p>
+                                        <p className="text-sm">{survey.no_of_employees}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Industries</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.industries?.map((ind, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              className="bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100"
+                                            >
+                                              {ind}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {survey.current_systems?.length > 0 && (
+                                  <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-950/30 dark:to-cyan-900/20 p-6 rounded-xl border-2 border-cyan-200 dark:border-cyan-800">
+                                    <h3 className="font-semibold text-lg mb-4">Current Systems</h3>
                                     <div className="flex flex-wrap gap-2">
-                                      {survey.systems_of_interest?.map((sys, idx) => (
+                                      {survey.current_systems.map((system, idx) => (
                                         <Badge
                                           key={idx}
-                                          variant="outline"
-                                          className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
+                                          className="bg-cyan-200 dark:bg-cyan-800 text-cyan-900 dark:text-cyan-100"
                                         >
-                                          {sys}
+                                          {system}
                                         </Badge>
                                       ))}
-                                      {survey.system_of_interest_other && (
+                                    </div>
+                                  </div>
+                                )}
+
+                                {survey.systems_of_interest?.length > 0 && (
+                                  <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 p-6 rounded-xl border-2 border-green-200 dark:border-green-800">
+                                    <h3 className="font-semibold text-lg mb-4">Systems of Interest</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                      {survey.systems_of_interest.map((system, idx) => (
                                         <Badge
-                                          variant="outline"
-                                          className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                                          key={idx}
+                                          className="bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100"
                                         >
-                                           {survey.system_of_interest_other}
+                                          {system}
                                         </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(survey.system_performance_issues?.length ||
+                                  survey.process_workflow_issues?.length ||
+                                  survey.reporting_data_issues?.length ||
+                                  survey.hr_payroll_issues?.length ||
+                                  survey.customer_sales_issues?.length ||
+                                  survey.inventory_supply_chain_issues?.length ||
+                                  survey.digital_marketing_issues?.length) && (
+                                  <div className="bg-gradient-to-br from-red-50 to-orange-50/30 dark:from-red-950/30 dark:to-orange-950/20 p-6 rounded-xl border-2 border-red-200 dark:border-red-800">
+                                    <h3 className="font-semibold text-lg mb-4">Identified Challenges</h3>
+                                    <div className="space-y-4">
+                                      {survey.system_performance_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            System Performance Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.system_performance_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.process_workflow_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            Process & Workflow Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.process_workflow_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.reporting_data_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            Reporting & Data Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.reporting_data_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.hr_payroll_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            HR / Payroll Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.hr_payroll_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.customer_sales_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            Customer & Sales Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.customer_sales_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.inventory_supply_chain_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            Inventory & Supply Chain Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.inventory_supply_chain_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {survey.digital_marketing_issues?.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                            Digital Marketing & Online Presence Issues
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {survey.digital_marketing_issues.map((issue, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800"
+                                              >
+                                                {issue}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
+                                )}
 
-                                  {survey.improvement_areas?.length > 0 && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Areas to Improve</h3>
-                                      <div className="flex flex-wrap gap-2">
-                                        {survey.improvement_areas.map((area, idx) => (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300"
-                                          >
-                                            {area}
-                                          </Badge>
-                                        ))}
+                                {(survey.pain_points || survey.ideal_system || survey.additional_comments) && (
+                                  <div className="bg-gradient-to-br from-amber-50 to-yellow-50/30 dark:from-amber-950 dark:to-yellow-950/10 p-6 rounded-xl border-2">
+                                    <h3 className="font-semibold text-lg mb-4">Feedback & Comments</h3>
+                                    <div className="space-y-4">
+                                      {survey.pain_points && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                            Pain Points
+                                          </p>
+                                          <p className="text-sm whitespace-pre-wrap">{survey.pain_points}</p>
+                                        </div>
+                                      )}
+                                      {survey.ideal_system && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                            Ideal System Description
+                                          </p>
+                                          <p className="text-sm whitespace-pre-wrap">{survey.ideal_system}</p>
+                                        </div>
+                                      )}
+                                      {survey.additional_comments && (
+                                        <div>
+                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                            Additional Comments
+                                          </p>
+                                          <p className="text-sm whitespace-pre-wrap">{survey.additional_comments}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {survey.preferred_features?.length > 0 && (
+                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
+                                    <h3 className="font-semibold text-lg mb-4">Preferred Features</h3>
+                                    <div className="flex flex-wrap gap-2 mb-6">
+                                      {survey.preferred_features.map((feature, idx) => (
+                                        <Badge key={idx} className="bg-green-500 hover:bg-green-600 text-white">
+                                          {feature}
+                                        </Badge>
+                                      ))}
+                                    </div>
+
+                                    <div className="border-t pt-4 space-y-3">
+                                      <p className="text-sm font-semibold text-muted-foreground">Actions</p>
+                                      <div className="flex flex-col gap-2">
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => openEmailDialog(survey)}
+                                          disabled={sendingEmailId === survey.id}
+                                          className="w-full border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950/20 justify-start"
+                                        >
+                                          {sendingEmailId === survey.id ? (
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Send className="h-4 w-4 mr-2" />
+                                          )}
+                                          Send Email
+                                        </Button>
+
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => openPlanModal(survey, "juan-tap")}
+                                          disabled={sendingChallengeEmailId === survey.id}
+                                          className="w-full border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/20 justify-start"
+                                        >
+                                          {sendingChallengeEmailId === survey.id ? (
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Eye className="h-4 w-4 mr-2" />
+                                          )}
+                                          Free JuanTap
+                                        </Button>
+
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => {
+                                            openPlanModal(survey, "video")
+                                          }}
+                                          disabled={sendingChallengeEmailId === survey.id}
+                                          className="w-full border-2 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/20 justify-start"
+                                        >
+                                          {sendingChallengeEmailId === survey.id ? (
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Eye className="h-4 w-4 mr-2" />
+                                          )}
+                                          Free Video Shoot
+                                        </Button>
+
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => {
+                                            openPlanModal(survey, "photo")
+                                          }}
+                                          disabled={sendingChallengeEmailId === survey.id}
+                                          className="w-full border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-800 dark:hover:bg-pink-900/20 justify-start"
+                                        >
+                                          {sendingChallengeEmailId === survey.id ? (
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Eye className="h-4 w-4 mr-2" />
+                                          )}
+                                          Free Photo Shoot
+                                        </Button>
                                       </div>
                                     </div>
-                                  )}
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          )}
+                        </Dialog>
 
-                                  {survey.daily_situations?.length > 0 && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Hidden Needs / Daily Situations</h3>
-                                      <div className="flex flex-wrap gap-2">
-                                        {survey.daily_situations.map((situation, idx) => (
-                                          <Badge
-                                            key={idx}
-                                            variant="outline"
-                                            className="bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300"
-                                          >
-                                            {situation}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {(survey.system_performance_issues?.length ||
-                                    survey.process_workflow_issues?.length ||
-                                    survey.reporting_data_issues?.length ||
-                                    survey.hr_payroll_issues?.length ||
-                                    survey.customer_sales_issues?.length ||
-                                    survey.inventory_supply_chain_issues?.length ||
-                                    survey.digital_marketing_issues?.length) && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Operational Challenges</h3>
-                                      <div className="space-y-4">
-                                        {survey.system_performance_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              System Performance Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.system_performance_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.process_workflow_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              Process & Workflow Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.process_workflow_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.reporting_data_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              Reporting & Data Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.reporting_data_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.hr_payroll_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              HR / Payroll Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.hr_payroll_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.customer_sales_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              Customer & Sales Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.customer_sales_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.inventory_supply_chain_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              Inventory & Supply Chain Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.inventory_supply_chain_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {survey.digital_marketing_issues?.length > 0 && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                              Digital Marketing & Online Presence Issues
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                              {survey.digital_marketing_issues.map((issue, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800"
-                                                >
-                                                  {issue}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Feedback & Comments */}
-                                  {(survey.pain_points || survey.ideal_system || survey.additional_comments) && (
-                                    <div className="bg-gradient-to-br from-amber-50 to-yellow-50/30 dark:from-amber-950 dark:to-yellow-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Feedback & Comments</h3>
-                                      <div className="space-y-4">
-                                        {survey.pain_points && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                              Pain Points
-                                            </p>
-                                            <p className="text-sm whitespace-pre-wrap">{survey.pain_points}</p>
-                                          </div>
-                                        )}
-                                        {survey.ideal_system && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                              Ideal System Description
-                                            </p>
-                                            <p className="text-sm whitespace-pre-wrap">{survey.ideal_system}</p>
-                                          </div>
-                                        )}
-                                        {survey.additional_comments && (
-                                          <div>
-                                            <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                              Additional Comments
-                                            </p>
-                                            <p className="text-sm whitespace-pre-wrap">{survey.additional_comments}</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Preferred Features */}
-                                  {survey.preferred_features?.length > 0 && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                      <h3 className="font-semibold text-lg mb-4">Preferred Features</h3>
-                                      <div className="flex flex-wrap gap-2">
-                                        {survey.preferred_features.map((feature, idx) => (
-                                          <Badge key={idx} className="bg-green-500 hover:bg-green-600 text-white">
-                                            {feature}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </DialogContent>
-                            )}
-                          </Dialog>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => generatePDF(survey)}
-                            disabled={downloadingId === survey.id}
-                            className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-900/20"
-                          >
-                            {downloadingId === survey.id ? (
-                              <Loader className="h-4 w-4 mr-1 animate-spin" />
-                            ) : (
-                              <Download className="h-4 w-4 mr-1" />
-                            )}
-                            PDF
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEmailDialog(survey)}
-                            disabled={sendingEmailId === survey.id}
-                            className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950/20"
-                          >
-                            {sendingEmailId === survey.id ? (
-                              <Loader className="h-4 w-4 mr-1 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4 mr-1" />
-                            )}
-                            Email
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generatePDF(survey)}
+                          disabled={downloadingId === survey.id}
+                          className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-900/20"
+                        >
+                          {downloadingId === survey.id ? (
+                            <Loader className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4 mr-1" />
+                          )}
+                          PDF
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1058,7 +1186,6 @@ The Team`)
           </CardContent>
         </Card>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
             <p className="text-sm text-muted-foreground">
@@ -1087,57 +1214,382 @@ The Team`)
           </div>
         )}
 
-        {/* Email Dialog */}
-        <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-          <DialogContent className="max-w-2xl">
+        <Dialog
+          open={emailPreview.isOpen}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setEmailPreview({
+                isOpen: false,
+                survey: null,
+                subject: "",
+                message: "",
+              })
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5 text-blue-600" />
-                Send Email to {emailSurvey?.contact_person || "Contact"}
+                Email Preview
               </DialogTitle>
-              <DialogDescription>Compose your message to {emailSurvey?.email}</DialogDescription>
+              <DialogDescription>
+                Review and edit your email before sending to {emailPreview.survey?.contact_person || "contact"}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="email-to">To</Label>
+                <Label htmlFor="preview-to">To</Label>
                 <Input
-                  id="email-to"
-                  value={emailSurvey?.email || ""}
-                  disabled
+                  id="preview-to"
+                  value={emailPreview.survey?.email || ""}
+                  onChange={(e) =>
+                    setEmailPreview({
+                      ...emailPreview,
+                      survey: emailPreview.survey ? { ...emailPreview.survey, email: e.target.value } : null,
+                    })
+                  }
                   className="bg-slate-50 dark:bg-slate-900"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email-subject">Subject</Label>
+                <Label htmlFor="preview-subject">Subject</Label>
                 <Input
-                  id="email-subject"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
+                  id="preview-subject"
+                  value={emailPreview.subject}
+                  onChange={(e) =>
+                    setEmailPreview({
+                      ...emailPreview,
+                      subject: e.target.value,
+                    })
+                  }
                   placeholder="Enter email subject..."
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email-message">Message</Label>
+                <Label htmlFor="preview-message">Message</Label>
                 <Textarea
-                  id="email-message"
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
+                  id="preview-message"
+                  value={emailPreview.message}
+                  onChange={(e) =>
+                    setEmailPreview({
+                      ...emailPreview,
+                      message: e.target.value,
+                    })
+                  }
                   placeholder="Enter your message..."
-                  rows={10}
-                  className="resize-none"
+                  rows={12}
+                  className="resize-none font-mono text-sm"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEmailPreview({
+                    isOpen: false,
+                    survey: null,
+                    subject: "",
+                    message: "",
+                  })
+                }}
+              >
                 Cancel
               </Button>
               <Button
-                onClick={sendSurveyEmail}
-                disabled={sendingEmailId !== null || !emailSubject || !emailMessage}
+                onClick={sendEmailFromPreview}
+                disabled={sendingEmailId !== null || !emailPreview.subject || !emailPreview.message}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {sendingEmailId !== null ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Email
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={planModal.isOpen}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setPlanModal({ ...planModal, isOpen })
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-purple-600" />
+                Select{" "}
+                {planModal.planType === "juan-tap"
+                  ? "Free JuanTap"
+                  : planModal.planType === "video"
+                    ? "Free Video Shoot"
+                    : "Free Photo Shoot"}{" "}
+                Plan
+              </DialogTitle>
+              <DialogDescription>
+                Choose a plan for {planModal.survey?.contact_person || "the contact"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {planModal.planType === "juan-tap" && (
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-2">
+                    <ExternalLink className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">View JuanTap Survey</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                        To proceed with the JuanTap offering, please click the link below:
+                      </p>
+                      <a
+                        href="https://infinitechphil.com/juantap-survey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                      >
+                        infinitechphil.com/juantap-survey
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="space-y-3">
+                <Label>Available Plans</Label>
+                <div className="grid grid-cols-1 gap-3">
+                  {planModal.planType === "juan-tap" && (
+                    <>
+                      <div
+                        className="p-4 border-2 rounded-lg cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                        onClick={() => setSelectedPlan("standard")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="plan"
+                            value="standard"
+                            checked={selectedPlan === "standard"}
+                            onChange={() => setSelectedPlan("standard")}
+                          />
+                          <div>
+                            <p className="font-semibold">Standard Plan</p>
+                            <p className="text-sm text-muted-foreground">Basic features included</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="p-4 border-2 rounded-lg cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                        onClick={() => setSelectedPlan("premium")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="plan"
+                            value="premium"
+                            checked={selectedPlan === "premium"}
+                            onChange={() => setSelectedPlan("premium")}
+                          />
+                          <div>
+                            <p className="font-semibold">Premium Plan</p>
+                            <p className="text-sm text-muted-foreground">Advanced features and support</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="p-4 border-2 rounded-lg cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                        onClick={() => setSelectedPlan("elite")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="plan"
+                            value="elite"
+                            checked={selectedPlan === "elite"}
+                            onChange={() => setSelectedPlan("elite")}
+                          />
+                          <div>
+                            <p className="font-semibold">Elite Plan</p>
+                            <p className="text-sm text-muted-foreground">Premium experience with priority support</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {planModal.planType === "video" && (
+                    <div
+                      className="p-4 border-2 rounded-lg cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                      onClick={() => setSelectedPlan("standard")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="plan"
+                          value="standard"
+                          checked={selectedPlan === "standard"}
+                          onChange={() => setSelectedPlan("standard")}
+                        />
+                        <div>
+                          <p className="font-semibold">Free Video Shoot</p>
+                          <p className="text-sm text-muted-foreground">Professional video production package</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {planModal.planType === "photo" && (
+                    <div
+                      className="p-4 border-2 rounded-lg cursor-pointer hover:bg-pink-50 dark:hover:bg-pink-950/30"
+                      onClick={() => setSelectedPlan("standard")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="plan"
+                          value="standard"
+                          checked={selectedPlan === "standard"}
+                          onChange={() => setSelectedPlan("standard")}
+                        />
+                        <div>
+                          <p className="font-semibold">Free Photo Shoot</p>
+                          <p className="text-sm text-muted-foreground">Professional photography package</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPlanModal({ isOpen: false, survey: null, planType: null })
+                  setSelectedPlan("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={generateChallengeEmailPreview}
+                disabled={sendingChallengeEmailId !== null || !selectedPlan}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {sendingChallengeEmailId !== null ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Review Email
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={challengeEmailPreview.isOpen}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setChallengeEmailPreview({
+                isOpen: false,
+                survey: null,
+                subject: "",
+                message: "",
+              })
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-purple-600" />
+                Email Preview
+              </DialogTitle>
+              <DialogDescription>
+                Review the email content before sending to {challengeEmailPreview.survey?.contact_person || "contact"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="challenge-preview-to">To</Label>
+                <Input
+                  id="challenge-preview-to"
+                  value={challengeEmailPreview.survey?.email || ""}
+                  onChange={(e) =>
+                    setChallengeEmailPreview({
+                      ...challengeEmailPreview,
+                      survey: challengeEmailPreview.survey
+                        ? { ...challengeEmailPreview.survey, email: e.target.value }
+                        : null,
+                    })
+                  }
+                  className="bg-slate-50 dark:bg-slate-900"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="challenge-preview-subject">Subject</Label>
+                <Input
+                  id="challenge-preview-subject"
+                  value={challengeEmailPreview.subject}
+                  onChange={(e) =>
+                    setChallengeEmailPreview({
+                      ...challengeEmailPreview,
+                      subject: e.target.value,
+                    })
+                  }
+                  className="bg-slate-50 dark:bg-slate-900"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="challenge-preview-message">Message</Label>
+                <Textarea
+                  id="challenge-preview-message"
+                  value={challengeEmailPreview.message}
+                  onChange={(e) =>
+                    setChallengeEmailPreview({
+                      ...challengeEmailPreview,
+                      message: e.target.value,
+                    })
+                  }
+                  rows={14}
+                  className="resize-none font-mono text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setChallengeEmailPreview({
+                    isOpen: false,
+                    survey: null,
+                    subject: "",
+                    message: "",
+                  })
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={sendChallengeEmailFromPreview}
+                disabled={sendingChallengeEmailId !== null}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {sendingChallengeEmailId !== null ? (
                   <>
                     <Loader className="h-4 w-4 mr-2 animate-spin" />
                     Sending...
