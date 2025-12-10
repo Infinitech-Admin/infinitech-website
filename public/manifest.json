@@ -7,7 +7,7 @@
   "id": "/",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
+  "display": "fullscreen", 
   "orientation": "any",
   "background_color": "#ff6905",
   "theme_color": "#ff470a",
