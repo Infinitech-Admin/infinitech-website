@@ -14,6 +14,11 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   ChevronLeft,
@@ -33,6 +38,7 @@ import {
   Instagram,
   MessageCircle,
   Copy,
+  Info,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -53,11 +59,13 @@ interface JuanTapSurvey {
   display_name: string
   first_name: string
   last_name: string
-  position: string // added position field
+  position: string
   website: string
-  social_media: SocialMedia[] | string // support both array and JSON string
+  social_media: SocialMedia[] | string
   profile_image: string
   profile_image_url: string
+  delivery_address: string
+  receiver_phone_number: string
   created_at: string
 }
 
@@ -94,11 +102,9 @@ export default function JuanTapAdminPage() {
   }
 
   const getImageUrl = (profile_image: string): string => {
-    if (!profile_image) return "/placeholder.svg"
+    if (!profile_image) return "/images/ProfileImage.jpg"
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-    // If already a full URL, return as is
     if (profile_image.startsWith("http")) return profile_image
-    // Otherwise, prepend API URL
     return `${apiUrl}/${profile_image}`
   }
 
@@ -312,12 +318,23 @@ export default function JuanTapAdminPage() {
       addTableRow("Display Name", survey.display_name, false)
       addTableRow("First Name", survey.first_name, true)
       addTableRow("Last Name", survey.last_name, false)
-      addTableRow("Position", survey.position, false)
+      addTableRow("Position", survey.position, true)
 
       addSectionHeader("CONTACT INFORMATION")
       addTableRow("Phone Number", survey.phone_number, false)
       addTableRow("Address", survey.address, true)
       addTableRow("Website", survey.website, false)
+
+      // Add Delivery Information Section
+      if (survey.delivery_address || survey.receiver_phone_number) {
+        addSectionHeader("DELIVERY INFORMATION")
+        if (survey.delivery_address) {
+          addTableRow("Delivery Address", survey.delivery_address, false)
+        }
+        if (survey.receiver_phone_number) {
+          addTableRow("Receiver Phone", survey.receiver_phone_number, true)
+        }
+      }
 
       const socialMediaArray = parseSocialMedia(survey.social_media)
       if (socialMediaArray && socialMediaArray.length > 0) {
@@ -411,7 +428,9 @@ JuanTap Team`)
           (survey.display_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (survey.first_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (survey.last_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-          (survey.position?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+          (survey.position?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.delivery_address?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (survey.receiver_phone_number?.toLowerCase() || "").includes(searchQuery.toLowerCase())
         return matchesSearch
       })
     : []
@@ -452,6 +471,76 @@ JuanTap Team`)
       default:
         return "#ccc"
     }
+  }
+
+  // Component for delivery address with redesigned popover
+  const DeliveryAddressCell = ({ address }: { address: string }) => {
+    if (!address) return <span className="text-muted-foreground">N/A</span>
+    
+    if (address.length <= 30) {
+      return <span className="text-sm">{address}</span>
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="flex items-center gap-1 text-sm text-left hover:bg-slate-100 dark:hover:bg-slate-800 p-1 rounded transition-colors">
+            <span className="truncate max-w-[120px]">{address}</span>
+            <Info className="h-3 w-3 text-orange-500 flex-shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent 
+          className="w-96 p-0 border-0 shadow-2xl" 
+          align="start"
+          side="top"
+          sideOffset={8}
+        >
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3">
+              <div className="flex items-center gap-2 text-white">
+                <MapPin className="h-5 w-5" />
+                <span className="font-semibold text-sm">Delivery Address</span>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                <p className="text-slate-100 leading-relaxed text-sm font-medium">
+                  {address}
+                </p>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(address)
+                    setMessage("Address copied to clipboard!")
+                    setTimeout(() => setMessage(""), 2000)
+                  }}
+                  className="flex-1 bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600 hover:text-white transition-colors"
+                >
+                  <Copy className="h-3 w-3 mr-2" />
+                  Copy Address
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(address)}`, '_blank')}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 transition-all"
+                >
+                  <MapPin className="h-3 w-3 mr-2" />
+                  Open in Maps
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    )
   }
 
   if (loading) {
@@ -496,7 +585,7 @@ JuanTap Team`)
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email, username, display name, first or last name..."
+                placeholder="Search by email, username, display name, first or last name, delivery address, or receiver phone..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
@@ -530,6 +619,8 @@ JuanTap Team`)
                     <TableHead className="font-bold">Username</TableHead>
                     <TableHead className="font-bold">Email</TableHead>
                     <TableHead className="font-bold">Phone</TableHead>
+                    <TableHead className="font-bold">Delivery Address</TableHead>
+                    <TableHead className="font-bold">Receiver Phone</TableHead>
                     <TableHead className="font-bold">Submitted</TableHead>
                     <TableHead className="font-bold text-center">Actions</TableHead>
                   </TableRow>
@@ -544,6 +635,10 @@ JuanTap Team`)
                         {survey.email || "N/A"}
                       </TableCell>
                       <TableCell className="text-sm">{survey.phone_number || "N/A"}</TableCell>
+                      <TableCell className="min-w-[150px]">
+                        <DeliveryAddressCell address={survey.delivery_address} />
+                      </TableCell>
+                      <TableCell className="text-sm">{survey.receiver_phone_number || "N/A"}</TableCell>
                       <TableCell className="text-sm">{new Date(survey.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 justify-center">
@@ -567,11 +662,11 @@ JuanTap Team`)
                                   {survey.profile_image && (
                                     <div className="relative w-full">
                                       <img
-                                        src={getImageUrl(survey.profile_image) || "/placeholder.svg"}
+                                        src={getImageUrl(survey.profile_image) || "/images/ProfileImage.jpg"}
                                         alt={`${survey.display_name || survey.username} profile`}
                                         className="w-full h-auto rounded-t-xl object-cover aspect-square"
                                         onError={(e) => {
-                                          e.currentTarget.src = "/placeholder.svg"
+                                          e.currentTarget.src = "/images/ProfileImage.jpg"
                                         }}
                                       />
                                     </div>
