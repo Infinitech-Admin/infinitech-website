@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle, Upload, Camera } from 'lucide-react';
+import { Mail, User, MapPin, Phone, CheckCircle2, Loader2, Globe, Plus, X, Facebook, Instagram, MessageCircle, Upload, Camera, Package, PhoneCall } from 'lucide-react';
 
 interface SocialMedia {
   platform: string;
@@ -17,6 +17,8 @@ interface FormData {
   last_name: string;
     position: string;
   website: string;
+    receiver_phone_number: string;
+      delivery_address: string;
   social_media: SocialMedia[];
   profile_image: File | null;
 }
@@ -32,6 +34,8 @@ export default function JuanTapSurvey() {
     last_name: '',
     position:'',
     website: '',
+        receiver_phone_number: '',
+            delivery_address: '',
     social_media: [],
     profile_image: null
   });
@@ -39,12 +43,7 @@ export default function JuanTapSurvey() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentSocial, setCurrentSocial] = useState<SocialMedia>({ platform: '', url: '' });
-  const [errors, setErrors] = useState({
-    email: '',
-    phone_number: '',
-    profile_image: '',
-    social_media: ''
-  });
+  const [errors, setErrors] = useState({ email: '', phone_number: '', receiver_phone_number: '', profile_image: '', social_media: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -89,7 +88,12 @@ export default function JuanTapSurvey() {
       setErrors(prev => ({ ...prev, phone_number: '' }));
     }
   };
-
+  const handleReceiverPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const sanitized = value.replace(/[a-zA-Z]/g, '');
+    setFormData(prev => ({ ...prev, receiver_phone_number: sanitized }));
+    setErrors(prev => ({ ...prev, receiver_phone_number: value !== sanitized ? 'Phone number cannot contain letters' : '' }));
+  };
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     
@@ -174,17 +178,11 @@ export default function JuanTapSurvey() {
 
   const handleSubmit = async () => {
     let hasErrors = false;
-    const newErrors = { email: '', phone_number: '', profile_image: '', social_media: '' };
+    const newErrors = { email: '', phone_number: '', receiver_phone_number: '', profile_image: '', social_media: '' };
 
-    if (formData.email && !validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-      hasErrors = true;
-    }
-
-    if (formData.phone_number && /[a-zA-Z]/.test(formData.phone_number)) {
-      newErrors.phone_number = 'Phone number cannot contain letters';
-      hasErrors = true;
-    }
+    if (formData.email && !validateEmail(formData.email)) { newErrors.email = 'Please enter a valid email address'; hasErrors = true; }
+    if (formData.phone_number && /[a-zA-Z]/.test(formData.phone_number)) { newErrors.phone_number = 'Phone number cannot contain letters'; hasErrors = true; }
+    if (formData.receiver_phone_number && /[a-zA-Z]/.test(formData.receiver_phone_number)) { newErrors.receiver_phone_number = 'Phone number cannot contain letters'; hasErrors = true; }
 
     setErrors(newErrors);
     if (hasErrors) return;
@@ -192,10 +190,7 @@ export default function JuanTapSurvey() {
     setIsSubmitting(true);
 
     try {
-      // Create FormData for multipart/form-data submission
       const submitFormData = new FormData();
-      
-      // Append text fields
       submitFormData.append('email', formData.email || '');
       submitFormData.append('username', formData.username || '');
       submitFormData.append('address', formData.address || '');
@@ -203,36 +198,20 @@ export default function JuanTapSurvey() {
       submitFormData.append('display_name', formData.display_name || '');
       submitFormData.append('first_name', formData.first_name || '');
       submitFormData.append('last_name', formData.last_name || '');
-            submitFormData.append('position', formData.position || '');
+      submitFormData.append('position', formData.position || '');
       submitFormData.append('website', formData.website || '');
+      submitFormData.append('delivery_address', formData.delivery_address || '');
+      submitFormData.append('receiver_phone_number', formData.receiver_phone_number || '');
       
-      // Append social media as JSON string
-      if (formData.social_media && formData.social_media.length > 0) {
-        submitFormData.append('social_media', JSON.stringify(formData.social_media));
-      }
-      
-      // Append image file
-      if (formData.profile_image) {
-        submitFormData.append('profile_image', formData.profile_image);
-      }
+      if (formData.social_media?.length > 0) submitFormData.append('social_media', JSON.stringify(formData.social_media));
+      if (formData.profile_image) submitFormData.append('profile_image', formData.profile_image);
 
-      console.log('=== SUBMITTING WITH IMAGE ===');
-      console.log('Has image?', !!formData.profile_image);
-      console.log('Image name:', formData.profile_image?.name);
-
-      const response = await fetch('/api/juantap-surveys', {
-        method: 'POST',
-        body: submitFormData, // Note: Don't set Content-Type header, browser will set it with boundary
-      });
-
+      const response = await fetch('/api/juantap-surveys', { method: 'POST', body: submitFormData });
       const data = await response.json();
-
-      console.log('Response from API:', data);
 
       if (data.success) {
         setSubmitted(true);
       } else {
-        console.error('Failed to submit survey:', data);
         alert('Failed to submit survey. Please try again.');
       }
     } catch (error) {
@@ -242,7 +221,6 @@ export default function JuanTapSurvey() {
       setIsSubmitting(false);
     }
   };
-
   useEffect(() => {
     if (submitted) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -520,7 +498,28 @@ export default function JuanTapSurvey() {
     </div>
   </div>
 </div>
-
+<div className="border-t border-slate-200 pt-5 mt-6">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-orange-500" />Delivery Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">Delivery Address</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input type="text" placeholder="Delivery address" className="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm" value={formData.delivery_address} onChange={(e) => handleInputChange('delivery_address', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">Receiver Phone Number</label>
+                    <div className="relative">
+                      <PhoneCall className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input type="tel" placeholder="09123456789" className={`w-full pl-10 pr-3 py-2.5 border ${errors.receiver_phone_number ? 'border-red-500' : 'border-slate-300'} rounded-lg focus:ring-2 focus:ring-orange-500 text-sm`} value={formData.receiver_phone_number} onChange={handleReceiverPhoneChange} />
+                    </div>
+                    {errors.receiver_phone_number && <p className="text-red-500 text-xs">{errors.receiver_phone_number}</p>}
+                  </div>
+                </div>
+              </div>
 
               {/* Social Media */}
               <div className="space-y-3">
