@@ -33,7 +33,7 @@ const FloatingSocialMedia = () => {
       title: "Email"
     },
     {
-      href: "tel:+63",
+      href: "tel:+639195874915",
       icon: Phone,
       bgColor: "bg-blue-500 hover:bg-blue-600",
       title: "Phone"
@@ -134,5 +134,6 @@ const FloatingSocialMedia = () => {
     </>
   );
 };
+
 
 export default FloatingSocialMedia;
