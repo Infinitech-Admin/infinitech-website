@@ -5,7 +5,7 @@ import ConditionalLayout from "@/components/conditional-layout";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { poppins } from "@/config/fonts";
 import { Toaster } from "react-hot-toast";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://infinitechphil.com'),
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     description: "Transform your business with cutting-edge web design, digital marketing, and advertising solutions. Based in Makati, serving businesses across Metro Manila and the Philippines.",
     images: [
       {
-        url: "/og-image.jpg", // Create this image (1200x630px recommended)
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Infinitech Advertising Corporation - Web Design & Digital Marketing",
@@ -102,8 +102,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Infinitech Advertising Corporation - Digital Marketing & Web Design",
     description: "Leading advertising agency in Makati. Expert web design, SEO, and digital marketing services for businesses in the Philippines.",
-    images: ["/twitter-image.jpg"], // Create this image (1200x600px recommended)
-    creator: "@infinitechcorp", // Replace with your actual Twitter handle
+    images: ["/twitter-image.jpg"],
+    creator: "@infinitechcorp",
   },
   
   robots: {
@@ -136,16 +136,8 @@ export const metadata: Metadata = {
     { media: "(prefers-color-scheme: dark)", color: "#ff470a" },
   ],
   
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  
   verification: {
-    google: "your-google-verification-code", // Add your Google Search Console verification
-    // yandex: "your-yandex-verification",
-    // yahoo: "your-yahoo-verification",
+    google: "your-google-verification-code",
   },
   
   alternates: {
@@ -154,6 +146,15 @@ export const metadata: Metadata = {
   
   category: "Advertising and Marketing",
 };
+
+// Export viewport separately for better control
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true, // Allow user scaling
+  viewportFit: "cover", // Important for PWA fullscreen
+}
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -172,6 +173,11 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         <meta property="business:contact_data:postal_code" content="1206" />
         <meta property="business:contact_data:country_name" content="Philippines" />
         <meta property="business:contact_data:email" content="infinitechcorp.ph@gmail.com" />
+        
+        {/* Mobile-specific meta tags for orientation */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
