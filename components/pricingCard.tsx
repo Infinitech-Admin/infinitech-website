@@ -38,8 +38,8 @@ const PricingCard: React.FC<PricingCardProps> = ({
   onExpandChange,
 }) => {
   const getBillingText = () => {
-    if (billingPeriod === "piece") return "per piece"
-    return billingPeriod === "yearly" ? "/year" : "/month"
+    if (billingPeriod === "piece") return "/per piece"
+    return billingPeriod === "yearly" ? "/year" : "/month" 
   }
 
   return (
@@ -66,7 +66,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
           </div>
         )}
 
-        <div className="p-5">
+        <div className="p-5 pb-20">
           <div className="flex flex-row gap-6">
             {/* Left: Plan Info & Features */}
             <div className="flex-1 min-w-0">
@@ -93,41 +93,41 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 </p>
               )}
             </div>
-
-            {/* Right: Price & Cart Button */}
-            <div className="flex flex-col items-end justify-between shrink-0 w-32">
-              {/* Price */}
-              <div className="text-right">
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-2xl font-black text-white">{currency}</span>
-                  <span className="text-2xl font-black text-white">
-                    {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-                <span className="text-slate-400 font-medium text-xs">
-                  {getBillingText()}
-                </span>
-              </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onAddToCart?.()
-                }}
-                className={`relative p-3 rounded-xl transition-all duration-300 mt-auto ${
-                  isInCart
-                    ? "bg-green-500 text-white"
-                    : plan.popular
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                      : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
-                }`}
-                title={isInCart ? "Added to cart" : "Add to cart"}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {!isInCart && <Plus className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full p-0.5" />}
-              </button>
-            </div>
           </div>
+        </div>
+
+        {/* Price & Cart Button - Bottom Right */}
+        <div className="absolute bottom-5 right-5 flex items-center gap-3">
+          {/* Price */}
+          <div className="text-right">
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-2xl font-black text-white">{currency}</span>
+              <span className="text-2xl font-black text-white">
+                {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
+            <span className="text-slate-400 font-medium text-xs">
+              {getBillingText()}
+            </span>
+          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddToCart?.()
+            }}
+            className={`relative p-3 rounded-xl transition-all duration-300 ${
+              isInCart
+                ? "bg-green-500 text-white"
+                : plan.popular
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
+                  : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
+            }`}
+            title={isInCart ? "Added to cart" : "Add to cart"}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {!isInCart && <Plus className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full p-0.5" />}
+          </button>
         </div>
       </div>
 
