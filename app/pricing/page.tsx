@@ -364,62 +364,63 @@ const PricingPage = () => {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 lg:py-12 pt-24">
       {/* Header Section */}
-    <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
-  <div className="text-center max-w-4xl mx-auto">
-    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-      Our Pricing Plans
-    </h1>
-    <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
-      Choose the perfect plan for your business. All plans include support and updates.
-    </p>
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
+        <div className="text-center max-w-4xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            Our Pricing Plans
+          </h1>
+          <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
+            Choose the perfect plan for your business. All plans include support and updates.
+          </p>
 
-    {/* Service Selector */}
-    <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2">
-      {Object.entries(services).map(([key, service]) => (
-        <button
-          key={key}
-          onClick={() => setActiveService(key)}
-          className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
-            activeService === key
-              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
-              : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-          }`}
-        >
-          {key === "website" && "Website"}
-          {key === "juantap" && "JuanTap"}
-          {key === "socialmedia" && "Social Media"}
-          {key === "multimedia" && "Multimedia"}
-        </button>
-      ))}
-    </div>
+          {/* Service Selector */}
+          <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2">
+            {Object.entries(services).map(([key, service]) => (
+              <button
+                key={key}
+                onClick={() => setActiveService(key)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
+                  activeService === key
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                {key === "website" && "Website"}
+                {key === "juantap" && "JuanTap"}
+                {key === "socialmedia" && "Social Media"}
+                {key === "multimedia" && "Multimedia"}
+              </button>
+            ))}
+          </div>
 
-    <div className="flex justify-center gap-2 mb-4">
-      <button
-        onClick={() => setBillingPeriod("monthly")}
-        className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-          billingPeriod === "monthly"
-            ? "bg-cyan-500 text-white"
-            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-        }`}
-      >
-        Monthly
-      </button>
-      <button
-        onClick={() => setBillingPeriod("yearly")}
-        className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-          billingPeriod === "yearly"
-            ? "bg-cyan-500 text-white"
-            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-        }`}
-      >
-        Yearly
-      </button>
-    </div>
+          {!isJuanTap && (
+            <div className="flex justify-center gap-2 mb-4">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                  billingPeriod === "monthly"
+                    ? "bg-cyan-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingPeriod("yearly")}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                  billingPeriod === "yearly"
+                    ? "bg-cyan-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
+          )}
 
-    <p className="text-slate-400 text-sm">{currentService.description}</p>
-  </div>
-</section>
-
+          <p className="text-slate-400 text-sm">{currentService.description}</p>
+        </div>
+      </section>
 
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
