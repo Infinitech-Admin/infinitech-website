@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +28,12 @@ import {
   Send,
   Loader,
   ExternalLink,
+  Search,
+  Filter,
+  ChevronDown,
+  Clock,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -422,7 +427,7 @@ The Team
         doc.rect(0, 0, pageWidth, 45, "F")
 
         try {
-          const logo = await loadImage("/images/logo.png")
+          const logo = await loadImage("/images/Logo.jpg")
           const canvas = document.createElement("canvas")
           canvas.width = logo.width
           canvas.height = logo.height
@@ -707,14 +712,46 @@ The Team
   const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE)
   const paginatedSurveys = filteredSurveys.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
+  // Calculate stats
+  const totalSurveys = surveys.length
+  const pendingSurveys = 0 // You can implement this logic based on your requirements
+  const repliedSurveys = surveys.length // Assuming all are replied for now
+  const resolvedSurveys = 0 // You can implement this logic based on your requirements
+
+  // Generate initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?"
+  }
+
+  // Generate avatar color based on name
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500", 
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-red-500",
+      "bg-yellow-500",
+      "bg-teal-500"
+    ]
+    const hash = name?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 0
+    return colors[hash % colors.length]
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
+      <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center items-center h-96">
             <div className="text-center">
               <Loader className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-muted-foreground">Loading surveys...</p>
+              <p className="text-gray-600">Loading surveys...</p>
             </div>
           </div>
         </div>
@@ -723,472 +760,605 @@ The Team
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with gradient background */}
+      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-12">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <BarChart3 className="h-8 w-8" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Survey Responses</h1>
+              <p className="text-cyan-100 mt-1">Manage and respond to customer inquiries</p>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            className="bg-white text-blue-600 border-white hover:bg-blue-50"
+            onClick={() => router.push("/admin")}
+          >
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-8 py-8">
         {message && (
-          <Alert className="mb-6 bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800">
-            <AlertDescription className="text-green-800 dark:text-green-200">{message}</AlertDescription>
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <AlertDescription className="text-green-800">{message}</AlertDescription>
           </Alert>
         )}
 
-        <Card className="bg-white dark:bg-slate-800 shadow-lg border-0">
-          <CardHeader className="border-b border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-3xl font-bold text-slate-900 dark:text-white">Survey Responses</CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400 mt-2">
-                  Manage survey data and send follow-up emails with tailored offers
-                </CardDescription>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white border-l-4 border-l-cyan-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Total Inquiries</p>
+                  <p className="text-3xl font-bold text-gray-900">{totalSurveys}</p>
+                </div>
+                <div className="p-3 bg-cyan-500 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-white" />
+                </div>
               </div>
-              <BarChart3 className="h-8 w-8 text-blue-600" />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-l-4 border-l-yellow-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Pending</p>
+                  <p className="text-3xl font-bold text-yellow-600">{pendingSurveys}</p>
+                </div>
+                <div className="p-3 bg-yellow-500 rounded-lg">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-l-4 border-l-blue-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Replied</p>
+                  <p className="text-3xl font-bold text-blue-600">{repliedSurveys}</p>
+                </div>
+                <div className="p-3 bg-blue-500 rounded-lg">
+                  <Mail className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">Resolved</p>
+                  <p className="text-3xl font-bold text-green-600">{resolvedSurveys}</p>
+                </div>
+                <div className="p-3 bg-green-500 rounded-lg">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Card */}
+        <Card className="bg-white shadow-sm">
+          <CardHeader className="border-b border-gray-200 pb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Mail className="h-6 w-6 text-blue-600" />
+                <div>
+                  <CardTitle className="text-xl font-bold text-gray-900">All Inquiries</CardTitle>
+                  <CardDescription className="text-gray-500">
+                    Showing 1-{Math.min(ITEMS_PER_PAGE, filteredSurveys.length)} of {filteredSurveys.length}
+                  </CardDescription>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Search inquiries..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  All Status
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-6">
-            <div className="mb-6 space-y-4">
-              <div>
-                <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
-                  Search Surveys
-                </Label>
-                <Input
-                  placeholder="Search by company name, contact person, or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600"
-                />
-              </div>
+          <CardContent className="p-0">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-600">
+              <div className="col-span-3">Name</div>
+              <div className="col-span-2">Email</div>
+              <div className="col-span-2">Phone</div>
+              <div className="col-span-2">Message</div>
+              <div className="col-span-1">Status</div>
+              <div className="col-span-1">Date</div>
+              <div className="col-span-1">Actions</div>
             </div>
 
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-b-2 border-slate-200 dark:border-slate-700">
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Company</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Contact</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Email</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300">Phone</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedSurveys.map((survey) => (
-                    <TableRow
-                      key={survey.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700"
-                    >
-                      <TableCell className="font-semibold text-slate-900 dark:text-white">
-                        {survey.company_name}
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.contact_person}</TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.email}</TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400">{survey.phone}</TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-2 border-slate-200 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700 bg-transparent"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          {survey && (
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2 text-2xl">
-                                  <Building2 className="h-6 w-6 text-blue-600" />
-                                  {survey.company_name}
-                                </DialogTitle>
-                                <DialogDescription>
-                                  Survey ID: {survey.survey_id} | Submitted:{" "}
-                                  {new Date(survey.created_at).toLocaleDateString()}
-                                </DialogDescription>
-                              </DialogHeader>
+            {/* Table Body */}
+            <div className="divide-y divide-gray-200">
+              {paginatedSurveys.map((survey) => (
+                <div key={survey.id} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                  {/* Name with Avatar */}
+                  <div className="col-span-3 flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(survey.contact_person || survey.company_name || "")}`}>
+                      {getInitials(survey.contact_person || survey.company_name || "")}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{survey.contact_person || "N/A"}</p>
+                      <p className="text-sm text-gray-500">{survey.company_name}</p>
+                    </div>
+                  </div>
 
-                              <div className="space-y-6 py-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800">
-                                    <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
-                                    <div className="space-y-3">
-                                      <div className="flex items-start gap-2">
-                                        <Building2 className="h-4 w-4 text-blue-600 mt-1" />
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground">Company</p>
-                                          <p className="text-sm">{survey.company_name}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-start gap-2">
-                                        <Mail className="h-4 w-4 text-blue-600 mt-1" />
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground">Email</p>
-                                          <p className="text-sm">{survey.email}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-start gap-2">
-                                        <Phone className="h-4 w-4 text-blue-600 mt-1" />
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground">Phone</p>
-                                          <p className="text-sm">{survey.phone}</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-start gap-2">
-                                        <MapPin className="h-4 w-4 text-blue-600 mt-1" />
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground">Location</p>
-                                          <p className="text-sm">{survey.location}</p>
-                                        </div>
+                  {/* Email */}
+                  <div className="col-span-2 flex items-center">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-900 truncate">{survey.email}</span>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="col-span-2 flex items-center">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-900">{survey.phone}</span>
+                    </div>
+                  </div>
+
+                  {/* Message Preview */}
+                  <div className="col-span-2 flex items-center">
+                    <p className="text-sm text-gray-600 truncate">
+                      {survey.pain_points || survey.additional_comments || "Good day Ma'am/Sir, I hope you are doing..."}
+                    </p>
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-1 flex items-center">
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                      Replied
+                    </Badge>
+                  </div>
+
+                  {/* Date */}
+                  <div className="col-span-1 flex items-center">
+                    <span className="text-sm text-gray-600">
+                      {new Date(survey.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-1 flex items-center">
+                    <div className="flex gap-1">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        {survey && (
+                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2 text-2xl">
+                                <Building2 className="h-6 w-6 text-blue-600" />
+                                {survey.company_name}
+                              </DialogTitle>
+                              <DialogDescription>
+                                Survey ID: {survey.survey_id} | Submitted:{" "}
+                                {new Date(survey.created_at).toLocaleDateString()}
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                                  <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
+                                  <div className="space-y-3">
+                                    <div className="flex items-start gap-2">
+                                      <Building2 className="h-4 w-4 text-blue-600 mt-1" />
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground">Company</p>
+                                        <p className="text-sm">{survey.company_name}</p>
                                       </div>
                                     </div>
-                                  </div>
-
-                                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-800">
-                                    <h3 className="font-semibold text-lg mb-4">Business Profile</h3>
-                                    <div className="space-y-3">
+                                    <div className="flex items-start gap-2">
+                                      <Mail className="h-4 w-4 text-blue-600 mt-1" />
                                       <div>
-                                        <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                          Contact Person
-                                        </p>
-                                        <p className="text-sm">{survey.contact_person}</p>
+                                        <p className="text-sm font-semibold text-muted-foreground">Email</p>
+                                        <p className="text-sm">{survey.email}</p>
                                       </div>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                      <Phone className="h-4 w-4 text-blue-600 mt-1" />
                                       <div>
-                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Role</p>
-                                        <p className="text-sm">{survey.role}</p>
+                                        <p className="text-sm font-semibold text-muted-foreground">Phone</p>
+                                        <p className="text-sm">{survey.phone}</p>
                                       </div>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                      <MapPin className="h-4 w-4 text-blue-600 mt-1" />
                                       <div>
-                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Employees</p>
-                                        <p className="text-sm">{survey.no_of_employees}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-semibold text-muted-foreground mb-1">Industries</p>
-                                        <div className="flex flex-wrap gap-2">
-                                          {survey.industries?.map((ind, idx) => (
-                                            <Badge
-                                              key={idx}
-                                              className="bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100"
-                                            >
-                                              {ind}
-                                            </Badge>
-                                          ))}
-                                        </div>
+                                        <p className="text-sm font-semibold text-muted-foreground">Location</p>
+                                        <p className="text-sm">{survey.location}</p>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
 
-                                {survey.current_systems?.length > 0 && (
-                                  <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-950/30 dark:to-cyan-900/20 p-6 rounded-xl border-2 border-cyan-200 dark:border-cyan-800">
-                                    <h3 className="font-semibold text-lg mb-4">Current Systems</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                      {survey.current_systems.map((system, idx) => (
-                                        <Badge
-                                          key={idx}
-                                          className="bg-cyan-200 dark:bg-cyan-800 text-cyan-900 dark:text-cyan-100"
-                                        >
-                                          {system}
-                                        </Badge>
-                                      ))}
+                                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 p-6 rounded-xl border-2 border-purple-200 dark:border-purple-800">
+                                  <h3 className="font-semibold text-lg mb-4">Business Profile</h3>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                        Contact Person
+                                      </p>
+                                      <p className="text-sm">{survey.contact_person}</p>
                                     </div>
-                                  </div>
-                                )}
-
-                                {survey.systems_of_interest?.length > 0 && (
-                                  <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 p-6 rounded-xl border-2 border-green-200 dark:border-green-800">
-                                    <h3 className="font-semibold text-lg mb-4">Systems of Interest</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                      {survey.systems_of_interest.map((system, idx) => (
-                                        <Badge
-                                          key={idx}
-                                          className="bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100"
-                                        >
-                                          {system}
-                                        </Badge>
-                                      ))}
+                                    <div>
+                                      <p className="text-sm font-semibold text-muted-foreground mb-1">Role</p>
+                                      <p className="text-sm">{survey.role}</p>
                                     </div>
-                                  </div>
-                                )}
-
-                                {(survey.system_performance_issues?.length ||
-                                  survey.process_workflow_issues?.length ||
-                                  survey.reporting_data_issues?.length ||
-                                  survey.hr_payroll_issues?.length ||
-                                  survey.customer_sales_issues?.length ||
-                                  survey.inventory_supply_chain_issues?.length ||
-                                  survey.digital_marketing_issues?.length) && (
-                                  <div className="bg-gradient-to-br from-red-50 to-orange-50/30 dark:from-red-950/30 dark:to-orange-950/20 p-6 rounded-xl border-2 border-red-200 dark:border-red-800">
-                                    <h3 className="font-semibold text-lg mb-4">Identified Challenges</h3>
-                                    <div className="space-y-4">
-                                      {survey.system_performance_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            System Performance Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.system_performance_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.process_workflow_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            Process & Workflow Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.process_workflow_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.reporting_data_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            Reporting & Data Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.reporting_data_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.hr_payroll_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            HR / Payroll Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.hr_payroll_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.customer_sales_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            Customer & Sales Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.customer_sales_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.inventory_supply_chain_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            Inventory & Supply Chain Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.inventory_supply_chain_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {survey.digital_marketing_issues?.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-2">
-                                            Digital Marketing & Online Presence Issues
-                                          </p>
-                                          <div className="flex flex-wrap gap-2">
-                                            {survey.digital_marketing_issues.map((issue, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800"
-                                              >
-                                                {issue}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
+                                    <div>
+                                      <p className="text-sm font-semibold text-muted-foreground mb-1">Employees</p>
+                                      <p className="text-sm">{survey.no_of_employees}</p>
                                     </div>
-                                  </div>
-                                )}
-
-                                {(survey.pain_points || survey.ideal_system || survey.additional_comments) && (
-                                  <div className="bg-gradient-to-br from-amber-50 to-yellow-50/30 dark:from-amber-950 dark:to-yellow-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4">Feedback & Comments</h3>
-                                    <div className="space-y-4">
-                                      {survey.pain_points && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                            Pain Points
-                                          </p>
-                                          <p className="text-sm whitespace-pre-wrap">{survey.pain_points}</p>
-                                        </div>
-                                      )}
-                                      {survey.ideal_system && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                            Ideal System Description
-                                          </p>
-                                          <p className="text-sm whitespace-pre-wrap">{survey.ideal_system}</p>
-                                        </div>
-                                      )}
-                                      {survey.additional_comments && (
-                                        <div>
-                                          <p className="text-sm font-semibold text-muted-foreground mb-1">
-                                            Additional Comments
-                                          </p>
-                                          <p className="text-sm whitespace-pre-wrap">{survey.additional_comments}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {survey.preferred_features?.length > 0 && (
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
-                                    <h3 className="font-semibold text-lg mb-4">Preferred Features</h3>
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                      {survey.preferred_features.map((feature, idx) => (
-                                        <Badge key={idx} className="bg-green-500 hover:bg-green-600 text-white">
-                                          {feature}
-                                        </Badge>
-                                      ))}
-                                    </div>
-
-                                    <div className="border-t pt-4 space-y-3">
-                                      <p className="text-sm font-semibold text-muted-foreground">Actions</p>
-                                      <div className="flex flex-col gap-2">
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => openEmailDialog(survey)}
-                                          disabled={sendingEmailId === survey.id}
-                                          className="w-full border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950/20 justify-start"
-                                        >
-                                          {sendingEmailId === survey.id ? (
-                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                          ) : (
-                                            <Send className="h-4 w-4 mr-2" />
-                                          )}
-                                          Send Email
-                                        </Button>
-
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => openPlanModal(survey, "juan-tap")}
-                                          disabled={sendingChallengeEmailId === survey.id}
-                                          className="w-full border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/20 justify-start"
-                                        >
-                                          {sendingChallengeEmailId === survey.id ? (
-                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                          ) : (
-                                            <Eye className="h-4 w-4 mr-2" />
-                                          )}
-                                          Free JuanTap
-                                        </Button>
-
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => {
-                                            openPlanModal(survey, "video")
-                                          }}
-                                          disabled={sendingChallengeEmailId === survey.id}
-                                          className="w-full border-2 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/20 justify-start"
-                                        >
-                                          {sendingChallengeEmailId === survey.id ? (
-                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                          ) : (
-                                            <Eye className="h-4 w-4 mr-2" />
-                                          )}
-                                          Free Video Shoot
-                                        </Button>
-
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => {
-                                            openPlanModal(survey, "photo")
-                                          }}
-                                          disabled={sendingChallengeEmailId === survey.id}
-                                          className="w-full border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-800 dark:hover:bg-pink-900/20 justify-start"
-                                        >
-                                          {sendingChallengeEmailId === survey.id ? (
-                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                          ) : (
-                                            <Eye className="h-4 w-4 mr-2" />
-                                          )}
-                                          Free Photo Shoot
-                                        </Button>
+                                    <div>
+                                      <p className="text-sm font-semibold text-muted-foreground mb-1">Industries</p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {survey.industries?.map((ind, idx) => (
+                                          <Badge
+                                            key={idx}
+                                            className="bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100"
+                                          >
+                                            {ind}
+                                          </Badge>
+                                        ))}
                                       </div>
                                     </div>
                                   </div>
-                                )}
+                                </div>
                               </div>
-                            </DialogContent>
-                          )}
-                        </Dialog>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generatePDF(survey)}
-                          disabled={downloadingId === survey.id}
-                          className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-900/20"
-                        >
-                          {downloadingId === survey.id ? (
-                            <Loader className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4 mr-1" />
-                          )}
-                          PDF
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                              {survey.current_systems?.length > 0 && (
+                                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-950/30 dark:to-cyan-900/20 p-6 rounded-xl border-2 border-cyan-200 dark:border-cyan-800">
+                                  <h3 className="font-semibold text-lg mb-4">Current Systems</h3>
+                                  <div className="flex flex-wrap gap-2">
+                                    {survey.current_systems.map((system, idx) => (
+                                      <Badge
+                                        key={idx}
+                                        className="bg-cyan-200 dark:bg-cyan-800 text-cyan-900 dark:text-cyan-100"
+                                      >
+                                        {system}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {survey.systems_of_interest?.length > 0 && (
+                                <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 p-6 rounded-xl border-2 border-green-200 dark:border-green-800">
+                                  <h3 className="font-semibold text-lg mb-4">Systems of Interest</h3>
+                                  <div className="flex flex-wrap gap-2">
+                                    {survey.systems_of_interest.map((system, idx) => (
+                                      <Badge
+                                        key={idx}
+                                        className="bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100"
+                                      >
+                                        {system}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {(survey.system_performance_issues?.length ||
+                                survey.process_workflow_issues?.length ||
+                                survey.reporting_data_issues?.length ||
+                                survey.hr_payroll_issues?.length ||
+                                survey.customer_sales_issues?.length ||
+                                survey.inventory_supply_chain_issues?.length ||
+                                survey.digital_marketing_issues?.length) && (
+                                <div className="bg-gradient-to-br from-red-50 to-orange-50/30 dark:from-red-950/30 dark:to-orange-950/20 p-6 rounded-xl border-2 border-red-200 dark:border-red-800">
+                                  <h3 className="font-semibold text-lg mb-4">Identified Challenges</h3>
+                                  <div className="space-y-4">
+                                    {survey.system_performance_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          System Performance Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.system_performance_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.process_workflow_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          Process & Workflow Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.process_workflow_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.reporting_data_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          Reporting & Data Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.reporting_data_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.hr_payroll_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          HR / Payroll Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.hr_payroll_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.customer_sales_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          Customer & Sales Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.customer_sales_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.inventory_supply_chain_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          Inventory & Supply Chain Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.inventory_supply_chain_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {survey.digital_marketing_issues?.length > 0 && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-2">
+                                          Digital Marketing & Online Presence Issues
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {survey.digital_marketing_issues.map((issue, idx) => (
+                                            <Badge
+                                              key={idx}
+                                              variant="outline"
+                                              className="bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800"
+                                            >
+                                              {issue}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {(survey.pain_points || survey.ideal_system || survey.additional_comments) && (
+                                <div className="bg-gradient-to-br from-amber-50 to-yellow-50/30 dark:from-amber-950 dark:to-yellow-950/10 p-6 rounded-xl border-2">
+                                  <h3 className="font-semibold text-lg mb-4">Feedback & Comments</h3>
+                                  <div className="space-y-4">
+                                    {survey.pain_points && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                          Pain Points
+                                        </p>
+                                        <p className="text-sm whitespace-pre-wrap">{survey.pain_points}</p>
+                                      </div>
+                                    )}
+                                    {survey.ideal_system && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                          Ideal System Description
+                                        </p>
+                                        <p className="text-sm whitespace-pre-wrap">{survey.ideal_system}</p>
+                                      </div>
+                                    )}
+                                    {survey.additional_comments && (
+                                      <div>
+                                        <p className="text-sm font-semibold text-muted-foreground mb-1">
+                                          Additional Comments
+                                        </p>
+                                        <p className="text-sm whitespace-pre-wrap">{survey.additional_comments}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {survey.preferred_features?.length > 0 && (
+                                <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-950/10 p-6 rounded-xl border-2">
+                                  <h3 className="font-semibold text-lg mb-4">Preferred Features</h3>
+                                  <div className="flex flex-wrap gap-2 mb-6">
+                                    {survey.preferred_features.map((feature, idx) => (
+                                      <Badge key={idx} className="bg-green-500 hover:bg-green-600 text-white">
+                                        {feature}
+                                      </Badge>
+                                    ))}
+                                  </div>
+
+                                  <div className="border-t pt-4 space-y-3">
+                                    <p className="text-sm font-semibold text-muted-foreground">Actions</p>
+                                    <div className="flex flex-col gap-2">
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => openEmailDialog(survey)}
+                                        disabled={sendingEmailId === survey.id}
+                                        className="w-full border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950/20 justify-start"
+                                      >
+                                        {sendingEmailId === survey.id ? (
+                                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Send className="h-4 w-4 mr-2" />
+                                        )}
+                                        Send Email
+                                      </Button>
+
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => openPlanModal(survey, "juan-tap")}
+                                        disabled={sendingChallengeEmailId === survey.id}
+                                        className="w-full border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/20 justify-start"
+                                      >
+                                        {sendingChallengeEmailId === survey.id ? (
+                                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Eye className="h-4 w-4 mr-2" />
+                                        )}
+                                        Free JuanTap
+                                      </Button>
+
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          openPlanModal(survey, "video")
+                                        }}
+                                        disabled={sendingChallengeEmailId === survey.id}
+                                        className="w-full border-2 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-900/20 justify-start"
+                                      >
+                                        {sendingChallengeEmailId === survey.id ? (
+                                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Eye className="h-4 w-4 mr-2" />
+                                        )}
+                                        Free Video Shoot
+                                      </Button>
+
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          openPlanModal(survey, "photo")
+                                        }}
+                                        disabled={sendingChallengeEmailId === survey.id}
+                                        className="w-full border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-800 dark:hover:bg-pink-900/20 justify-start"
+                                      >
+                                        {sendingChallengeEmailId === survey.id ? (
+                                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Eye className="h-4 w-4 mr-2" />
+                                        )}
+                                        Free Photo Shoot
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        )}
+                      </Dialog>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => generatePDF(survey)}
+                        disabled={downloadingId === survey.id}
+                        className="h-8 w-8 p-0"
+                      >
+                        {downloadingId === survey.id ? (
+                          <Loader className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEmailDialog(survey)}
+                        disabled={sendingEmailId === survey.id}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
@@ -1214,6 +1384,7 @@ The Team
           </div>
         )}
 
+        {/* All existing modals remain the same */}
         <Dialog
           open={emailPreview.isOpen}
           onOpenChange={(isOpen) => {
