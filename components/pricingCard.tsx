@@ -95,7 +95,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
             </div>
 
             {/* Right: Price & Cart Button */}
-            <div className="flex flex-col items-end justify-between shrink-0">
+            <div className="flex flex-col items-end justify-between shrink-0 w-32">
               {/* Price */}
               <div className="text-right">
                 <div className="flex items-baseline gap-0.5">
@@ -114,7 +114,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                   e.stopPropagation()
                   onAddToCart?.()
                 }}
-                className={`relative p-3 rounded-xl transition-all duration-300 ${
+                className={`relative p-3 rounded-xl transition-all duration-300 mt-auto ${
                   isInCart
                     ? "bg-green-500 text-white"
                     : plan.popular
