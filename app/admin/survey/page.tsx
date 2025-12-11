@@ -427,7 +427,7 @@ The Team
         doc.rect(0, 0, pageWidth, 45, "F")
 
         try {
-          const logo = await loadImage("/images/Logo.jpg")
+          const logo = await loadImage("/images/photo1765413474.jpg")
           const canvas = document.createElement("canvas")
           canvas.width = logo.width
           canvas.height = logo.height
@@ -884,70 +884,62 @@ The Team
 
           <CardContent className="p-0">
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-600">
+            <div className="grid grid-cols-12 gap-6 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-600">
               <div className="col-span-3">Name</div>
-              <div className="col-span-2">Email</div>
+              <div className="col-span-3">Email</div>
               <div className="col-span-2">Phone</div>
               <div className="col-span-2">Message</div>
               <div className="col-span-1">Status</div>
-              <div className="col-span-1">Date</div>
               <div className="col-span-1">Actions</div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-gray-200">
               {paginatedSurveys.map((survey) => (
-                <div key={survey.id} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div key={survey.id} className="grid grid-cols-12 gap-6 px-6 py-4 hover:bg-gray-50 transition-colors items-center">
                   {/* Name with Avatar */}
-                  <div className="col-span-3 flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(survey.contact_person || survey.company_name || "")}`}>
+                  <div className="col-span-3 flex items-center gap-3 min-w-0">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${getAvatarColor(survey.contact_person || survey.company_name || "")}`}>
                       {getInitials(survey.contact_person || survey.company_name || "")}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{survey.contact_person || "N/A"}</p>
-                      <p className="text-sm text-gray-500">{survey.company_name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 truncate">{survey.contact_person || "N/A"}</p>
+                      <p className="text-sm text-gray-500 truncate">{survey.company_name}</p>
                     </div>
                   </div>
 
                   {/* Email */}
-                  <div className="col-span-2 flex items-center">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
+                  <div className="col-span-3 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-900 truncate">{survey.email}</span>
                     </div>
                   </div>
 
                   {/* Phone */}
-                  <div className="col-span-2 flex items-center">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{survey.phone}</span>
+                  <div className="col-span-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-900 truncate">{survey.phone}</span>
                     </div>
                   </div>
 
                   {/* Message Preview */}
-                  <div className="col-span-2 flex items-center">
+                  <div className="col-span-2 min-w-0">
                     <p className="text-sm text-gray-600 truncate">
                       {survey.pain_points || survey.additional_comments || "Good day Ma'am/Sir, I hope you are doing..."}
                     </p>
                   </div>
 
                   {/* Status */}
-                  <div className="col-span-1 flex items-center">
-                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                  <div className="col-span-1">
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 whitespace-nowrap">
                       Replied
                     </Badge>
                   </div>
 
-                  {/* Date */}
-                  <div className="col-span-1 flex items-center">
-                    <span className="text-sm text-gray-600">
-                      {new Date(survey.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-
                   {/* Actions */}
-                  <div className="col-span-1 flex items-center">
+                  <div className="col-span-1">
                     <div className="flex gap-1">
                       <Dialog>
                         <DialogTrigger asChild>
