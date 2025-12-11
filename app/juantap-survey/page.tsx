@@ -499,7 +499,7 @@ export default function JuanTapSurvey() {
                   <input
                     type="text"
                     id="address"
-                    placeholder="Unit 202, Campos Rueda Building, Urban Avenue, Makati City"
+                    placeholder="your address"
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
@@ -520,7 +520,7 @@ export default function JuanTapSurvey() {
                     <input
                       type="tel"
                       id="phone_number"
-                      placeholder="09651983796"
+                      placeholder="09123456789"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.phone_number ? 'border-red-500' : 'border-slate-300'
                       } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
@@ -558,7 +558,7 @@ export default function JuanTapSurvey() {
                     <input
                       type="url"
                       id="website"
-                      placeholder="abicealtyph.com"
+                      placeholder="yourwebsite.com"
                       className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                       value={formData.website}
                       onChange={(e) => handleInputChange('website', e.target.value)}
@@ -566,45 +566,7 @@ export default function JuanTapSurvey() {
                   </div>
                 </div>
               </div>
-
-              {/* Delivery Information */}
-              <div className="border-t border-slate-200 pt-5 mt-6">
-                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-orange-500" />
-                  Delivery Information
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700">Delivery Address</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                      <input 
-                        type="text" 
-                        placeholder="Delivery address" 
-                        className="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm" 
-                        value={formData.delivery_address} 
-                        onChange={(e) => handleInputChange('delivery_address', e.target.value)} 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700">Receiver Phone Number</label>
-                    <div className="relative">
-                      <PhoneCall className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                      <input 
-                        type="tel" 
-                        placeholder="09123456789" 
-                        className={`w-full pl-10 pr-3 py-2.5 border ${errors.receiver_phone_number ? 'border-red-500' : 'border-slate-300'} rounded-lg focus:ring-2 focus:ring-orange-500 text-sm`} 
-                        value={formData.receiver_phone_number} 
-                        onChange={handleReceiverPhoneChange} 
-                      />
-                    </div>
-                    {errors.receiver_phone_number && <p className="text-red-500 text-xs">{errors.receiver_phone_number}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Media */}
+{/* Social Media */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-slate-700">
                   Social Media
@@ -671,6 +633,44 @@ export default function JuanTapSurvey() {
                   </div>
                 )}
               </div>
+              {/* Delivery Information */}
+              <div className="border-t border-slate-200 pt-5 mt-6">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-orange-500" />
+                  Delivery Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">Delivery Address</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Delivery address" 
+                        className="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm" 
+                        value={formData.delivery_address} 
+                        onChange={(e) => handleInputChange('delivery_address', e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700">Receiver Phone Number</label>
+                    <div className="relative">
+                      <PhoneCall className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                      <input 
+                        type="tel" 
+                        placeholder="09123456789" 
+                        className={`w-full pl-10 pr-3 py-2.5 border ${errors.receiver_phone_number ? 'border-red-500' : 'border-slate-300'} rounded-lg focus:ring-2 focus:ring-orange-500 text-sm`} 
+                        value={formData.receiver_phone_number} 
+                        onChange={handleReceiverPhoneChange} 
+                      />
+                    </div>
+                    {errors.receiver_phone_number && <p className="text-red-500 text-xs">{errors.receiver_phone_number}</p>}
+                  </div>
+                </div>
+              </div>
+
+              
 
               <button
                 type="button"
