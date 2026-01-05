@@ -107,7 +107,7 @@ export const members = [
   // IT Supervisor
   {
     name: "Justin De Castro",
-    position: "IT Supervisor",
+    position: "Junior IT Manager",
     image: "justin.png",
     email: "infinitech.justin2024@gmail.com",
     phone: "09456754591",
