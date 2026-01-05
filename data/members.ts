@@ -55,7 +55,7 @@ export const members = [
   // Accounting Assistant
   {
     name: "Darlene Angel Fajarito",
-    position: "Accounting Assistant",
+    position: "Accounting Supervisor",
     image: "darlene.png",
     email: "infinitech.darlene@gmail.com",
     phone: "09667515747",
