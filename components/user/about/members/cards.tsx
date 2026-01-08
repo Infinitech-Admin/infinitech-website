@@ -32,17 +32,17 @@ const Cards = () => {
                 />
               </div>
             </CardBody>
-            <CardFooter className="pt-2 pb-3 px-3">
-              <div className="w-full min-h-[110px] flex flex-col justify-start">
-                <h1 className="uppercase font-semibold text-lg leading-tight">{member.name}</h1>
+            <CardFooter className="pt-3 pb-3 px-3">
+              <div className="w-full">
+                <h1 className="uppercase font-semibold text-lg leading-tight mb-1">{member.name}</h1>
                 {positions.length > 1 ? (
-                  <div className="flex flex-col gap-0.5 text-xs sm:text-sm font-medium leading-tight mt-1">
+                  <div className="flex flex-col gap-0.5 text-xs sm:text-sm font-medium leading-tight">
                     {positions.map((pos, idx) => (
                       <span key={idx}>{pos.trim()}</span>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-sm font-medium block mt-1">{member.position}</span>
+                  <span className="text-sm font-medium block">{member.position}</span>
                 )}
               </div>
             </CardFooter>
