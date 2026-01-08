@@ -26,17 +26,39 @@ const Member = ({ id }: { id: number }) => {
 BEGIN:VCARD
 VERSION:3.0
 FN:${member.name || ""}
-EMAIL;TYPE=INTERNET:${member.email || ""}
 TEL;TYPE=CELL:${member.phone || ""}
-URL:${member.company?.includes("abicrealtyph.com") ? "https://abicrealtyph.com" : ""}
 ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila;;;
 `;
 
+    // Handle websites (array or from company field)
+    if (member.websites && Array.isArray(member.websites)) {
+      member.websites.forEach((website) => {
+        vcard += `URL:https://${website}\n`;
+      });
+    } else if (member.company?.includes("abicrealtyph.com")) {
+      vcard += `URL:https://abicrealtyph.com\n`;
+    }
+
+    // Handle emails (single or array)
+    if (member.emails && Array.isArray(member.emails)) {
+      member.emails.forEach((email, index) => {
+        vcard += `EMAIL;TYPE=INTERNET${index > 0 ? ",WORK" : ""}:${email}\n`;
+      });
+    } else if (member.email) {
+      vcard += `EMAIL;TYPE=INTERNET:${member.email}\n`;
+    }
+
     // Add Facebook or socials
-    if (member.facebookname)
-      vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.href || ""}\n`;
-    if (member.facebooknames)
-      vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.hrefs || ""}\n`;
+    if (member.facebook && Array.isArray(member.facebook)) {
+      member.facebook.forEach((fb) => {
+        if (fb.href) vcard += `X-SOCIALPROFILE;TYPE=facebook:${fb.href}\n`;
+      });
+    } else {
+      if (member.facebookname)
+        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.href || ""}\n`;
+      if (member.facebooknames)
+        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.hrefs || ""}\n`;
+    }
     if (member.telegram)
       vcard += `X-SOCIALPROFILE;TYPE=telegram:${
         typeof member.telegram === "string"
@@ -84,15 +106,35 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     <h3 className="text-xl font-semibold text-primary">
                       {member.position}
                     </h3>
-
-                    {/* Save Contact Button */}
-                    
                   </div>
 
                   {/* Details Grid */}
                   <div className="grid grid-cols-[40px_1fr] gap-y-3 gap-x-3 items-start text-sm text-blue-700">
                     {/* Websites */}
-                    {(member.company?.includes("abicrealtyph.com") ||
+                    {member.websites && Array.isArray(member.websites) ? (
+                      <>
+                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                          <LuGlobe size={20} />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {member.websites.map((website, index) => (
+                            <React.Fragment key={index}>
+                              <a
+                                href={`https://${website}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                www.{website}
+                              </a>
+                              {index < member.websites.length - 1 && (
+                                <span className="text-gray-400">|</span>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </>
+                    ) : (member.company?.includes("abicrealtyph.com") ||
                       member.company?.includes("Infinitech Advertising")) && (
                       <>
                         <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
@@ -147,13 +189,25 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
                       <LuMail size={20} />
                     </div>
-                    <div>
-                      <a
-                        href={`mailto:${member.email}`}
-                        className="hover:underline"
-                      >
-                        {member.email}
-                      </a>
+                    <div className="flex flex-col gap-1">
+                      {member.emails && Array.isArray(member.emails) ? (
+                        member.emails.map((email, index) => (
+                          <a
+                            key={index}
+                            href={`mailto:${email}`}
+                            className="hover:underline"
+                          >
+                            {email}
+                          </a>
+                        ))
+                      ) : (
+                        <a
+                          href={`mailto:${member.email}`}
+                          className="hover:underline"
+                        >
+                          {member.email}
+                        </a>
+                      )}
                     </div>
 
                     {/* Phone */}
@@ -223,63 +277,84 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                       </>
                     )}
 
-                    {/* Facebook */}
-                    {member.facebookname && (
+                    {/* Facebook - New Array Structure (for Zoe Li) */}
+                    {member.facebook && Array.isArray(member.facebook) ? (
+                      member.facebook.map((fb, index) => (
+                        <React.Fragment key={index}>
+                          <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                            <LuFacebook size={20} />
+                          </div>
+                          <div>
+                            <a
+                              href={fb.href || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline"
+                            >
+                              {fb.name || "Facebook Profile"}
+                            </a>
+                          </div>
+                        </React.Fragment>
+                      ))
+                    ) : (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <LuFacebook size={20} />
-                        </div>
-                        <div>
-                          <a
-                            href={member.href || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            {member.facebookname}
-                          </a>
-                        </div>
-                      </>
-                    )}
+                        {/* Facebook - Old Structure (for other members) */}
+                        {member.facebookname && (
+                          <>
+                            <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                              <LuFacebook size={20} />
+                            </div>
+                            <div>
+                              <a
+                                href={member.href || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {member.facebookname}
+                              </a>
+                            </div>
+                          </>
+                        )}
 
-                    {member.facebooknames && (
-                      <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <LuFacebook size={20} />
-                        </div>
-                        <div>
-                          <a
-                            href={member.hrefs || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            {member.facebooknames}
-                          </a>
-                        </div>
+                        {member.facebooknames && (
+                          <>
+                            <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
+                              <LuFacebook size={20} />
+                            </div>
+                            <div>
+                              <a
+                                href={member.hrefs || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {member.facebooknames}
+                              </a>
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
                 </div>
               </div>
             </CardBody>
-             <div className="mt-4 flex justify-end sm:hidden">
-  <Button
-    color="primary"
-    className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
-    onPress={handleSaveContact}
-  >
-    Save Contact
-  </Button>
-</div>
+            <div className="mt-4 flex justify-end sm:hidden">
+              <Button
+                color="primary"
+                className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
+                onPress={handleSaveContact}
+              >
+                Save Contact
+              </Button>
+            </div>
           </Card>
-          
         ) : (
           <div className="flex justify-center py-8">
             <h3 className="font-semibold">Member Not Found</h3>
           </div>
         )}
-       
       </div>
     </section>
   );
