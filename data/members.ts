@@ -20,12 +20,12 @@ export const members = [
     hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
     company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
-  // President
+  // COO & President
   {
     name: "Zoe Li",
     facebookname: "ABIC Realty & Consultancy Corporation",
     facebooknames: "Infinitech Advertising Corporation",
-    position: "President",
+    position: "Chief Operating Officer - Advance Beyond International Consulting Corp. | Chief Executive Officer - ABIC Realty & Consultancy Corp. | Chief Operating Officer - ABIC Manpower Corp. | President - Infinitech Advertising Corp.",
     image: "zoe.png",
     emails: ["abic.zoe@gmail.com", "zoe@abicph.com"],
     phone: "63 915 580 0518",
