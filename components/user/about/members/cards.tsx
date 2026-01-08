@@ -24,11 +24,11 @@ const Cards = () => {
             as={Link}
             href={`/about/${index}`}
           >
-            <CardBody className="p-0 pb-0">
-              <div>
+            <CardBody className="p-0">
+              <div className="h-[280px] sm:h-[320px] overflow-hidden">
                 <Image
                   src={`/images/members/${member.image}`}
-                  className="w-[63rem] min-h-[9rem] object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </CardBody>
