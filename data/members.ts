@@ -1,4 +1,3 @@
-
 export const members = [
   // CEO
   {
@@ -21,46 +20,47 @@ export const members = [
     hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
     company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
-{
-  name: "Zoe Li",
-  facebookname: "ABIC Realty & Consultancy Corporation",
-  facebooknames: "Infinitech Advertising Corporation",
-  position: "President",
-  image: "zoe.png",
-  emails: ["abic.zoe@gmail.com", "zoe@abicph.com"],
-  phone: "63 915 580 0518",
-  telegram: {
-    title: "63 915 580 0518",
-    href: "https://t.me/+639155800518"
+  // President
+  {
+    name: "Zoe Li",
+    facebookname: "ABIC Realty & Consultancy Corporation",
+    facebooknames: "Infinitech Advertising Corporation",
+    position: "President",
+    image: "zoe.png",
+    emails: ["abic.zoe@gmail.com", "zoe@abicph.com"],
+    phone: "63 915 580 0518",
+    telegram: {
+      title: "63 915 580 0518",
+      href: "https://t.me/+639155800518"
+    },
+    viber: {
+      title: "63 915 580 0518",
+      href: "viber://chat?number=%2B639155800518"
+    },
+    facebook: [
+      {
+        name: "ABIC Realty & Consultancy Corporation",
+        href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/"
+      },
+      {
+        name: "Infinitech Advertising Corporation",
+        href: "https://www.facebook.com/profile.php?id=100080647808810"
+      },
+      {
+        name: "Advance Beyond International Consulting Inc",
+        href: "https://web.facebook.com/people/Advance-Beyond-International-Consulting-Inc/100064218002344/"
+      },
+      {
+        href: "https://facebook.com/profile.php?id=100090318514723"
+      }
+    ],
+    websites: [
+      "abicmanpower.com",
+      "abicph.com",
+      "abicrealtyph.com"
+    ],
+    company: "ABIC Realty & Consultancy Corporation | Infinitech Advertising Corporation"
   },
-  viber: {
-    title: "63 915 580 0518",
-    href: "viber://chat?number=%2B639155800518"
-  },
-  facebook: [
-    {
-      name: "ABIC Realty & Consultancy Corporation",
-      href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/"
-    },
-    {
-      name: "Infinitech Advertising Corporation",
-      href: "https://www.facebook.com/profile.php?id=100080647808810"
-    },
-    {
-      name: "Advance Beyond International Consulting Inc",
-      href: "https://web.facebook.com/people/Advance-Beyond-International-Consulting-Inc/100064218002344/"
-    },
-    {
-      href: "https://facebook.com/profile.php?id=100090318514723"
-    }
-  ],
-  websites: [
-    "abicmanpower.com",
-    "abicph.com",
-    "abicrealtyph.com"
-  ],
-  company: "ABIC Realty & Consultancy Corporation | Infinitech Advertising Corporation"
-}
   // Executive Assistant
   {
     name: "Maria Krissa Charez Bongon",
@@ -77,9 +77,10 @@ export const members = [
       href: "https://msng.link/o?09298597655=vi"
     },
     facebookname: "Maria Krissa Charez Bongon",
-    href: "https://www.facebook.com/charizr1",
+    href: "https://www.facebook.com/charizr1"
   },
-   {
+  // Sales Director
+  {
     name: "Baby Rose Hernandez",
     position: "Sales Director",
     image: "rose.png",
@@ -90,9 +91,9 @@ export const members = [
       href: "https://web.telegram.org/k/#3965198379"
     },
     facebookname: "Baby Rose Hernandez",
-    href: "https://www.facebook.com/share/1FFxbQz9Gc/",
+    href: "https://www.facebook.com/share/1FFxbQz9Gc/"
   },
-  // Accounting Assistant
+  // Accounting Supervisor
   {
     name: "Darlene Angel Fajarito",
     position: "Accounting Supervisor",
@@ -108,43 +109,37 @@ export const members = [
       href: "https://msng.link/o?09667515747=vi"
     },
     facebookname: "Darlene Angel Fajarito",
-    href: "https://www.facebook.com/darlenefajarito",
+    href: "https://www.facebook.com/darlenefajarito"
   },
-    {
+  // Admin Assistant
+  {
     name: "Aizle Marie Atienza",
     position: "Admin Assistant",
     image: "aizle.png",
-    email: "inifinitech.aizle@gmail.com",
+    email: "infinitech.aizle@gmail.com",
     phone: "09619570430",
     telegram: {
-      title: "09619570430 ",
+      title: "09619570430",
       href: "https://web.telegram.org/a/#2054180343"
     },
-    // viber: {
-    //   title: "09667515747",
-    //   href: "https://msng.link/o?09667515747=vi"
-    // },
     facebookname: "Aizle Marie Atienza",
-    href: "https://www.facebook.com/share/17XC8hgRZH/?mibextid=wwXIfr",
+    href: "https://www.facebook.com/share/17XC8hgRZH/?mibextid=wwXIfr"
   },
-     {
+  // Admin Assistant
+  {
     name: "Jhoanna Mae Papio",
     position: "Admin Assistant",
     image: "JHO.png",
     email: "infinitech.jhoanna@gmail.com",
-    phone: "009455837887",
+    phone: "09455837887",
     telegram: {
-      title: "09455837887 ",
+      title: "09455837887",
       href: "https://web.telegram.org/a/#1852459873"
     },
-    // viber: {
-    //   title: "09667515747",
-    //   href: "https://msng.link/o?09667515747=vi"
-    // },
     facebookname: "Jhoanna Mae Papio",
-    href: "https://www.facebook.com/share/1CvLXJM1S4/",
+    href: "https://www.facebook.com/share/1CvLXJM1S4/"
   },
-  // IT Supervisor
+  // Junior IT Manager
   {
     name: "Justin De Castro",
     position: "Junior IT Manager",
@@ -160,8 +155,9 @@ export const members = [
       href: "https://msng.link/o?09456754591=vi"
     },
     facebookname: "Justin De Castro",
-    href: "https://www.facebook.com/tine.tainy",
+    href: "https://www.facebook.com/tine.tainy"
   },
+  // Junior Web Developer
   {
     name: "Eirene Grace Armilla",
     position: "Junior Web Developer",
@@ -173,7 +169,7 @@ export const members = [
       href: "https://t.me/EireneArmilla"
     },
     facebookname: "Eirene Grace Armilla",
-    href: "https://www.facebook.com/share/1Dfj2gvpyf/",
+    href: "https://www.facebook.com/share/1Dfj2gvpyf/"
   },
   {
     name: "Hazel Anne Mendoza",
@@ -186,47 +182,47 @@ export const members = [
       href: "https://t.me/infinitech_hazel"
     },
     facebookname: "Hazel Anne Mendoza",
-    href: "https://www.facebook.com/share/17K45vBsgz/",
+    href: "https://www.facebook.com/share/17K45vBsgz/"
   },
   {
     name: "Raiza Mae Habaña",
     position: "Junior Web Developer",
     image: "raiza.png",
     email: "infinitech.raiza@gmail.com",
-    phone: "09668830150",
+    phone: "09386226278",
     telegram: {
       title: "09386226278",
       href: "https://web.telegram.org/k/#5736999446"
     },
     facebookname: "Raiza Mae Habaña",
-    href: "https://www.facebook.com/share/1FJfpM3ig9/",
+    href: "https://www.facebook.com/share/1FJfpM3ig9/"
   },
   // Digital Marketing Staff
   {
     name: "Michael Tapec",
     position: "Digital Marketing Staff",
     image: "madriaga.png",
-    email: "Infinitech.mike@gmail.com ",
+    email: "infinitech.mike@gmail.com",
     phone: "09566423715",
     telegram: {
       title: "09566423715",
       href: "https://web.telegram.org/k/#@Mike_madriaga"
     },
     facebookname: "Michael Tapec",
-    href: "https://www.facebook.com/share/1Rg9NYHbRL/",
+    href: "https://www.facebook.com/share/1Rg9NYHbRL/"
   },
   {
     name: "Armand M. Cajucom",
     position: "Digital Marketing Staff",
     image: "armans.png",
-    email: " Infinitech.armandcajucom@gmail.com",
+    email: "infinitech.armandcajucom@gmail.com",
     phone: "09940244223",
     telegram: {
       title: "09940244223",
       href: "https://web.telegram.org/k/#8303557841"
     },
     facebookname: "Armand M. Cajucom",
-    href: "https://www.facebook.com/armand.cajucom.7?mibextid=ZbWKwL",
+    href: "https://www.facebook.com/armand.cajucom.7?mibextid=ZbWKwL"
   },
   {
     name: "Jose Dexter Anyayahan",
@@ -239,10 +235,8 @@ export const members = [
       href: "https://web.telegram.org/k/#5736999446"
     },
     facebookname: "Jd Anyayahan",
-    href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr",
+    href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr"
   },
-  // Junior Web Developers
-  
   {
     name: "Jayvee Valeriano",
     position: "Digital Marketing Staff",
@@ -254,7 +248,7 @@ export const members = [
       href: "https://web.telegram.org/k/#@Jayveevaleriano20"
     },
     facebookname: "Jayvee Valeriano",
-    href: "https://www.facebook.com/Abic.jayvee",
+    href: "https://www.facebook.com/Abic.jayvee"
   },
   {
     name: "Janina Jerusalem",
@@ -267,7 +261,7 @@ export const members = [
       href: "https://web.telegram.org/k/#63948929429"
     },
     facebookname: "Janina Jerusalem",
-    href: "https://www.facebook.com/iamjaninajerusalem/",
+    href: "https://www.facebook.com/iamjaninajerusalem/"
   },
   {
     name: "Angely Victoriano",
@@ -280,7 +274,7 @@ export const members = [
       href: "https://web.telegram.org/k/#09487191557"
     },
     facebookname: "Angely Victoriano",
-    href: "https://www.facebook.com/angely.victoriano/",
+    href: "https://www.facebook.com/angely.victoriano/"
   },
   {
     name: "Kaila Dapiaoen",
@@ -293,7 +287,7 @@ export const members = [
       href: "https://web.telegram.org/k/#09919875397"
     },
     facebookname: "Kaila Dapiaoen",
-    href: "https://www.facebook.com/krdapiaoen",
+    href: "https://www.facebook.com/krdapiaoen"
   },
   {
     name: "Joe Rendon",
@@ -306,12 +300,6 @@ export const members = [
       href: "https://t.me/09470445574"
     },
     facebookname: "Joe Rendon",
-    href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO",
-  },
- 
-
-
- 
+    href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO"
+  }
 ];
-
- 
