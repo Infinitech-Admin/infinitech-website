@@ -295,13 +295,14 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
 
                     {/* Facebook - New Array Structure (for Zoe Li) */}
                     {member.facebook && Array.isArray(member.facebook) ? (
-                      member.facebook.map((fb, index) => (
-                        <React.Fragment key={index}>
-                          <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                            <LuFacebook size={18} className="sm:w-5 sm:h-5" />
-                          </div>
-                          <div className="break-words min-w-0">
+                      <>
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <LuFacebook size={18} className="sm:w-5 sm:h-5" />
+                        </div>
+                        <div className="flex flex-col gap-1 break-words min-w-0">
+                          {member.facebook.map((fb, index) => (
                             <a
+                              key={index}
                               href={fb.href || "#"}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -309,9 +310,9 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                             >
                               {fb.name || "Facebook Profile"}
                             </a>
-                          </div>
-                        </React.Fragment>
-                      ))
+                          ))}
+                        </div>
+                      </>
                     ) : (
                       <>
                         {/* Facebook - Old Structure (for other members) */}
