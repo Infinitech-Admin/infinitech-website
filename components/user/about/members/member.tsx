@@ -81,6 +81,16 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
     toast.success(`${member.name} saved to your contacts!`);
   };
 
+  // Helper function to parse positions if they contain multiple titles
+  const parsePositions = (position: string) => {
+    if (position.includes(" | ")) {
+      return position.split(" | ");
+    }
+    return [position];
+  };
+
+  const positions = member ? parsePositions(member.position) : [];
+
   return (
     <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] mt-12 sm:mt-24 mb-12">
       <div className="w-full max-w-6xl">
@@ -103,9 +113,19 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     <h3 className="text-xl sm:text-2xl font-semibold text-accent">
                       {member.name}
                     </h3>
-                    <h3 className="text-lg sm:text-xl font-semibold text-primary">
-                      {member.position}
-                    </h3>
+                    <div className="text-lg sm:text-xl font-semibold text-primary">
+                      {positions.length > 1 ? (
+                        <div className="flex flex-col gap-1 text-sm sm:text-base normal-case">
+                          {positions.map((pos, index) => (
+                            <div key={index} className="leading-tight">
+                              {pos.trim()}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div>{member.position}</div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Details Grid */}
