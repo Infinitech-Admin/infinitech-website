@@ -13,18 +13,18 @@ const Cards = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
       {members.map((member, index) => {
         const positions = parsePositions(member.position);
         
         return (
           <Card
             key={member.name}
-            className="bg-gray-100 shadow-none h-full"
+            className="bg-gray-100 shadow-none"
             as={Link}
             href={`/about/${index}`}
           >
-            <CardBody>
+            <CardBody className="p-0">
               <div>
                 <Image
                   src={`/images/members/${member.image}`}
@@ -32,7 +32,7 @@ const Cards = () => {
                 />
               </div>
             </CardBody>
-            <CardFooter>
+            <CardFooter className="pt-3 pb-4">
               <div className="w-full">
                 <h1 className="uppercase font-semibold text-lg">{member.name}</h1>
                 {positions.length > 1 ? (
@@ -42,7 +42,7 @@ const Cards = () => {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-sm font-medium">{member.position}</span>
+                  <span className="text-sm font-medium block mt-1">{member.position}</span>
                 )}
               </div>
             </CardFooter>
