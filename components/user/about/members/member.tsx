@@ -109,13 +109,13 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
 
                 {/* Info Section */}
                 <div className="flex flex-col justify-start gap-3 sm:gap-4 w-full sm:w-[60%]">
-                  <div className="text-center sm:text-left uppercase mb-2 sm:mb-4">
-                    <h3 className="text-xl sm:text-2xl font-semibold text-accent">
+                  <div className="text-center sm:text-left mb-2 sm:mb-4">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-accent uppercase">
                       {member.name}
                     </h3>
-                    <div className="text-lg sm:text-xl font-semibold text-primary">
+                    <div className="font-semibold text-primary mt-2">
                       {positions.length > 1 ? (
-                        <div className="flex flex-col gap-1 text-sm sm:text-base normal-case">
+                        <div className="flex flex-col gap-1.5 text-xs sm:text-sm leading-snug">
                           {positions.map((pos, index) => (
                             <div key={index} className="leading-tight">
                               {pos.trim()}
@@ -123,7 +123,7 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                           ))}
                         </div>
                       ) : (
-                        <div>{member.position}</div>
+                        <div className="text-lg sm:text-xl uppercase">{member.position}</div>
                       )}
                     </div>
                   </div>
