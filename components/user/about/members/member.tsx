@@ -115,15 +115,15 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     </h3>
                     <div className="font-semibold text-primary mt-2">
                       {positions.length > 1 ? (
-                        <div className="flex flex-col gap-1.5 text-xs sm:text-sm leading-snug">
+                        <div className="flex flex-col gap-1 text-xs sm:text-sm leading-tight">
                           {positions.map((pos, index) => (
-                            <div key={index} className="leading-tight">
+                            <div key={index}>
                               {pos.trim()}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-lg sm:text-xl uppercase">{member.position}</div>
+                        <div className="text-sm sm:text-base uppercase leading-tight">{member.position}</div>
                       )}
                     </div>
                   </div>
