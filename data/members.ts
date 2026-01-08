@@ -51,6 +51,7 @@ export const members = [
         href: "https://web.facebook.com/people/Advance-Beyond-International-Consulting-Inc/100064218002344/"
       },
       {
+        name: "ABIC Manpower Service Corp.",
         href: "https://facebook.com/profile.php?id=100090318514723"
       }
     ],
@@ -58,6 +59,7 @@ export const members = [
       "abicmanpower.com",
       "abicph.com",
       "abicrealtyph.com"
+       "infinitechphil.com",
     ],
     company: "ABIC Realty & Consultancy Corporation | Infinitech Advertising Corporation"
   },
