@@ -59,7 +59,6 @@ export const members = [
       "abicmanpower.com",
       "abicph.com",
       "abicrealtyph.com"
-       "infinitechphil.com",
     ],
     company: "ABIC Realty & Consultancy Corporation | Infinitech Advertising Corporation"
   },
