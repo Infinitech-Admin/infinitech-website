@@ -21,6 +21,46 @@ export const members = [
     hrefs: "https://www.facebook.com/profile.php?id=100080647808810",
     company: "abicrealtyph.com | Infinitech Advertising Corporation"
   },
+{
+  name: "Zoe Li",
+  facebookname: "ABIC Realty & Consultancy Corporation",
+  facebooknames: "Infinitech Advertising Corporation",
+  position: "President",
+  image: "zoe.png",
+  emails: ["abic.zoe@gmail.com", "zoe@abicph.com"],
+  phone: "63 915 580 0518",
+  telegram: {
+    title: "63 915 580 0518",
+    href: "https://t.me/+639155800518"
+  },
+  viber: {
+    title: "63 915 580 0518",
+    href: "viber://chat?number=%2B639155800518"
+  },
+  facebook: [
+    {
+      name: "ABIC Realty & Consultancy Corporation",
+      href: "https://www.facebook.com/people/ABIC-Realty-Consultancy-Corporation/61576086213534/"
+    },
+    {
+      name: "Infinitech Advertising Corporation",
+      href: "https://www.facebook.com/profile.php?id=100080647808810"
+    },
+    {
+      name: "Advance Beyond International Consulting Inc",
+      href: "https://web.facebook.com/people/Advance-Beyond-International-Consulting-Inc/100064218002344/"
+    },
+    {
+      href: "https://facebook.com/profile.php?id=100090318514723"
+    }
+  ],
+  websites: [
+    "abicmanpower.com",
+    "abicph.com",
+    "abicrealtyph.com"
+  ],
+  company: "ABIC Realty & Consultancy Corporation | Infinitech Advertising Corporation"
+}
   // Executive Assistant
   {
     name: "Maria Krissa Charez Bongon",
