@@ -82,65 +82,61 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
   };
 
   return (
-    <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] mt-24 mb-12">
+    <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] mt-12 sm:mt-24 mb-12">
       <div className="w-full max-w-6xl">
         {member ? (
-          <Card className="p-4">
+          <Card className="p-2 sm:p-4">
             <CardBody>
-              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8">
                 {/* Image Section */}
                 <div className="flex justify-center sm:justify-start items-center sm:w-[40%]">
                   <Image
                     src={`/images/members/${member.image}`}
                     alt={member.name}
-                    className="w-full h-auto sm:h-[20rem] max-h-[24rem] object-cover rounded-lg"
+                    className="w-full h-auto max-h-[20rem] sm:h-[20rem] sm:max-h-[24rem] object-cover rounded-lg"
                   />
                 </div>
 
                 {/* Info Section */}
-                <div className="flex flex-col justify-start gap-4 w-full sm:w-[60%]">
-                  <div className="text-center sm:text-left uppercase mb-4">
-                    <h3 className="text-2xl font-semibold text-accent">
+                <div className="flex flex-col justify-start gap-3 sm:gap-4 w-full sm:w-[60%]">
+                  <div className="text-center sm:text-left uppercase mb-2 sm:mb-4">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-accent">
                       {member.name}
                     </h3>
-                    <h3 className="text-xl font-semibold text-primary">
+                    <h3 className="text-lg sm:text-xl font-semibold text-primary">
                       {member.position}
                     </h3>
                   </div>
 
                   {/* Details Grid */}
-                  <div className="grid grid-cols-[40px_1fr] gap-y-3 gap-x-3 items-start text-sm text-blue-700">
+                  <div className="grid grid-cols-[40px_1fr] gap-y-2 sm:gap-y-3 gap-x-2 sm:gap-x-3 items-start text-xs sm:text-sm text-blue-700">
                     {/* Websites */}
                     {member.websites && Array.isArray(member.websites) ? (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <LuGlobe size={20} />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <LuGlobe size={18} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-1 min-w-0">
                           {member.websites.map((website, index) => (
-                            <React.Fragment key={index}>
-                              <a
-                                href={`https://${website}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:underline"
-                              >
-                                www.{website}
-                              </a>
-                              {index < member.websites.length - 1 && (
-                                <span className="text-gray-400">|</span>
-                              )}
-                            </React.Fragment>
+                            <a
+                              key={index}
+                              href={`https://${website}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline break-words"
+                            >
+                              www.{website}
+                            </a>
                           ))}
                         </div>
                       </>
                     ) : (member.company?.includes("abicrealtyph.com") ||
                       member.company?.includes("Infinitech Advertising")) && (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <LuGlobe size={20} />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <LuGlobe size={18} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 min-w-0">
                           {member.company.includes("abicrealtyph.com") && (
                             <a
                               href="https://abicrealtyph.com"
@@ -170,10 +166,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     )}
 
                     {/* Address */}
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                      <LuBriefcaseBusiness size={20} />
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                      <LuBriefcaseBusiness size={18} className="sm:w-5 sm:h-5" />
                     </div>
-                    <div>
+                    <div className="break-words min-w-0">
                       <a
                         href="https://www.google.com/maps?q=Unit+311,+Campos+Rueda+Building,+101+Urban+Ave,+Makati,+Metro+Manila"
                         target="_blank"
@@ -186,10 +182,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     </div>
 
                     {/* Email */}
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                      <LuMail size={20} />
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                      <LuMail size={18} className="sm:w-5 sm:h-5" />
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 break-words min-w-0">
                       {member.emails && Array.isArray(member.emails) ? (
                         member.emails.map((email, index) => (
                           <a
@@ -211,10 +207,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     </div>
 
                     {/* Phone */}
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                      <LuPhone size={20} />
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                      <LuPhone size={18} className="sm:w-5 sm:h-5" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <a
                         href={`tel:${removeSpaces(member.phone)}`}
                         className="hover:underline"
@@ -226,10 +222,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     {/* Telegram */}
                     {member.telegram && typeof member.telegram !== "string" ? (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <RiTelegram2Line size={20} />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <RiTelegram2Line size={18} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <a
                             href={member.telegram.href}
                             target="_blank"
@@ -242,10 +238,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                       </>
                     ) : member.telegram ? (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <RiTelegram2Line size={20} />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <RiTelegram2Line size={18} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <a
                             href={`https://web.telegram.org/a/#${member.telegram}`}
                             target="_blank"
@@ -261,10 +257,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     {/* Viber */}
                     {member.viber && (
                       <>
-                        <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                          <FaViber size={20} />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <FaViber size={18} className="sm:w-5 sm:h-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <a
                             href={member.viber.href}
                             target="_blank"
@@ -281,10 +277,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     {member.facebook && Array.isArray(member.facebook) ? (
                       member.facebook.map((fb, index) => (
                         <React.Fragment key={index}>
-                          <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                            <LuFacebook size={20} />
+                          <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                            <LuFacebook size={18} className="sm:w-5 sm:h-5" />
                           </div>
-                          <div>
+                          <div className="break-words min-w-0">
                             <a
                               href={fb.href || "#"}
                               target="_blank"
@@ -301,10 +297,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                         {/* Facebook - Old Structure (for other members) */}
                         {member.facebookname && (
                           <>
-                            <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                              <LuFacebook size={20} />
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                              <LuFacebook size={18} className="sm:w-5 sm:h-5" />
                             </div>
-                            <div>
+                            <div className="break-words min-w-0">
                               <a
                                 href={member.href || "#"}
                                 target="_blank"
@@ -319,10 +315,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
 
                         {member.facebooknames && (
                           <>
-                            <div className="p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center">
-                              <LuFacebook size={20} />
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                              <LuFacebook size={18} className="sm:w-5 sm:h-5" />
                             </div>
-                            <div>
+                            <div className="break-words min-w-0">
                               <a
                                 href={member.hrefs || "#"}
                                 target="_blank"
@@ -340,10 +336,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                 </div>
               </div>
             </CardBody>
-            <div className="mt-4 flex justify-end sm:hidden">
+            <div className="mt-2 sm:mt-4 flex justify-center sm:justify-end px-2 sm:px-0">
               <Button
                 color="primary"
-                className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition"
+                className="bg-[#1D2F7C] text-white hover:bg-[#9A3160] rounded-lg shadow-md transition w-full sm:w-auto"
                 onPress={handleSaveContact}
               >
                 Save Contact
