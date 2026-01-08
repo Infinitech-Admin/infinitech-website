@@ -9,58 +9,65 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { CheckCircle2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-const TOTAL_STEPS = 6
-const stepTitles = ["Company & Contact", "Current Systems", "Challenges", "Hidden Needs", "Customization", "Feedback"]
+import { useToast } from "@/hooks/use-toast"
 
 export default function SurveyForm() {
-  const [currentStep, setCurrentStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
 
-  // Complete form data state matching database fields
+  // Complete form data state
   const [formData, setFormData] = useState({
-    // Step 1: Company & Contact
-    company_name: "",
-    no_of_employees: "", // Added no_of_employees field
-    location: "",
-    industries: [] as string[],
-    industry_other: "",
-    contact_person: "",
-    role: "",
+    // Client Information
+    client_name: "",
     email: "",
     phone: "",
+    company_name: "",
+    role: "",
+    industries: [] as string[],
+    industry_other: "",
 
-    // Step 2: Current Systems
-    current_systems: [] as string[],
-    current_system_other: "",
-    satisfaction_level: "",
+    // Discovery Survey - Question 1: Business Goals (Checkbox)
+    business_goals: [] as string[],
+    business_goals_other: "",
 
-    // Step 3: Operational Challenges
-    system_performance_issues: [] as string[],
-    process_workflow_issues: [] as string[],
-    reporting_data_issues: [] as string[],
-    hr_payroll_issues: [] as string[],
-    customer_sales_issues: [] as string[],
-    inventory_supply_chain_issues: [] as string[],
-    digital_marketing_issues: [] as string[],
+    // Discovery Survey - Question 2: Slowdown Issues (Checkbox)
+    slowdown_issues: [] as string[],
+    slowdown_issues_other: "",
 
-    // Step 4: Hidden Needs
-    daily_situations: [] as string[],
-    improvement_areas: [] as string[],
+    // Discovery Survey - Question 3: Customer Journey (Radio - Yes/No)
+    customer_journey: "",
+    customer_journey_details: "",
 
-    // Step 5: System Customization
-    systems_of_interest: [] as string[],
-    system_of_interest_other: "",
-    preferred_features: [] as string[],
+    // Discovery Survey - Question 4: SOPs (Radio - Yes/No)
+    sops_status: "",
+    sops_details: "",
 
-    // Step 6: Open Feedback
-    pain_points: "",
-    ideal_system: "",
-    additional_comments: "",
+    // Discovery Survey - Question 5: Tools/Systems (Checkbox)
+    current_tools: [] as string[],
+    current_tools_details: "",
+
+    // Discovery Survey - Question 6: Marketing Confidence (Radio)
+    marketing_confidence: "",
+    marketing_details: "",
+
+    // Discovery Survey - Question 7: Content Quality (Radio with full options)
+    content_quality: "",
+    content_details: "",
+
+    // Discovery Survey - Question 8: Problem Areas (Checkbox)
+    problem_areas: [] as string[],
+    problem_areas_details: "",
+
+    // Discovery Survey - Question 9: Data/Analytics (Radio)
+    data_analytics: "",
+    data_details: "",
+
+    // Discovery Survey - Question 10: Solution Openness (Radio)
+    solution_openness: "",
+    solution_details: "",
   })
 
   const [errors, setErrors] = useState({
@@ -70,8 +77,10 @@ export default function SurveyForm() {
 
   const [otherSelections, setOtherSelections] = useState({
     industry: false,
-    system: false,
-    interest: false,
+    businessGoals: false,
+    slowdownIssues: false,
+    tools: false,
+    problemAreas: false,
   })
 
   const validateEmail = (email: string) => {
@@ -117,7 +126,10 @@ export default function SurveyForm() {
     }
   }
 
-  const handleOtherToggle = (field: "industry" | "system" | "interest", checked: boolean) => {
+  const handleOtherToggle = (
+    field: "industry" | "businessGoals" | "slowdownIssues" | "tools" | "problemAreas",
+    checked: boolean,
+  ) => {
     setOtherSelections((prev) => ({ ...prev, [field]: checked }))
 
     if (field === "industry") {
@@ -133,70 +145,85 @@ export default function SurveyForm() {
           industry_other: "",
         }))
       }
-    }
-
-    if (field === "system") {
+    } else if (field === "businessGoals") {
       if (checked) {
         setFormData((prev) => ({
           ...prev,
-          current_systems: [...prev.current_systems, "Other"],
+          business_goals: [...prev.business_goals, "Other"],
         }))
       } else {
         setFormData((prev) => ({
           ...prev,
-          current_systems: prev.current_systems.filter((item) => item !== "Other"),
-          current_system_other: "",
+          business_goals: prev.business_goals.filter((item) => item !== "Other"),
+          business_goals_other: "",
         }))
       }
-    }
-
-    if (field === "interest") {
+    } else if (field === "slowdownIssues") {
       if (checked) {
         setFormData((prev) => ({
           ...prev,
-          systems_of_interest: [...prev.systems_of_interest, "Other"],
+          slowdown_issues: [...prev.slowdown_issues, "Other"],
         }))
       } else {
         setFormData((prev) => ({
           ...prev,
-          systems_of_interest: prev.systems_of_interest.filter((item) => item !== "Other"),
-          system_of_interest_other: "",
+          slowdown_issues: prev.slowdown_issues.filter((item) => item !== "Other"),
+          slowdown_issues_other: "",
         }))
       }
-    }
-  }
-
-  const handleNext = () => {
-    if (currentStep === 1) {
-      let hasErrors = false
-      const newErrors = { email: "", phone: "" }
-
-      if (formData.email && !validateEmail(formData.email)) {
-        newErrors.email = "Please enter a valid email address"
-        hasErrors = true
+    } else if (field === "tools") {
+      if (checked) {
+        setFormData((prev) => ({
+          ...prev,
+          current_tools: [...prev.current_tools, "Other"],
+        }))
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          current_tools: prev.current_tools.filter((item) => item !== "Other"),
+          current_tools_details: "",
+        }))
       }
-
-      if (formData.phone && /[a-zA-Z]/.test(formData.phone)) {
-        newErrors.phone = "Phone number cannot contain letters"
-        hasErrors = true
+    } else if (field === "problemAreas") {
+      if (checked) {
+        setFormData((prev) => ({
+          ...prev,
+          problem_areas: [...prev.problem_areas, "Other"],
+        }))
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          problem_areas: prev.problem_areas.filter((item) => item !== "Other"),
+          problem_areas_details: "",
+        }))
       }
-
-      setErrors(newErrors)
-      if (hasErrors) return
-    }
-
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
     }
   }
 
   const handleSubmit = async () => {
+    let hasErrors = false
+    const newErrors = { email: "", phone: "" }
+
+    if (formData.email && !validateEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email address"
+      hasErrors = true
+    }
+
+    if (formData.phone && /[a-zA-Z]/.test(formData.phone)) {
+      newErrors.phone = "Phone number cannot contain letters"
+      hasErrors = true
+    }
+
+    setErrors(newErrors)
+    if (hasErrors) {
+      toast({
+        title: "Validation Error",
+        description: Object.values(newErrors).filter(Boolean).join(", "),
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -211,14 +238,34 @@ export default function SurveyForm() {
       const data = await response.json()
 
       if (data.success) {
+        toast({
+          title: "Success",
+          description: "Survey submitted successfully! Thank you for your feedback.",
+          variant: "default",
+        })
         setSubmitted(true)
       } else {
+        const errorMessage = data.errors
+          ? typeof data.errors === "object"
+            ? Object.values(data.errors).join(", ")
+            : data.errors
+          : data.message || "Failed to submit survey"
+
+        toast({
+          title: "Submission Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
         console.error("Failed to submit survey:", data)
-        alert("Failed to submit survey. Please try again.")
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred while submitting the survey"
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
       console.error("Error submitting survey:", error)
-      alert("An error occurred. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -240,637 +287,620 @@ export default function SurveyForm() {
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {stepTitles.map((title, index) => (
-            <div
-              key={title}
-              className={cn(
-                "flex flex-col items-center flex-1",
-                index + 1 === currentStep && "text-orange-400",
-                index + 1 < currentStep && "text-emerald-400",
-                index + 1 > currentStep && "text-blue-300/50",
-              )}
-            >
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
-                  index + 1 === currentStep && "bg-orange-500 text-white border-orange-500",
-                  index + 1 < currentStep && "bg-emerald-500 text-white border-emerald-500",
-                  index + 1 > currentStep && "bg-slate-800 border-blue-400/30 text-blue-300/50",
-                )}
-              >
-                {index + 1 < currentStep ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
+    <div className="w-full min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4">
+      <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur shadow-2xl border-0">
+        <CardHeader className="bg-slate-800 text-white rounded-t-lg">
+          <CardTitle className="text-2xl">Client Discovery Survey</CardTitle>
+          <CardDescription className="text-slate-300">
+            Please fill out all fields below. All questions are on this page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-8 space-y-8">
+          {/* Client Information Section */}
+          <div className="space-y-4 pb-6 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-800">Client Information Details</h3>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="clientName" className="text-slate-700">
+                  Client Name *
+                </Label>
+                <Input
+                  id="clientName"
+                  placeholder="Enter name"
+                  className="border-slate-300"
+                  value={formData.client_name}
+                  onChange={(e) => handleInputChange("client_name", e.target.value)}
+                />
               </div>
-              <span className="text-xs mt-1 hidden md:block">{title}</span>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-slate-700">
+                  Email *
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter email"
+                  className={cn("border-slate-300", errors.email && "border-red-500 focus-visible:ring-red-500")}
+                  value={formData.email}
+                  onChange={handleEmailChange}
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-slate-700">
+                  Phone No. *
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  className={cn("border-slate-300", errors.phone && "border-red-500 focus-visible:ring-red-500")}
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                />
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+              </div>
             </div>
-          ))}
-        </div>
-        <div className="w-full bg-slate-700/50 rounded-full h-2">
-          <div
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
-          />
-        </div>
-      </div>
 
-      <Card className="mb-6 bg-white/95 backdrop-blur shadow-2xl border-0">
-        {/* Step 1: Company & Contact */}
-        {currentStep === 1 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">Company & Contact Information</CardTitle>
-              <CardDescription>Tell us about your organization</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName" className="text-slate-700">
-                    Company Name
-                  </Label>
-                  <Input
-                    id="companyName"
-                    placeholder="Enter company name"
-                    className="border-slate-300"
-                    value={formData.company_name}
-                    onChange={(e) => handleInputChange("company_name", e.target.value)}
-                  />
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="noOfEmployees" className="text-slate-700">
-                    Number of Employees
-                  </Label>
-                  <Select
-                    value={formData.no_of_employees}
-                    onValueChange={(value) => handleInputChange("no_of_employees", value)}
-                  >
-                    <SelectTrigger id="noOfEmployees" className="border-slate-300 bg-white">
-                      <SelectValue placeholder="Select range" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1-10" className="hover:bg-slate-100 cursor-pointer">1-10</SelectItem>
-                      <SelectItem value="11-50" className="hover:bg-slate-100 cursor-pointer">11-50</SelectItem>
-                      <SelectItem value="51-200" className="hover:bg-slate-100 cursor-pointer">51-200</SelectItem>
-                      <SelectItem value="201-500" className="hover:bg-slate-100 cursor-pointer">201-500</SelectItem>
-                      <SelectItem value="501-1000" className="hover:bg-slate-100 cursor-pointer">501-1000</SelectItem>
-                      <SelectItem value="1000+" className="hover:bg-slate-100 cursor-pointer">1000+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location" className="text-slate-700">
-                    Location
-                  </Label>
-                  <Input
-                    id="location"
-                    placeholder="Enter location"
-                    className="border-slate-300"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange("location", e.target.value)}
-                  />
-                </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="companyName" className="text-slate-700">
+                  Company Name
+                </Label>
+                <Input
+                  id="companyName"
+                  placeholder="Enter company name"
+                  className="border-slate-300"
+                  value={formData.company_name}
+                  onChange={(e) => handleInputChange("company_name", e.target.value)}
+                />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-slate-700">
+                  Position
+                </Label>
+                <Input
+                  id="role"
+                  placeholder="Enter your position"
+                  className="border-slate-300"
+                  value={formData.role}
+                  onChange={(e) => handleInputChange("role", e.target.value)}
+                />
+              </div>
+            </div>
 
-              <div className="space-y-3">
-                <Label className="text-slate-700">Industry</Label>
-                <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
-                  {[
-                    "Manufacturing",
-                    "Retail",
-                    "Healthcare",
-                    "Logistics",
-                    "Education",
-                    "Finance",
-                    "Hospitality",
-                    "Construction",
-                    "Other",
-                  ].map((industry) => (
-                    <div key={industry}>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`industry-${industry}`}
-                          checked={
-                            industry === "Other" ? otherSelections.industry : formData.industries.includes(industry)
+            {/* Industry Selection */}
+            <div className="space-y-3">
+              <Label className="text-slate-700">Industry</Label>
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+                {[
+                  "Manufacturing",
+                  "Retail",
+                  "Healthcare",
+                  "Logistics",
+                  "Education",
+                  "Finance",
+                  "Hospitality",
+                  "Construction",
+                  "Other",
+                ].map((industry) => (
+                  <div key={industry}>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`industry-${industry}`}
+                        checked={
+                          industry === "Other" ? otherSelections.industry : formData.industries.includes(industry)
+                        }
+                        onCheckedChange={(checked) => {
+                          if (industry === "Other") {
+                            handleOtherToggle("industry", checked as boolean)
+                          } else {
+                            handleCheckboxChange("industries", industry, checked as boolean)
                           }
-                          onCheckedChange={(checked) => {
-                            if (industry === "Other") {
-                              handleOtherToggle("industry", checked as boolean)
-                            } else {
-                              handleCheckboxChange("industries", industry, checked as boolean)
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`industry-${industry}`} className="font-normal text-sm text-slate-600">
-                          {industry}
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {otherSelections.industry && (
-                  <div className="mt-2 ml-6">
-                    <Input
-                      placeholder="Please specify your industry"
-                      value={formData.industry_other}
-                      onChange={(e) => handleInputChange("industry_other", e.target.value)}
-                      className="border-slate-300"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="contactPerson" className="text-slate-700">
-                    Contact Person
-                  </Label>
-                  <Input
-                    id="contactPerson"
-                    placeholder="Enter name"
-                    className="border-slate-300"
-                    value={formData.contact_person}
-                    onChange={(e) => handleInputChange("contact_person", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role" className="text-slate-700">
-                    Role / Position
-                  </Label>
-                  <Input
-                    id="role"
-                    placeholder="Enter role"
-                    className="border-slate-300"
-                    value={formData.role}
-                    onChange={(e) => handleInputChange("role", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter email"
-                    className={cn("border-slate-300", errors.email && "border-red-500 focus-visible:ring-red-500")}
-                    value={formData.email}
-                    onChange={handleEmailChange}
-                  />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-slate-700">
-                    Phone
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter phone number"
-                    className={cn("border-slate-300", errors.phone && "border-red-500 focus-visible:ring-red-500")}
-                    value={formData.phone}
-                    onChange={handlePhoneChange}
-                  />
-                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                </div>
-              </div>
-            </CardContent>
-          </>
-        )}
-
-        {/* Step 2: Current Systems */}
-        {currentStep === 2 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">Current System Overview</CardTitle>
-              <CardDescription>What systems are you currently using?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-slate-700">Select all that apply</Label>
-                <div className="grid gap-3 grid-cols-2">
-                  {[
-                    "ERP",
-                    "CRM",
-                    "HR / Payroll System",
-                    "Inventory Management",
-                    "POS System",
-                    "E-commerce / Ordering System",
-                    "Excel / Manual Records",
-                    "Booking System",
-                    "Other",
-                  ].map((system) => (
-                    <div key={system}>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`system-${system}`}
-                          checked={
-                            system === "Other" ? otherSelections.system : formData.current_systems.includes(system)
-                          }
-                          onCheckedChange={(checked) => {
-                            if (system === "Other") {
-                              handleOtherToggle("system", checked as boolean)
-                            } else {
-                              handleCheckboxChange("current_systems", system, checked as boolean)
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`system-${system}`} className="font-normal text-sm text-slate-600">
-                          {system}
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {otherSelections.system && (
-                  <div className="mt-2 ml-6">
-                    <Input
-                      placeholder="Please specify your system"
-                      value={formData.current_system_other}
-                      onChange={(e) => handleInputChange("current_system_other", e.target.value)}
-                      className="border-slate-300"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-slate-700">How satisfied are you with your current systems?</Label>
-                <RadioGroup
-                  value={formData.satisfaction_level}
-                  onValueChange={(value) => handleInputChange("satisfaction_level", value)}
-                  className="space-y-2"
-                >
-                  {["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"].map((level) => (
-                    <div key={level} className="flex items-center space-x-2">
-                      <RadioGroupItem value={level.toLowerCase().replace(" ", "-")} id={`satisfaction-${level}`} />
-                      <Label htmlFor={`satisfaction-${level}`} className="font-normal text-sm text-slate-600">
-                        {level}
+                        }}
+                      />
+                      <Label htmlFor={`industry-${industry}`} className="font-normal text-sm text-slate-600">
+                        {industry}
                       </Label>
                     </div>
-                  ))}
-                </RadioGroup>
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </>
-        )}
+              {otherSelections.industry && (
+                <div className="mt-2 ml-6">
+                  <Input
+                    placeholder="Please specify your industry"
+                    value={formData.industry_other}
+                    onChange={(e) => handleInputChange("industry_other", e.target.value)}
+                    className="border-slate-300"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Step 3: Operational Challenges */}
-        {currentStep === 3 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">Operational Challenges</CardTitle>
-              <CardDescription>Indicate the problems you currently face</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          {/* Question 1: Business Goals */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              1. What are your top 3 business goals for the next 6–12 months?
+            </h3>
+            <p className="text-sm text-slate-600">Select all that apply</p>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
               {[
-                {
-                  title: "System Performance Issues",
-                  field: "system_performance_issues",
-                  items: [
-                    "Slow system response",
-                    "Frequent system downtime",
-                    "System crashes or bugs",
-                    "Poor user interface",
-                    "Difficult navigation",
-                  ],
-                },
-                {
-                  title: "Process & Workflow",
-                  field: "process_workflow_issues",
-                  items: [
-                    "Manual data entry",
-                    "Repetitive tasks",
-                    "Inefficient approval process",
-                    "Data duplication",
-                    "Lack of automation",
-                  ],
-                },
-                {
-                  title: "Reporting & Data",
-                  field: "reporting_data_issues",
-                  items: [
-                    "Inaccurate reports",
-                    "Delayed reporting",
-                    "Difficult to extract data",
-                    "No real-time dashboard",
-                    "Limited analytics",
-                  ],
-                },
-                {
-                  title: "Human Resources / Payroll",
-                  field: "hr_payroll_issues",
-                  items: [
-                    "Payroll errors",
-                    "Late salary processing",
-                    "Leave management issues",
-                    "Attendance tracking problems",
-                    "Compliance issues",
-                  ],
-                },
-                {
-                  title: "Customer & Sales Management",
-                  field: "customer_sales_issues",
-                  items: [
-                    "Poor customer tracking",
-                    "Delayed order processing",
-                    "Lost sales data",
-                    "No CRM system",
-                    "Lack of customer insights",
-                  ],
-                },
-                {
-                  title: "Inventory & Supply Chain",
-                  field: "inventory_supply_chain_issues",
-                  items: [
-                    "Stock shortages",
-                    "Overstocking",
-                    "Inaccurate stock levels",
-                    "Poor supplier tracking",
-                    "Manual stock updates",
-                  ],
-                },
-                {
-                  title: "Digital Marketing & Online Presence",
-                  field: "digital_marketing_issues",
-                  items: [
-                    "Low online visibility",
-                    "Ineffective social media",
-                    "Poor website performance",
-                    "Low lead generation",
-                    "Lack of campaign tracking",
-                  ],
-                },
-              ].map((section) => (
-                <div key={section.title} className="space-y-2">
-                  <Label className="text-sm font-semibold text-slate-800">{section.title}</Label>
-                  <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-                    {section.items.map((item) => (
-                      <div key={item} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`challenge-${item}`}
-                          checked={
-                            (formData[section.field as keyof typeof formData] as string[])?.includes(item) || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handleCheckboxChange(section.field as keyof typeof formData, item, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`challenge-${item}`} className="font-normal text-sm text-slate-600">
-                          {item}
-                        </Label>
-                      </div>
-                    ))}
+                "Increase sales",
+                "Improve brand visibility",
+                "Reduce operational errors",
+                "Save time / manpower",
+                "Scale the business",
+                "Other",
+              ].map((goal) => (
+                <div key={goal}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`goal-${goal}`}
+                      checked={
+                        goal === "Other" ? otherSelections.businessGoals : formData.business_goals.includes(goal)
+                      }
+                      onCheckedChange={(checked) => {
+                        if (goal === "Other") {
+                          handleOtherToggle("businessGoals", checked as boolean)
+                        } else {
+                          handleCheckboxChange("business_goals", goal, checked as boolean)
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`goal-${goal}`} className="font-normal text-sm text-slate-600">
+                      {goal}
+                    </Label>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </>
-        )}
-
-        {/* Step 4: Hidden Needs Discovery */}
-        {currentStep === 4 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">Hidden Needs Discovery</CardTitle>
-              <CardDescription>Even if you have not identified issues, please consider the following</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-slate-700">Which of these situations occur in your daily operations?</Label>
-                <div className="space-y-2">
-                  {[
-                    "Employees spend too much time on manual tasks",
-                    "Difficulty tracking overall business performance",
-                    "Delayed decision-making due to lack of data",
-                    "Multiple systems not integrated",
-                    "Customer complaints due to operational delays",
-                  ].map((situation) => (
-                    <div key={situation} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`situation-${situation}`}
-                        checked={formData.daily_situations.includes(situation)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange("daily_situations", situation, checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`situation-${situation}`} className="font-normal text-sm text-slate-600">
-                        {situation}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-slate-700">Which areas would you like to improve?</Label>
-                <div className="grid gap-2 grid-cols-2">
-                  {[
-                    "Speed of operations",
-                    "Cost reduction",
-                    "Accuracy of data",
-                    "Customer satisfaction",
-                    "Employee productivity",
-                    "Branding",
-                  ].map((area) => (
-                    <div key={area} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`improve-${area}`}
-                        checked={formData.improvement_areas.includes(area)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange("improvement_areas", area, checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`improve-${area}`} className="font-normal text-sm text-slate-600">
-                        {area}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </>
-        )}
-
-        {/* Step 5: System Customization Interest */}
-        {currentStep === 5 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">System Customization Interest</CardTitle>
-              <CardDescription>What solutions are you looking for?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-slate-700">Which systems are you interested in improving or implementing?</Label>
-                <div className="grid gap-2 grid-cols-2">
-                  {[
-                    "Payroll System",
-                    "HR Management",
-                    "CRM",
-                    "Inventory System",
-                    "E-commerce / Ordering System",
-                    "Project Management",
-                    "Automated Reporting",
-                    "Custom Workflow",
-                    "Other",
-                  ].map((system) => (
-                    <div key={system}>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`interest-${system}`}
-                          checked={
-                            system === "Other"
-                              ? otherSelections.interest
-                              : formData.systems_of_interest.includes(system)
-                          }
-                          onCheckedChange={(checked) => {
-                            if (system === "Other") {
-                              handleOtherToggle("interest", checked as boolean)
-                            } else {
-                              handleCheckboxChange("systems_of_interest", system, checked as boolean)
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`interest-${system}`} className="font-normal text-sm text-slate-600">
-                          {system}
-                        </Label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {otherSelections.interest && (
-                  <div className="mt-2 ml-6">
-                    <Input
-                      placeholder="Please specify the system you're interested in"
-                      value={formData.system_of_interest_other}
-                      onChange={(e) => handleInputChange("system_of_interest_other", e.target.value)}
-                      className="border-slate-300"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-slate-700">Preferred features (Select all that apply)</Label>
-                <div className="grid gap-2 grid-cols-2">
-                  {[
-                    "Cloud-based access",
-                    "Mobile access",
-                    "Automated reporting",
-                    "System integration",
-                    "Multi-user roles",
-                    "Real-time alerts",
-                  ].map((feature) => (
-                    <div key={feature} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`feature-${feature}`}
-                        checked={formData.preferred_features.includes(feature)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange("preferred_features", feature, checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={`feature-${feature}`} className="font-normal text-sm text-slate-600">
-                        {feature}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </>
-        )}
-
-        {/* Step 6: Open Feedback */}
-        {currentStep === 6 && (
-          <>
-            <CardHeader>
-              <CardTitle className="text-slate-800">Open Feedback</CardTitle>
-              <CardDescription>Share your thoughts and requirements</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="painPoints" className="text-slate-700">
-                  What are your main operational pain points?
-                </Label>
-                <Textarea
-                  id="painPoints"
-                  placeholder="Describe your main challenges..."
-                  rows={3}
+            </div>
+            {otherSelections.businessGoals && (
+              <div className="mt-2 ml-6">
+                <Input
+                  placeholder="Please specify other goals"
+                  value={formData.business_goals_other}
+                  onChange={(e) => handleInputChange("business_goals_other", e.target.value)}
                   className="border-slate-300"
-                  value={formData.pain_points}
-                  onChange={(e) => handleInputChange("pain_points", e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="idealSystem" className="text-slate-700">
-                  What would an ideal system look like for your company?
-                </Label>
-                <Textarea
-                  id="idealSystem"
-                  placeholder="Describe your ideal solution..."
-                  rows={3}
-                  className="border-slate-300"
-                  value={formData.ideal_system}
-                  onChange={(e) => handleInputChange("ideal_system", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="comments" className="text-slate-700">
-                  Any additional comments or suggestions?
-                </Label>
-                <Textarea
-                  id="comments"
-                  placeholder="Additional feedback..."
-                  rows={3}
-                  className="border-slate-300"
-                  value={formData.additional_comments}
-                  onChange={(e) => handleInputChange("additional_comments", e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </>
-        )}
-      </Card>
-
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStep === 1}
-          className="gap-2 bg-transparent border-blue-400/30 text-blue-200 hover:bg-blue-900/50 hover:text-white disabled:opacity-30"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Previous
-        </Button>
-
-        {currentStep < TOTAL_STEPS ? (
-          <Button
-            onClick={handleNext}
-            className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white border-0"
-          >
-            Next
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              "Submit Survey"
             )}
-          </Button>
-        )}
-      </div>
+          </div>
+
+          {/* Question 2: Slowdown Issues */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              2. What is currently slowing down your business growth the most?
+            </h3>
+            <p className="text-sm text-slate-600">Select all that apply</p>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+              {[
+                "Low-quality leads",
+                "Inefficient internal processes",
+                "Poor online presence",
+                "Manual work / duplicated tasks",
+                "Lack of clear SOPs",
+                "Unclear customer journey",
+                "Other",
+              ].map((issue) => (
+                <div key={issue}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`slowdown-${issue}`}
+                      checked={
+                        issue === "Other" ? otherSelections.slowdownIssues : formData.slowdown_issues.includes(issue)
+                      }
+                      onCheckedChange={(checked) => {
+                        if (issue === "Other") {
+                          handleOtherToggle("slowdownIssues", checked as boolean)
+                        } else {
+                          handleCheckboxChange("slowdown_issues", issue, checked as boolean)
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`slowdown-${issue}`} className="font-normal text-sm text-slate-600">
+                      {issue}
+                    </Label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {otherSelections.slowdownIssues && (
+              <div className="mt-2 ml-6">
+                <Input
+                  placeholder="Please specify other issues"
+                  value={formData.slowdown_issues_other}
+                  onChange={(e) => handleInputChange("slowdown_issues_other", e.target.value)}
+                  className="border-slate-300"
+                />
+              </div>
+            )}
+            <Textarea
+              placeholder="Please provide additional details..."
+              value={formData.slowdown_issues_other}
+              onChange={(e) => handleInputChange("slowdown_issues_other", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 3: Customer Journey (Radio - Yes/No) */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              3. Can you clearly explain how a customer finds you, contacts you, and becomes a paying client?
+            </h3>
+            <RadioGroup
+              value={formData.customer_journey}
+              onValueChange={(value) => handleInputChange("customer_journey", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes, very clear and documented" id="journey-1" />
+                <Label htmlFor="journey-1" className="font-normal text-sm text-slate-600">
+                  Yes, very clear and documented
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Somewhat clear but not documented" id="journey-2" />
+                <Label htmlFor="journey-2" className="font-normal text-sm text-slate-600">
+                  Somewhat clear but not fully documented / Need clarity
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No, it's inconsistent" id="journey-3" />
+                <Label htmlFor="journey-3" className="font-normal text-sm text-slate-600">
+                  No, it's inconsistent
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="I've never mapped this out" id="journey-4" />
+                <Label htmlFor="journey-4" className="font-normal text-sm text-slate-600">
+                  I've never mapped this out
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please provide additional details about your customer journey..."
+              value={formData.customer_journey_details}
+              onChange={(e) => handleInputChange("customer_journey_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 4: SOPs */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              4. Do you have documented SOPs for marketing, sales, and operations?
+            </h3>
+            <RadioGroup
+              value={formData.sops_status}
+              onValueChange={(value) => handleInputChange("sops_status", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes, clear and followed" id="sops-1" />
+                <Label htmlFor="sops-1" className="font-normal text-sm text-slate-600">
+                  Yes, clear and followed
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Exists but not updated" id="sops-2" />
+                <Label htmlFor="sops-2" className="font-normal text-sm text-slate-600">
+                  Exists but not updated
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Informal / depends on people" id="sops-3" />
+                <Label htmlFor="sops-3" className="font-normal text-sm text-slate-600">
+                  Informal / depends on people
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No SOPs at all" id="sops-4" />
+                <Label htmlFor="sops-4" className="font-normal text-sm text-slate-600">
+                  No SOPs at all
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please describe your current SOPs..."
+              value={formData.sops_details}
+              onChange={(e) => handleInputChange("sops_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 5: Tools/Systems */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">5. What tools and systems are you currently using?</h3>
+            <p className="text-sm text-slate-600">Select all that apply</p>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+              {[
+                "Website / landing pages",
+                "CRM / customer database",
+                "Automation tools (email etc.)",
+                "Analytics / reporting tools",
+                "Mostly manual (Excel, WhatsApp, phone calls)",
+                "Other",
+              ].map((tool) => (
+                <div key={tool}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`tool-${tool}`}
+                      checked={tool === "Other" ? otherSelections.tools : formData.current_tools.includes(tool)}
+                      onCheckedChange={(checked) => {
+                        if (tool === "Other") {
+                          handleOtherToggle("tools", checked as boolean)
+                        } else {
+                          handleCheckboxChange("current_tools", tool, checked as boolean)
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`tool-${tool}`} className="font-normal text-sm text-slate-600">
+                      {tool}
+                    </Label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {otherSelections.tools && (
+              <div className="mt-2 ml-6">
+                <Input
+                  placeholder="Please specify other tools"
+                  value={formData.current_tools_details}
+                  onChange={(e) => handleInputChange("current_tools_details", e.target.value)}
+                  className="border-slate-300"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Question 6: Marketing Confidence */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              6. How confident are you that your current marketing brings the right customers?
+            </h3>
+            <RadioGroup
+              value={formData.marketing_confidence}
+              onValueChange={(value) => handleInputChange("marketing_confidence", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Very confident" id="marketing-1" />
+                <Label htmlFor="marketing-1" className="font-normal text-sm text-slate-600">
+                  Very confident
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Somewhat confident" id="marketing-2" />
+                <Label htmlFor="marketing-2" className="font-normal text-sm text-slate-600">
+                  Somewhat confident
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Not sure" id="marketing-3" />
+                <Label htmlFor="marketing-3" className="font-normal text-sm text-slate-600">
+                  Not sure
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Not confident at all" id="marketing-4" />
+                <Label htmlFor="marketing-4" className="font-normal text-sm text-slate-600">
+                  Not confident at all
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please describe your marketing confidence..."
+              value={formData.marketing_details}
+              onChange={(e) => handleInputChange("marketing_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 7: Content Quality */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              7. Do your videos, photos, and online content clearly communicate your value and build trust?
+            </h3>
+            <RadioGroup
+              value={formData.content_quality}
+              onValueChange={(value) => handleInputChange("content_quality", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes, strongly" id="content-1" />
+                <Label htmlFor="content-1" className="font-normal text-sm text-slate-600">
+                  Yes, strongly
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Somewhat" id="content-2" />
+                <Label htmlFor="content-2" className="font-normal text-sm text-slate-600">
+                  Somewhat
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Not really" id="content-3" />
+                <Label htmlFor="content-3" className="font-normal text-sm text-slate-600">
+                  Not really
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="We don't have consistent content" id="content-4" />
+                <Label htmlFor="content-4" className="font-normal text-sm text-slate-600">
+                  We don't have consistent content
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please describe your content quality..."
+              value={formData.content_details}
+              onChange={(e) => handleInputChange("content_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 8: Problem Areas */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              8. Where do mistakes, delays, or confusion most often happen?
+            </h3>
+            <p className="text-sm text-slate-600">Select all that apply</p>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+              {[
+                "Lead follow-up",
+                "Quotation & pricing",
+                "Internal communication",
+                "Project delivery",
+                "Customer after-sales",
+                "Reporting & tracking",
+                "Other",
+              ].map((area) => (
+                <div key={area}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`problem-${area}`}
+                      checked={area === "Other" ? otherSelections.problemAreas : formData.problem_areas.includes(area)}
+                      onCheckedChange={(checked) => {
+                        if (area === "Other") {
+                          handleOtherToggle("problemAreas", checked as boolean)
+                        } else {
+                          handleCheckboxChange("problem_areas", area, checked as boolean)
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`problem-${area}`} className="font-normal text-sm text-slate-600">
+                      {area}
+                    </Label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {otherSelections.problemAreas && (
+              <div className="mt-2 ml-6">
+                <Input
+                  placeholder="Please specify other problem areas"
+                  value={formData.problem_areas_details}
+                  onChange={(e) => handleInputChange("problem_areas_details", e.target.value)}
+                  className="border-slate-300"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Question 9: Data/Analytics */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">9. Do you have real data to guide business decisions?</h3>
+            <RadioGroup
+              value={formData.data_analytics}
+              onValueChange={(value) => handleInputChange("data_analytics", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes, real-time dashboards" id="data-1" />
+                <Label htmlFor="data-1" className="font-normal text-sm text-slate-600">
+                  Yes, real-time dashboards
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Some reports but not actionable" id="data-2" />
+                <Label htmlFor="data-2" className="font-normal text-sm text-slate-600">
+                  Some reports but not actionable
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Data exists but not analyzed" id="data-3" />
+                <Label htmlFor="data-3" className="font-normal text-sm text-slate-600">
+                  Data exists but not analyzed
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Mostly guessing / experience-based" id="data-4" />
+                <Label htmlFor="data-4" className="font-normal text-sm text-slate-600">
+                  Mostly guessing / experience-based
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please provide additional details about your analytics..."
+              value={formData.data_details}
+              onChange={(e) => handleInputChange("data_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Question 10: Solution Openness */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">
+              10. If the right solution could improve efficiency, clarity, and results, are you open to redesigning
+              processes using technology?
+            </h3>
+            <RadioGroup
+              value={formData.solution_openness}
+              onValueChange={(value) => handleInputChange("solution_openness", value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes, ready to act" id="solution-1" />
+                <Label htmlFor="solution-1" className="font-normal text-sm text-slate-600">
+                  Yes, ready to act
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Interested but need guidance" id="solution-2" />
+                <Label htmlFor="solution-2" className="font-normal text-sm text-slate-600">
+                  Interested but need guidance
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Open, but budget/time concern" id="solution-3" />
+                <Label htmlFor="solution-3" className="font-normal text-sm text-slate-600">
+                  Open, but budget/time concern
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Not ready yet" id="solution-4" />
+                <Label htmlFor="solution-4" className="font-normal text-sm text-slate-600">
+                  Not ready yet
+                </Label>
+              </div>
+            </RadioGroup>
+            <Textarea
+              placeholder="Please provide additional details about your openness to solutions..."
+              value={formData.solution_details}
+              onChange={(e) => handleInputChange("solution_details", e.target.value)}
+              className="border-slate-300 mt-2"
+              rows={3}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-2 pt-6 border-t border-slate-200">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="ml-auto bg-slate-800 hover:bg-slate-700 text-white"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Survey"
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
