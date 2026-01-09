@@ -18,7 +18,7 @@ const Solutions = () => {
         <div className="space-y-6">
           <span className="text-gray-400 text-2xl font-bold">OUR SOLUTIONS</span>
           <h1 className={`text-4xl md:text-5xl text-accent ${poetsen_one.className}`}>
-            We design & build your custom website
+            We design & build your custom website helping clients achieve business growth & digital transformation
           </h1>
           <p className="text-lg text-gray-100 leading-snug">
             Explore some of our latest projects showcasing innovative designs, 
