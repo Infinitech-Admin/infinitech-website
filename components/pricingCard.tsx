@@ -39,7 +39,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
 }) => {
   const getBillingText = () => {
     if (billingPeriod === "piece") return "/per piece"
-    return billingPeriod === "yearly" ? "/year" : "/month" 
+    return billingPeriod === "yearly" ? "/year" : "/month"
   }
 
   return (
@@ -47,9 +47,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
       {/* Normal Card */}
       <div
         onMouseEnter={() => onExpandChange?.(true)}
-        className={`relative rounded-2xl transition-all duration-500 ease-in-out ${
-          isExpanded ? "opacity-0 invisible" : ""
-        } ${
+        className={`relative rounded-2xl transition-all duration-500 ease-in-out ${isExpanded ? "opacity-0 invisible" : ""} ${
           isOtherExpanded ? "opacity-0 scale-75 pointer-events-none" : "opacity-100"
         } ${
           plan.popular
@@ -80,18 +78,12 @@ const PricingCard: React.FC<PricingCardProps> = ({
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                 {plan.features.slice(0, 6).map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <Check
-                      className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
-                    />
+                    <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`} />
                     <span className="text-slate-300 text-xs leading-relaxed">{feature}</span>
                   </div>
                 ))}
               </div>
-              {plan.features.length > 6 && (
-                <p className="text-cyan-400 text-xs mt-2 font-medium">
-                  +{plan.features.length - 6} more features...
-                </p>
-              )}
+              {plan.features.length > 6 && <p className="text-cyan-400 text-xs mt-2 font-medium">+{plan.features.length - 6} more features...</p>}
             </div>
           </div>
         </div>
@@ -106,9 +98,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
-            <span className="text-slate-400 font-medium text-xs">
-              {getBillingText()}
-            </span>
+            <span className="text-slate-400 font-medium text-xs">{getBillingText()}</span>
           </div>
 
           <button
@@ -134,7 +124,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
       {/* Expanded Card - Centered Modal */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
           onMouseLeave={() => onExpandChange?.(false)}
         >
           <div
@@ -147,39 +137,37 @@ const PricingCard: React.FC<PricingCardProps> = ({
             {/* Close Button */}
             <button
               onClick={() => onExpandChange?.(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors z-30"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors z-30"
               title="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Popular Badge */}
             {plan.popular && (
-              <div className="absolute -top-4 left-8">
-                <span className="inline-block px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold rounded-full shadow-lg">
+              <div className="absolute -top-3 sm:-top-4 left-4 sm:left-8">
+                <span className="inline-block px-3 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs sm:text-sm font-bold rounded-full shadow-lg">
                   Most Popular
                 </span>
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
               {/* Left: Plan Details */}
               <div className="flex-1">
-                <div className="mb-6">
-                  <h2 className="text-4xl font-bold text-white mb-2">{plan.name}</h2>
-                  {plan.badge && <p className="text-sm text-slate-400">{plan.badge}</p>}
+                <div className="mb-4 sm:mb-6">
+                  <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{plan.name}</h2>
+                  {plan.badge && <p className="text-xs sm:text-sm text-slate-400">{plan.badge}</p>}
                 </div>
 
-                {/* Features List - Two column grid */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-white mb-4">What's Included:</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Features List */}
+                <div className="space-y-2 sm:space-y-3">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">What's Included:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     {plan.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <Check
-                          className={`w-5 h-5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
-                        />
-                        <span className="text-slate-200 text-base leading-relaxed">{feature}</span>
+                      <div key={idx} className="flex items-start gap-2 sm:gap-3">
+                        <Check className={`w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`} />
+                        <span className="text-slate-200 text-sm sm:text-base leading-relaxed">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -187,18 +175,16 @@ const PricingCard: React.FC<PricingCardProps> = ({
               </div>
 
               {/* Right: Price & Action */}
-              <div className="md:w-80 flex flex-col items-center justify-center text-center space-y-6 shrink-0">
+              <div className="lg:w-80 flex flex-col items-center justify-center text-center space-y-4 sm:space-y-6 shrink-0">
                 {/* Price Display */}
                 <div>
-                  <div className="flex items-baseline justify-center gap-1 mb-2">
-                    <span className="text-4xl font-black text-white">{currency}</span>
-                    <span className="text-6xl font-black text-white">
+                  <div className="flex items-baseline justify-center gap-1 mb-1 sm:mb-2">
+                    <span className="text-2xl sm:text-4xl font-black text-white">{currency}</span>
+                    <span className="text-4xl sm:text-6xl font-black text-white">
                       {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </span>
                   </div>
-                  <span className="text-slate-400 font-medium text-lg">
-                    {getBillingText()}
-                  </span>
+                  <span className="text-slate-400 font-medium text-sm sm:text-lg">{getBillingText()}</span>
                 </div>
 
                 {/* Add to Cart Button */}
@@ -207,7 +193,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                     e.stopPropagation()
                     onAddToCart?.()
                   }}
-                  className={`w-full py-4 px-8 rounded-xl transition-all duration-300 font-bold text-lg flex items-center justify-center gap-3 ${
+                  className={`w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300 font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 ${
                     isInCart
                       ? "bg-green-500 text-white hover:bg-green-600"
                       : plan.popular
@@ -215,13 +201,11 @@ const PricingCard: React.FC<PricingCardProps> = ({
                         : "bg-slate-700 text-white hover:bg-slate-600 border-2 border-slate-600"
                   }`}
                 >
-                  <ShoppingCart className="w-6 h-6" />
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                   {isInCart ? "Added to Cart" : "Add to Cart"}
                 </button>
 
-                <p className="text-slate-400 text-sm">
-                  {isInCart ? "Item is in your cart" : ""}
-                </p>
+                <p className="text-slate-400 text-xs sm:text-sm">{isInCart ? "Item is in your cart" : ""}</p>
               </div>
             </div>
           </div>
