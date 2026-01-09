@@ -162,13 +162,7 @@ const PricingPage = () => {
           name: "Standard",
           monthlyPrice: 11993,
           yearlyPrice: 74979,
-          features: [
-            "Account Setup (FB+IG+TikTok)",
-            "Branding (Profile & Cover)",
-            "8 Posts / Month",
-            "2 Reels / Month",
-            "Monthly Insights Report",
-          ],
+          features: ["Account Setup (FB+IG+TikTok)", "Branding (Profile & Cover)", "8 Posts / Month", "2 Reels / Month", "Monthly Insights Report"],
           popular: false,
           cta: "Get Started",
         },
@@ -278,7 +272,7 @@ const PricingPage = () => {
 
   const currentService = services[activeService as keyof typeof services]
   const getPrice = (plan: any) => (billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice)
-  
+
   // Check if current service is JuanTap (per piece pricing)
   const isJuanTap = activeService === "juantap"
 
@@ -366,15 +360,13 @@ const PricingPage = () => {
       {/* Header Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            Our Pricing Plans
-          </h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">Our Pricing Plans</h1>
           <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
             Choose the perfect plan for your business. All plans include support and updates.
           </p>
 
           {/* Service Selector */}
-          <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="grid grid-cols-2 gap-2 mb-6 pb-2 sm:flex sm:justify-center sm:gap-2 sm:overflow-x-auto">
             {Object.entries(services).map(([key, service]) => (
               <button
                 key={key}
@@ -398,9 +390,7 @@ const PricingPage = () => {
               <button
                 onClick={() => setBillingPeriod("monthly")}
                 className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "monthly"
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  billingPeriod === "monthly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                 }`}
               >
                 Monthly
@@ -408,9 +398,7 @@ const PricingPage = () => {
               <button
                 onClick={() => setBillingPeriod("yearly")}
                 className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "yearly"
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  billingPeriod === "yearly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                 }`}
               >
                 Yearly
@@ -502,9 +490,7 @@ const PricingPage = () => {
                       {emailStatus && (
                         <div
                           className={`text-xs p-2 rounded-lg ${
-                            emailStatus.type === "success"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
+                            emailStatus.type === "success" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
                           }`}
                         >
                           {emailStatus.message}
