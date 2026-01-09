@@ -287,11 +287,11 @@ export default function SurveyForm() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8 px-4">
+    <div className="w-full min-h-screen py-8 px-4">
       <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur shadow-2xl border-0">
-        <CardHeader className="bg-slate-800 text-white rounded-t-lg">
+        <CardHeader className="bg-accent text-white rounded-t-lg">
           <CardTitle className="text-2xl">Client Discovery Survey</CardTitle>
-          <CardDescription className="text-slate-300">
+          <CardDescription className="text-slate-100">
             Please fill out all fields below. All questions are on this page.
           </CardDescription>
         </CardHeader>
