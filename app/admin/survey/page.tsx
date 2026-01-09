@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,10 +30,10 @@ import {
   Search,
   Calendar,
   FileText,
+  Trash2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import jsPDF from "jspdf"
 
 interface Survey {
   id: number
@@ -71,6 +72,7 @@ const ITEMS_PER_PAGE = 10
 
 export default function AdminSurveyPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -79,6 +81,12 @@ export default function AdminSurveyPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterIndustry, setFilterIndustry] = useState("all")
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [surveyToDelete, setSurveyToDelete] = useState<Survey | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [surveyToEmail, setSurveyToEmail] = useState<Survey | null>(null)
+  const [sendingEmail, setSendingEmail] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
@@ -108,7 +116,7 @@ export default function AdminSurveyPage() {
     }
   }
 
- const downloadSurveyPDF = async (survey: Survey) => {
+  const downloadSurveyPDF = async (survey: Survey) => {
     setDownloadingId(survey.id)
     try {
       const { generateSurveyPDF } = await import("@/lib/pdf-generator")
@@ -121,6 +129,80 @@ export default function AdminSurveyPage() {
       setTimeout(() => setMessage(""), 3000)
     } finally {
       setDownloadingId(null)
+    }
+  }
+
+  const handleDeleteSurvey = async () => {
+    if (!surveyToDelete) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/surveys/${surveyToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete survey")
+      }
+
+      toast({
+        title: "Success",
+        description: `Survey for ${surveyToDelete.client_name} deleted successfully!`,
+        variant: "default",
+      })
+
+      setSurveys(surveys.filter((s) => s.id !== surveyToDelete.id))
+
+      setDeleteDialogOpen(false)
+      setSurveyToDelete(null)
+    } catch (error) {
+      console.error("Error deleting survey:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete survey. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!surveyToEmail) return
+
+    setSendingEmail(true)
+    try {
+      const response = await fetch(`/api/surveys/${surveyToEmail.id}/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ survey: surveyToEmail }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send email")
+      }
+
+      toast({
+        title: "Success",
+        description: `Email sent to ${surveyToEmail.client_name} successfully!`,
+        variant: "default",
+      })
+
+      setEmailDialogOpen(false)
+      setSurveyToEmail(null)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send email"
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -367,6 +449,7 @@ export default function AdminSurveyPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
+                            {/* View Survey Dialog */}
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button
@@ -578,6 +661,82 @@ export default function AdminSurveyPage() {
                               </DialogContent>
                             </Dialog>
 
+                            {/* Send Email Button */}
+                            <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSurveyToEmail(survey)}
+                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                  <span className="hidden sm:inline ml-1">Email</span>
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="border-2 max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="text-lg flex items-center gap-2">
+                                    <Mail className="h-5 w-5 text-blue-600" />
+                                    Send Assessment Email
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    Send a personalized follow-up email with insights based on the survey responses.
+                                  </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                    <strong>Client:</strong> {surveyToEmail?.client_name}
+                                  </p>
+                                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                                    <strong>Email:</strong> {surveyToEmail?.email}
+                                  </p>
+                                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                                    <strong>Company:</strong> {surveyToEmail?.company_name}
+                                  </p>
+                                </div>
+
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                                    This email will be personalized based on the client's identified problems and needs
+                                    from their survey responses.
+                                  </p>
+                                </div>
+
+                                <div className="flex gap-3 justify-end">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEmailDialogOpen(false)
+                                      setSurveyToEmail(null)
+                                    }}
+                                    disabled={sendingEmail}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={handleSendEmail}
+                                    disabled={sendingEmail}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    {sendingEmail ? (
+                                      <>
+                                        <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        Sending...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Mail className="h-4 w-4 mr-2" />
+                                        Send Email
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            {/* Download PDF Button */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -591,6 +750,66 @@ export default function AdminSurveyPage() {
                                 <Download className="h-4 w-4" />
                               )}
                             </Button>
+
+                            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSurveyToDelete(survey)}
+                                  className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="hidden sm:inline ml-1">Delete</span>
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="border-2 max-w-sm">
+                                <DialogHeader>
+                                  <DialogTitle className="text-lg flex items-center gap-2">
+                                    <Trash2 className="h-5 w-5 text-red-600" />
+                                    Delete Survey
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    Are you sure you want to delete this survey? This action cannot be undone.
+                                  </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                                  <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                                    <strong>Client:</strong> {surveyToDelete?.client_name}
+                                  </p>
+                                  <p className="text-sm text-red-800 dark:text-red-200">
+                                    <strong>Company:</strong> {surveyToDelete?.company_name}
+                                  </p>
+                                </div>
+
+                                <div className="flex gap-3 justify-end">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setDeleteDialogOpen(false)
+                                      setSurveyToDelete(null)
+                                    }}
+                                    disabled={deleting}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button variant="destructive" onClick={handleDeleteSurvey} disabled={deleting}>
+                                    {deleting ? (
+                                      <>
+                                        <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Survey
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </TableCell>
                       </TableRow>
