@@ -38,11 +38,11 @@ const Services = () => {
           name: "Booking System",
           description: "Websites with integrated booking and scheduling systems for services and events.",
         },
-        {
-          id: 7,
-          name: "Property Specialist",
-          description: "Specialized sites for property consultants and agencies to highlight expertise and listings.",
-        },
+        // {
+        //   id: 7,
+        //   name: "Property Specialist",
+        //   description: "Specialized sites for property consultants and agencies to highlight expertise and listings.",
+        // },
       ],
     },
     {
