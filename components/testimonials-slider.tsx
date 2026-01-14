@@ -4,6 +4,7 @@ import "keen-slider/keen-slider.min.css"
 import React, { useMemo, useState, useEffect } from "react"
 import { Card, CardBody, CardFooter, Divider } from "@heroui/react"
 import { useKeenSlider } from "keen-slider/react"
+import Marquee from "react-fast-marquee"
 
 export interface Testimonial {
   id?: number
@@ -32,45 +33,6 @@ const TestimonialSlider: React.FC<TestimonialsSliderProps> = ({ testimonials }) 
   const realSlidesCount = testimonials.length
   const loop = isMobile ? realSlidesCount > 1 : realSlidesCount > 3
 
-  // only use slider if looping
-  const [sliderRef] = useKeenSlider<HTMLDivElement>({
-    loop,
-    slides: { perView: 3, spacing: 15 },
-    breakpoints: {
-      "(max-width: 1024px)": { slides: { perView: 2, spacing: 12 } },
-      "(max-width: 640px)": { slides: { perView: 1, spacing: 10 } },
-    },
-    created(slider) {
-      if (!loop) return
-
-      let timeout: ReturnType<typeof setTimeout>
-      let mouseOver = false
-
-      const clearNextTimeout = () => clearTimeout(timeout)
-      const nextTimeout = () => {
-        clearTimeout(timeout)
-        if (mouseOver || !slider.track?.details) return
-        timeout = setTimeout(() => slider.next(), 3000)
-      }
-
-      slider.container.addEventListener("mouseenter", () => {
-        mouseOver = true
-        clearNextTimeout()
-      })
-
-      slider.container.addEventListener("mouseleave", () => {
-        mouseOver = false
-        nextTimeout()
-      })
-
-      slider.on("dragStarted", clearNextTimeout)
-      slider.on("animationEnded", nextTimeout)
-      slider.on("updated", nextTimeout)
-
-      nextTimeout()
-    },
-  })
-
   // If loop is false, render static flex grid
   if (!loop) {
     return (
@@ -84,27 +46,31 @@ const TestimonialSlider: React.FC<TestimonialsSliderProps> = ({ testimonials }) 
 
   // loop true, render slider
   return (
-    <div className="mt-12 my-2">
-      <div ref={sliderRef} className="keen-slider">
-        {testimonials.map((t) => (
-          <div key={t.id || t.name} className="keen-slider__slide flex justify-center">
-            <TestimonialCard testimonial={t} />
-          </div>
-        ))}
+    <Marquee pauseOnHover pauseOnClick speed={50}>
+      <div className="mt-5">
+        <div className="keen-slider">
+          {testimonials.map((t) => (
+            <div key={t.id || t.name} className="keen-slider__slide flex justify-center mx-3">
+              <TestimonialCard testimonial={t} />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </Marquee>
   )
 }
 
 const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => (
-  <Card className="bg-gray-100 shadow-none flex flex-col justify-between max-w-sm w-full">
+  <Card className="m-4 bg-white shadow-lg flex flex-col justify-between max-w-sm w-full border-amber-500 border-1 transform transition-transform duration-300 hover:scale-105">
     <CardBody className="px-6 py-4">
-      <p className="text-lg leading-relaxed">"{testimonial.message}"</p>
+      <p className="text-lg leading-relaxed bg-gradient-to-r from-accent to-orange-700 bg-clip-text text-transparent text-justify">
+        {testimonial.message}
+      </p>
     </CardBody>
 
     <CardFooter className="px-6 pb-4">
       <div className="w-full">
-        <Divider className="my-4" />
+        <Divider className="my-4 bg-accent" />
         <h4 className="font-semibold uppercase text-2xl">{testimonial.name}</h4>
         <span className="text-sm text-gray-500">{testimonial.position}</span>
       </div>
