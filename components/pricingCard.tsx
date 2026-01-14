@@ -46,7 +46,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
     <>
       {/* Normal Card */}
       <div
-        onMouseEnter={() => onExpandChange?.(true)}
+        onClick={() => onExpandChange?.(true)}
         className={`relative rounded-2xl transition-all duration-500 ease-in-out ${isExpanded ? "opacity-0 invisible" : ""} ${
           isOtherExpanded ? "opacity-0 scale-75 pointer-events-none" : "opacity-100"
         } ${
@@ -125,7 +125,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
       {isExpanded && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
-          onMouseLeave={() => onExpandChange?.(false)}
+          onClick={() => onExpandChange?.(false)}
         >
           <div
             className={`relative w-full max-w-5xl rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-300 ${
@@ -192,6 +192,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                   onClick={(e) => {
                     e.stopPropagation()
                     onAddToCart?.()
+                    onExpandChange?.(false)
                   }}
                   className={`w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300 font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 ${
                     isInCart
