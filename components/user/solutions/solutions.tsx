@@ -23,12 +23,20 @@ const Solutions = () => {
       {/* Solutions Section */}
       <section className="container mx-auto px-4">
         <div className="flex flex-col justify-center items-center">
-          <div className="flex justify-center lg:justify-end items-center w-full my-5">
+          <div className="text-center w-full mb-5">
+            <h2 className="text-2xl font-bold text-accent mb-2 uppercase">Your Experience Shapes Our Solution</h2>
+            <p className="text-md text-gray-300 max-w-xl mx-auto leading-relaxed">
+              Every project we deliver is built around your needs. By sharing your thoughts, you help us refine our process and create solutions that
+              truly resonate with you.
+            </p>
+          </div>
+
+          <div className="flex justify-center items-center w-full mb-10">
             <Button
               onClick={scrollToSurvey}
               className="relative z-20 px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-slate-900 font-semibold rounded-full shadow-lg hover:scale-105 transition-transform duration-300"
             >
-              <FaArrowDown className="mr-2" /> Take the Survey
+              <FaArrowDown className="mr-2 animate-bounce" /> Take the Survey
             </Button>
           </div>
 
