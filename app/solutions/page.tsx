@@ -14,7 +14,7 @@ const Page = () => {
       <section className="max-w-3xl mx-auto text-center mb-12 px-6">
         <h1 className="text-4xl md:text-5xl text-accent font-bold tracking-tight mb-4 uppercase">Services & Solutions</h1>
         <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
-          Delivering smart services and practical solutions that help your business grow, adapt, and succeed in a fast-changing digital world.
+         From Websites and Mobile Apps to SEO, Multimedia, Social Media, and JuanTap—We Power Your Digital Growth.
         </p>
       </section>
 
