@@ -225,7 +225,7 @@ const SolutionsPage: React.FC = () => {
 
   const SolutionCard = ({ solution, index }: { solution: Solution; index: number }) => (
     <div
-      className={`group cursor-pointer transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"}`}
+      className={`bg-white group cursor-pointer transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"}`}
       style={{ animationDelay: `${index * 100}ms` }}
       onMouseEnter={() => setHoveredCard(solution.id)}
       onMouseLeave={() => setHoveredCard(null)}
