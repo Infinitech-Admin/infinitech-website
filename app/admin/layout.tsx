@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList, Inbox } from "lucide-react"
+import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList, Inbox, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <a
+          
             href="/admin/dashboard"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -81,7 +81,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
           </a>
- <a
+
+          
             href="/admin/inquiries"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -91,19 +92,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Inbox size={20} />
             <span>Inquiries</span>
           </a>
-            <a
+
+          
             href="/admin/juantap-survey"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               isActive("/admin/juantap-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
             }`}
           >
-            <Inbox size={20} />
+            <ClipboardList size={20} />
             <span>Juantap Survey</span>
           </a>
-          
 
-          <a
+          
             href="/admin/survey"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -114,17 +115,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span>Survey</span>
           </a>
 
-          <a
+          
             href="/admin/video-survey"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               isActive("/admin/video-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
             }`}
           >
-            <ClipboardList size={20} />
+            <Video size={20} />
             <span>Video Survey</span>
           </a>
-<a
+
+          
             href="/admin/support-tickets"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -134,9 +136,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Ticket size={20} />
             <span>Support Tickets</span>
           </a>
-         
-
-        
         </nav>
 
         {/* Logout Button */}
