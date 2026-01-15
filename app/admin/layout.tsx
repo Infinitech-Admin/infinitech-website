@@ -9,7 +9,7 @@ interface AdminLayoutProps {
   children: React.ReactNode
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
@@ -37,17 +37,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     router.push("/admin/login")
   }
 
-  const isActive = (path: string) => pathname === path
+  const isActive = (path: string) => {
+    return pathname === path
+  }
 
   if (pathname === "/admin/login") {
-    return <React.Fragment>{children}</React.Fragment>
+    return React.createElement(React.Fragment, null, children)
   }
 
   if (isChecking || !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
-      </div>
+    return React.createElement(
+      "div",
+      { className: "min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center" },
+      React.createElement("div", { className: "animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600" })
     )
   }
 
@@ -170,3 +172,5 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   )
 }
+
+export default AdminLayout
