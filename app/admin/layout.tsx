@@ -6,11 +6,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { Menu, X, LogOut, LayoutDashboard, Ticket, ClipboardList, Inbox } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
@@ -24,7 +20,6 @@ export default function AdminLayout({
     }
 
     const token = localStorage.getItem("adminToken")
-
     if (!token) {
       router.push("/admin/login")
       return
@@ -41,9 +36,7 @@ export default function AdminLayout({
 
   const isActive = (path: string) => pathname === path
 
-  if (pathname === "/admin/login") {
-    return <>{children}</>
-  }
+  if (pathname === "/admin/login") return <>{children}</>
 
   if (isChecking || !isAuthenticated) {
     return (
@@ -110,7 +103,8 @@ export default function AdminLayout({
             <ClipboardList size={20} />
             <span>Survey</span>
           </a>
-             <a
+
+          <a
             href="/admin/video-survey"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -118,7 +112,9 @@ export default function AdminLayout({
             }`}
           >
             <ClipboardList size={20} />
-            <sp
+            <span>Video Survey</span>
+          </a>
+
           <a
             href="/admin/inquiries"
             onClick={() => setSidebarOpen(false)}
@@ -129,7 +125,8 @@ export default function AdminLayout({
             <Inbox size={20} />
             <span>Inquiries</span>
           </a>
-           <a
+
+          <a
             href="/admin/juantap-survey"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
