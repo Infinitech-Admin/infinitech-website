@@ -110,6 +110,15 @@ export default function AdminLayout({
             <ClipboardList size={20} />
             <span>Survey</span>
           </a>
+             <a
+            href="/admin/video-survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/video-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <ClipboardList size={20} />
+            <sp
           <a
             href="/admin/inquiries"
             onClick={() => setSidebarOpen(false)}
