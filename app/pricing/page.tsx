@@ -3,22 +3,23 @@
 import { useState } from "react"
 import PricingCard from "@/components/pricingCard"
 import { X, ShoppingCart, Mail, Loader2 } from "lucide-react"
+import { useMediaQuery } from 'react-responsive'
 
 interface CartItem {
   planName: string
   service: string
   price: number
-  billingPeriod: "monthly" | "yearly"
+  billingPeriod: "monthly" | "yearly" | "piece"
 }
 
 const PricingPage = () => {
   const [activeService, setActiveService] = useState("website")
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly")
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly" | "piece">("monthly")
   const [cart, setCart] = useState<CartItem[]>([])
   const [clientEmail, setClientEmail] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
-  const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(null)
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
 
   const services = {
     website: {
@@ -162,7 +163,13 @@ const PricingPage = () => {
           name: "Standard",
           monthlyPrice: 11993,
           yearlyPrice: 74979,
-          features: ["Account Setup (FB+IG+TikTok)", "Branding (Profile & Cover)", "8 Posts / Month", "2 Reels / Month", "Monthly Insights Report"],
+          features: [
+            "Account Setup (FB+IG+TikTok)",
+            "Branding (Profile & Cover)",
+            "8 Posts / Month",
+            "2 Reels / Month",
+            "Monthly Insights Report",
+          ],
           popular: false,
           cta: "Get Started",
         },
@@ -271,22 +278,7 @@ const PricingPage = () => {
   }
 
   const currentService = services[activeService as keyof typeof services]
-  const getPrice = (plan: any) => (billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice)
-
-  // Check if current service is JuanTap (per piece pricing)
-  const isJuanTap = activeService === "juantap"
-
-  const isInCart = (planName: string, service: string) => {
-    return cart.some((item) => item.planName === planName && item.service === service)
-  }
-
-  const toggleCart = (planName: string, service: string, price: number) => {
-    if (isInCart(planName, service)) {
-      setCart(cart.filter((item) => !(item.planName === planName && item.service === service)))
-    } else {
-      setCart([...cart, { planName, service, price, billingPeriod }])
-    }
-  }
+  const currentPlans = currentService.plans
 
   const removeFromCart = (planName: string, service: string) => {
     setCart(cart.filter((item) => !(item.planName === planName && item.service === service)))
@@ -304,78 +296,55 @@ const PricingPage = () => {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price, 0)
 
-  const handleSendEmail = async () => {
-    if (!clientEmail) {
-      setEmailStatus({ type: "error", message: "Please enter client email" })
-      return
-    }
-    if (cart.length === 0) {
-      setEmailStatus({ type: "error", message: "Cart is empty" })
-      return
-    }
+  const handleAddToCart = (plan: any) => {
+    const price = billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice
 
-    setIsSending(true)
-    setEmailStatus(null)
-
-    const now = new Date()
-    const dateStr = now.toLocaleDateString("en-PH", { day: "2-digit", month: "2-digit", year: "numeric" })
-    const timeStr = now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-    const receiptNo = `N° ${Math.floor(1000 + Math.random() * 9000)}`
-
-    try {
-      const response = await fetch("/api/summary-send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: clientEmail,
-          subject: `Infinitech - Order Summary #${receiptNo}`,
-          cart: cart.map((item) => ({
-            ...item,
-            serviceTitle: getServiceTitle(item.service),
-          })),
-          total: cartTotal,
-          dateStr,
-          timeStr,
-          receiptNo,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setEmailStatus({ type: "success", message: "Email sent successfully!" })
-        setClientEmail("")
-      } else {
-        setEmailStatus({ type: "error", message: data.error || "Failed to send email" })
-      }
-    } catch (error) {
-      setEmailStatus({ type: "error", message: "Failed to send email" })
-    } finally {
-      setIsSending(false)
+    if (price !== undefined) {
+      setCart([...cart, {
+        planName: plan.name,
+        service: activeService,
+        price,
+        billingPeriod: activeService === "juantap" ? "piece" : billingPeriod
+      }])
     }
   }
 
+  const isDesktopOrLaptop = useMediaQuery({
+    query: '(min-width: 1000px)'
+  })
+  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 999px)' })
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 lg:py-12 pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16">
       {/* Header Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">Our Pricing Plans</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            Our Pricing Plans
+          </h1>
           <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
             Choose the perfect plan for your business. All plans include support and updates.
           </p>
 
           {/* Service Selector */}
-          <div className="grid grid-cols-2 gap-2 mb-6 pb-2 sm:flex sm:justify-center sm:gap-2 sm:overflow-x-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 justify-center gap-2 mb-6 overflow-x-auto pb-2">
             {Object.entries(services).map(([key, service]) => (
               <button
                 key={key}
-                onClick={() => setActiveService(key)}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
-                  activeService === key
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
+                onClick={() => {
+                  setActiveService(key)
+                  setSelectedCardIndex(null)
+                  // Reset billing period when switching to/from JuanTap
+                  if (key === "juantap") {
+                    setBillingPeriod("piece")
+                  } else if (billingPeriod === "piece") {
+                    setBillingPeriod("monthly")
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${activeService === key
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
               >
                 {key === "website" && "Website"}
                 {key === "juantap" && "JuanTap"}
@@ -385,21 +354,22 @@ const PricingPage = () => {
             ))}
           </div>
 
-          {!isJuanTap && (
+          {/* Billing Period Selector - Only show for non-JuanTap services */}
+          {activeService !== "juantap" && (
             <div className="flex justify-center gap-2 mb-4">
               <button
                 onClick={() => setBillingPeriod("monthly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "monthly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${billingPeriod === "monthly"
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingPeriod("yearly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "yearly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${billingPeriod === "yearly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
               >
                 Yearly
               </button>
@@ -410,31 +380,39 @@ const PricingPage = () => {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
-          {/* Pricing Cards - Left Side (Landscape 2x2 grid) */}
+      {isTabletOrMobile &&
+        <section className="mx-auto px-6 flex flex-col pb-10 items-center">
+          {/* Pricing Cards Container */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {currentService.plans.map((plan, index) => (
-                <PricingCard
-                  key={index}
-                  plan={plan}
-                  billingPeriod={isJuanTap ? "piece" : billingPeriod}
-                  price={getPrice(plan)}
-                  currency="₱"
-                  onAddToCart={() => toggleCart(plan.name, activeService, getPrice(plan))}
-                  isInCart={isInCart(plan.name, activeService)}
-                  isExpanded={expandedCardIndex === index}
-                  isOtherExpanded={expandedCardIndex !== null && expandedCardIndex !== index}
-                  onExpandChange={(expanded) => setExpandedCardIndex(expanded ? index : null)}
-                />
-              ))}
+            <div className="relative">
+              <div className="py-8" onClick={() => setSelectedCardIndex(null)}>
+                <div className="flex-1 justify-center">
+                  {currentPlans.map((plan, index) => (
+                    <div
+                      key={index}
+                      className="cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedCardIndex(selectedCardIndex === index ? null : index)
+                      }}
+                    >
+                      <PricingCard
+                        plan={plan}
+                        billingPeriod={activeService === "juantap" ? "piece" : billingPeriod}
+                        onAddToCart={() => handleAddToCart(plan)}
+                        isHovered={index === selectedCardIndex}
+                        isSmall={selectedCardIndex !== null && index !== selectedCardIndex}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Order Summary - Right Side */}
-          <div className="lg:w-80 shrink-0">
-            <div id="order-summary" className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5 sticky top-8">
+          {/* Order Summary Sidebar */}
+          <div className="w-full lg:w-80 lg:fixed lg:right-8 lg:top-24 lg:h-fit">
+            <div id="order-summary" className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="w-5 h-5 text-cyan-400" />
                 <h3 className="text-lg font-bold text-white">Order Summary</h3>
@@ -448,7 +426,7 @@ const PricingPage = () => {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                     {cart.map((item, idx) => (
                       <div key={idx} className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3">
                         <div className="min-w-0 flex-1">
@@ -456,12 +434,14 @@ const PricingPage = () => {
                           <p className="text-slate-400 text-xs">{getServiceTitle(item.service)}</p>
                           <p className="text-cyan-400 text-xs font-semibold">
                             ₱{item.price.toLocaleString()}
-                            {item.service !== "juantap" && ` / ${item.billingPeriod === "yearly" ? "year" : "mo"}`}
+                            {item.billingPeriod === "piece"
+                              ? " / piece"
+                              : ` / ${item.billingPeriod === "yearly" ? "year" : "mo"}`}
                           </p>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.planName, item.service)}
-                          className="text-slate-400 hover:text-red-400 transition-colors p-1"
+                          className="text-slate-400 hover:text-red-400 transition-colors p-1 flex-shrink-0"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -471,58 +451,158 @@ const PricingPage = () => {
 
                   <div className="border-t border-slate-600 pt-4">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-slate-300 font-medium">Total</span>
-                      <span className="text-xl font-bold text-white">₱{cartTotal.toLocaleString()}</span>
+                      <span className="text-slate-300 font-semibold">Total:</span>
+                      <span className="text-2xl font-bold text-cyan-400">₱{cartTotal.toLocaleString()}</span>
                     </div>
 
                     <div className="space-y-3">
-                      <div>
-                        <label className="text-slate-400 text-xs mb-1 block">Client Email</label>
-                        <input
-                          type="email"
-                          value={clientEmail}
-                          onChange={(e) => setClientEmail(e.target.value)}
-                          placeholder="client@email.com"
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors"
-                        />
-                      </div>
-
-                      {emailStatus && (
-                        <div
-                          className={`text-xs p-2 rounded-lg ${
-                            emailStatus.type === "success" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {emailStatus.message}
-                        </div>
-                      )}
-
+                      <input
+                        type="email"
+                        placeholder="Client email"
+                        value={clientEmail}
+                        onChange={(e) => setClientEmail(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 text-sm"
+                      />
                       <button
-                        onClick={handleSendEmail}
+                        onClick={() => { }}
                         disabled={isSending}
-                        className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
                       >
                         {isSending ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                             Sending...
                           </>
                         ) : (
                           <>
-                            <Mail className="w-5 h-5" />
-                            Send to Email
+                            <Mail className="w-4 h-4" />
+                            Send Summary
                           </>
                         )}
                       </button>
+                      {emailStatus && (
+                        <div
+                          className={`text-xs p-2 rounded-lg ${emailStatus.type === "success"
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
+                        >
+                          {emailStatus.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
               )}
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      }
+
+      {isDesktopOrLaptop &&
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+            {/* Pricing Cards - Left Side (Landscape 2x2 grid) */}
+            <div className="flex-1">
+              <div className="grid grid-cols-2 gap-4">
+                {currentService.plans.map((plan, index) => (
+                  <PricingCard
+                    plan={plan}
+                    billingPeriod={activeService === "juantap" ? "piece" : billingPeriod}
+                    onAddToCart={() => handleAddToCart(plan)}
+                    isHovered={index === selectedCardIndex}
+                    isSmall={selectedCardIndex !== null && index !== selectedCardIndex}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:w-80 shrink-0">
+              <div id="order-summary" className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <ShoppingCart className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-lg font-bold text-white">Order Summary</h3>
+                </div>
+
+                {cart.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 text-sm">Your cart is empty</p>
+                    <p className="text-slate-500 text-xs mt-1">Add plans to get started</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {cart.map((item, idx) => (
+                        <div key={idx} className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-white font-medium text-sm truncate">{item.planName}</p>
+                            <p className="text-slate-400 text-xs">{getServiceTitle(item.service)}</p>
+                            <p className="text-cyan-400 text-xs font-semibold">
+                              ₱{item.price.toLocaleString()} / {item.billingPeriod === "yearly" ? "year" : "mo"}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => removeFromCart(item.planName, item.service)}
+                            className="text-slate-400 hover:text-red-400 transition-colors p-1"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-slate-600 pt-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-slate-300 font-semibold">Total:</span>
+                        <span className="text-2xl font-bold text-cyan-400">₱{cartTotal.toLocaleString()}</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <input
+                          type="email"
+                          placeholder="Client email"
+                          value={clientEmail}
+                          onChange={(e) => setClientEmail(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 text-sm"
+                        />
+                        <button
+                          onClick={() => { }}
+                          disabled={isSending}
+                          className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
+                        >
+                          {isSending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4" />
+                              Send Summary
+                            </>
+                          )}
+                        </button>
+                        {emailStatus && (
+                          <div
+                            className={`text-xs p-2 rounded-lg ${emailStatus.type === "success"
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              }`}
+                          >
+                            {emailStatus.message}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+    </div>
   )
 }
 
