@@ -81,17 +81,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
           </a>
-
-          <a
-            href="/admin/support-tickets"
+ <a
+            href="/admin/inquiries"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+              isActive("/admin/inquiries") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
             }`}
           >
-            <Ticket size={20} />
-            <span>Support Tickets</span>
+            <Inbox size={20} />
+            <span>Inquiries</span>
           </a>
+            <a
+            href="/admin/juantap-survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive("/admin/juantap-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Inbox size={20} />
+            <span>Juantap Survey</span>
+          </a>
+          
 
           <a
             href="/admin/survey"
@@ -114,28 +124,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <ClipboardList size={20} />
             <span>Video Survey</span>
           </a>
-
-          <a
-            href="/admin/inquiries"
+<a
+            href="/admin/support-tickets"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/admin/inquiries") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
+              isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
             }`}
           >
-            <Inbox size={20} />
-            <span>Inquiries</span>
+            <Ticket size={20} />
+            <span>Support Tickets</span>
           </a>
+         
 
-          <a
-            href="/admin/juantap-survey"
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/admin/juantap-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"
-            }`}
-          >
-            <Inbox size={20} />
-            <span>Juantap Survey</span>
-          </a>
+        
         </nav>
 
         {/* Logout Button */}
