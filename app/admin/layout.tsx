@@ -36,7 +36,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isActive = (path: string) => pathname === path
 
-  if (pathname === "/admin/login") return <>{children}</>
+  if (pathname === "/admin/login") {
+    return <>{children}</>
+  }
 
   if (isChecking || !isAuthenticated) {
     return (
