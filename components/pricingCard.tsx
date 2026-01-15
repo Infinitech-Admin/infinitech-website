@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { Check, ShoppingCart, Plus, X } from "lucide-react"
+import { Check, ShoppingCart, Plus } from "lucide-react"
+import { useMediaQuery } from 'react-responsive'
 
 interface Plan {
   name: string
@@ -17,55 +18,164 @@ interface Plan {
 interface PricingCardProps {
   plan: Plan
   billingPeriod: "monthly" | "yearly" | "piece"
-  price: number
-  currency?: string
   onAddToCart?: () => void
-  isInCart?: boolean
-  isExpanded?: boolean
-  isOtherExpanded?: boolean
-  onExpandChange?: (expanded: boolean) => void
+  isHovered?: boolean
+  isSmall?: boolean
 }
 
 const PricingCard: React.FC<PricingCardProps> = ({
   plan,
   billingPeriod,
-  price,
-  currency = "$",
   onAddToCart,
-  isInCart,
-  isExpanded = false,
-  isOtherExpanded = false,
-  onExpandChange,
+  isHovered = false,
+  isSmall = false,
 }) => {
+  const getPrice = () => {
+    if (billingPeriod === "yearly") {
+      return plan.yearlyPrice || 0
+    }
+    return plan.monthlyPrice || 0
+  }
+
+  const price = getPrice()
+
   const getBillingText = () => {
-    if (billingPeriod === "piece") return "/per piece"
+    if (billingPeriod === "piece") return "/piece"
     return billingPeriod === "yearly" ? "/year" : "/month"
   }
 
-  return (
-    <>
-      {/* Normal Card */}
+  const isDesktopOrLaptop = useMediaQuery({
+    query: '(min-width: 1000px)'
+  })
+  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 999px)' })
+
+  // Collapsed state - show only title and price vertically (when another card is clicked)
+  if (isSmall) {
+    return (
       <div
-        onMouseEnter={() => onExpandChange?.(true)}
-        className={`relative rounded-2xl transition-all duration-500 ease-in-out ${isExpanded ? "opacity-0 invisible" : ""} ${
-          isOtherExpanded ? "opacity-0 scale-75 pointer-events-none" : "opacity-100"
-        } ${
-          plan.popular
-            ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20"
-            : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70"
-        }`}
+        className={`my-6 relative rounded-2xl transition-all duration-500 ease-in-out ${plan.popular
+            ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500"
+            : "bg-slate-800/50 border border-slate-700"
+          } h-full flex items-center justify-center p-2`}
       >
-        {/* Popular Badge */}
-        {plan.popular && (
-          <div className="absolute -top-3 left-6 z-20">
-            <span className="inline-block px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
-              Most Popular
+        <div className="transform whitespace-nowrap text-center flex flex-col items-center gap-2">
+          <h3 className="font-bold text-white text-sm md:text-base">{plan.name}</h3>
+          <div className="flex items-baseline gap-0.5">
+            <span className="font-black text-white text-lg">₱</span>
+            <span className="font-black text-white text-xl">
+              {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </div>
-        )}
+          <span className="text-slate-400 font-medium text-xs">{getBillingText()}</span>
+        </div>
+      </div>
+    )
+  }
 
-        <div className="p-5 pb-20">
-          <div className="flex flex-row gap-6">
+  // Default/Normal state - show full card details
+  return (
+    <>
+      {isTabletOrMobile &&
+        <div
+          className={`relative rounded-2xl transition-all duration-500 ease-in-out cursor-pointer my-10 ${isHovered ? "z-20 shadow-2xl shadow-cyan-500/20 w-[50vh] md:w-[60vh]" : "w-[40vh] md:w-[50vh]"
+            } ${plan.popular
+              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-500/40"
+              : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70 hover:shadow-lg"
+            }`}
+        >
+          {plan.popular && (
+            <div className="absolute -top-3 left-6 z-20">
+              <span className="inline-block px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
+                Most Popular
+              </span>
+            </div>
+          )}
+
+          <div className={`p-5 lg:p-6 transition-all duration-500 flex flex-col ${isHovered ? "" : ""}`}>
+            {/* Plan Header */}
+            <div className="mb-4">
+              <h3 className={`font-bold text-white transition-all duration-500 ${isHovered ? "text-4xl mb-2" : "text-3xl mb-1"}`}>
+                {plan.name}
+              </h3>
+              {plan.badge && (
+                <p className={`text-slate-400 transition-all duration-500 ${isHovered ? "text-sm" : "text-xs"}`}>
+                  {plan.badge}
+                </p>
+              )}
+            </div>
+
+            {/* Features Section */}
+            <div className="mb-4 flex-1">
+              <h4 className={`font-semibold text-white mb-3 transition-all duration-500 ${isHovered ? "text-lg" : "text-md"}`}>
+                What's included:
+              </h4>
+              <div className={`transition-all duration-500 ${isHovered ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-1"}`}>
+                {(isHovered ? plan.features : plan.features.slice(0, 8)).map((feature, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Check
+                      className={`flex-shrink-0 transition-all duration-500 ${plan.popular ? "text-cyan-400" : "text-slate-400"
+                        } ${isHovered ? "w-5 h-5 mt-0.5" : "w-3 h-3 mt-0.5"}`}
+                    />
+                    <span className={`text-slate-200 leading-relaxed transition-all duration-500 ${isHovered ? "text-md" : "text-sm"}`}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+                {!isHovered && plan.features.length > 8 && (
+                  <span className="text-slate-400 text-xs italic">+{plan.features.length - 8} more</span>
+                )}
+              </div>
+            </div>
+
+            {/* Price & Button */}
+            <div className="flex items-end justify-between gap-3 pt-4 border-t border-slate-700 mt-auto">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className={`font-black text-white transition-all duration-500 ${isHovered ? "text-2xl" : "text-xl"}`}>
+                    ₱
+                  </span>
+                  <span className={`font-black text-white transition-all duration-500 ${isHovered ? "text-3xl" : "text-2xl"}`}>
+                    {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                <span className="text-slate-400 font-medium text-sm block truncate">{getBillingText()}</span>
+              </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAddToCart?.()
+                }}
+                className={`p-2.5 rounded-xl transition-all duration-300 flex-shrink-0 ${plan.popular
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
+                    : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
+                  }`}
+                title="Add to cart"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      {isDesktopOrLaptop &&
+        <div
+          className={`relative rounded-2xl transition-all duration-300 ${plan.popular
+              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20"
+              : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70"
+            }`}
+        >
+          {/* Popular Badge */}
+          {plan.popular && (
+            <div className="absolute -top-3 left-6">
+              <span className="inline-block px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
+                Most Popular
+              </span>
+            </div>
+          )}
+
+          <div className="p-5 flex flex-row gap-6">
             {/* Left: Plan Info & Features */}
             <div className="flex-1 min-w-0">
               {/* Plan Header */}
@@ -76,141 +186,47 @@ const PricingCard: React.FC<PricingCardProps> = ({
 
               {/* Features List - Two columns */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {plan.features.slice(0, 6).map((feature, idx) => (
+                {plan.features.map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`} />
+                    <Check
+                      className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
+                    />
                     <span className="text-slate-300 text-xs leading-relaxed">{feature}</span>
                   </div>
                 ))}
               </div>
-              {plan.features.length > 6 && <p className="text-cyan-400 text-xs mt-2 font-medium">+{plan.features.length - 6} more features...</p>}
             </div>
-          </div>
-        </div>
 
-        {/* Price & Cart Button - Bottom Right */}
-        <div className="absolute bottom-5 right-5 flex items-center gap-3">
-          {/* Price */}
-          <div className="text-right">
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-2xl font-black text-white">{currency}</span>
-              <span className="text-2xl font-black text-white">
-                {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </span>
-            </div>
-            <span className="text-slate-400 font-medium text-xs">{getBillingText()}</span>
-          </div>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onAddToCart?.()
-            }}
-            className={`relative p-3 rounded-xl transition-all duration-300 ${
-              isInCart
-                ? "bg-green-500 text-white"
-                : plan.popular
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                  : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
-            }`}
-            title={isInCart ? "Added to cart" : "Add to cart"}
-          >
-            <ShoppingCart className="w-5 h-5" />
-            {!isInCart && <Plus className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full p-0.5" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Expanded Card - Centered Modal */}
-      {isExpanded && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
-          onMouseLeave={() => onExpandChange?.(false)}
-        >
-          <div
-            className={`relative w-full max-w-5xl rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-300 ${
-              plan.popular
-                ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-cyan-500/30"
-                : "bg-slate-800 border-2 border-slate-700"
-            }`}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => onExpandChange?.(false)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors z-30"
-              title="Close"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-
-            {/* Popular Badge */}
-            {plan.popular && (
-              <div className="absolute -top-3 sm:-top-4 left-4 sm:left-8">
-                <span className="inline-block px-3 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs sm:text-sm font-bold rounded-full shadow-lg">
-                  Most Popular
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
-              {/* Left: Plan Details */}
-              <div className="flex-1">
-                <div className="mb-4 sm:mb-6">
-                  <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{plan.name}</h2>
-                  {plan.badge && <p className="text-xs sm:text-sm text-slate-400">{plan.badge}</p>}
+            {/* Right: Price & Cart Button */}
+            <div className="flex flex-col items-end justify-between shrink-0">
+              {/* Price */}
+              <div className="text-right">
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-2xl font-black text-white">₱</span>
+                  <span className="text-2xl font-black text-white">
+                    {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
                 </div>
-
-                {/* Features List */}
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">What's Included:</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    {plan.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-2 sm:gap-3">
-                        <Check className={`w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`} />
-                        <span className="text-slate-200 text-sm sm:text-base leading-relaxed">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <span className="text-slate-400 font-medium text-xs">/{billingPeriod === "yearly" ? "year" : "month"}</span>
               </div>
 
-              {/* Right: Price & Action */}
-              <div className="lg:w-80 flex flex-col items-center justify-center text-center space-y-4 sm:space-y-6 shrink-0">
-                {/* Price Display */}
-                <div>
-                  <div className="flex items-baseline justify-center gap-1 mb-1 sm:mb-2">
-                    <span className="text-2xl sm:text-4xl font-black text-white">{currency}</span>
-                    <span className="text-4xl sm:text-6xl font-black text-white">
-                      {price.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </span>
-                  </div>
-                  <span className="text-slate-400 font-medium text-sm sm:text-lg">{getBillingText()}</span>
-                </div>
-
-                {/* Add to Cart Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onAddToCart?.()
-                  }}
-                  className={`w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300 font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 ${
-                    isInCart
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : plan.popular
-                        ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                        : "bg-slate-700 text-white hover:bg-slate-600 border-2 border-slate-600"
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAddToCart?.()
+                }}
+                className={`p-2.5 rounded-xl transition-all duration-300 flex-shrink-0 ${plan.popular
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
+                    : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
                   }`}
-                >
-                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                  {isInCart ? "Added to Cart" : "Add to Cart"}
-                </button>
-
-                <p className="text-slate-400 text-xs sm:text-sm">{isInCart ? "Item is in your cart" : ""}</p>
-              </div>
+                title="Add to cart"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
-      )}
+      }
     </>
   )
 }
