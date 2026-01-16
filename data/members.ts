@@ -226,19 +226,19 @@ export const members = [
     facebookname: "Armand M. Cajucom",
     href: "https://www.facebook.com/armand.cajucom.7?mibextid=ZbWKwL"
   },
-  {
-    name: "Jose Dexter Anyayahan",
-    position: "Digital Marketing Staff",
-    image: "anyayahan.png",
-    email: "infinitech.jd@gmail.com",
-    phone: "09668830150",
-    telegram: {
-      title: "09668830150",
-      href: "https://web.telegram.org/k/#5736999446"
-    },
-    facebookname: "Jd Anyayahan",
-    href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr"
-  },
+  // {
+  //   name: "Jose Dexter Anyayahan",
+  //   position: "Digital Marketing Staff",
+  //   image: "anyayahan.png",
+  //   email: "infinitech.jd@gmail.com",
+  //   phone: "09668830150",
+  //   telegram: {
+  //     title: "09668830150",
+  //     href: "https://web.telegram.org/k/#5736999446"
+  //   },
+  //   facebookname: "Jd Anyayahan",
+  //   href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr"
+  // },
   {
     name: "Jayvee Valeriano",
     position: "Digital Marketing Staff",
