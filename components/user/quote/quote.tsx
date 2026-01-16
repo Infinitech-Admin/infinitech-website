@@ -39,6 +39,7 @@ const Quote = () => {
   const [services, setServices] = useState<ServiceCategory[]>([]);
   const [total, setTotal] = useState(0);
   const [logo, setLogo] = useState("");
+  const [logoAspectRatio, setLogoAspectRatio] = useState(1);
   
   // Client information state
   const [clientInfo, setClientInfo] = useState({
@@ -76,10 +77,21 @@ const createPDF = async () => {
   pdf.setTextColor(0, 0, 0);
   pdf.text(currentDate, pageWidth - 50, 40, { align: "right" });
 
-  // === LOGO ===
+  // === LOGO - Fixed aspect ratio ===
   if (logo) {
-    const logoWidth = 120;
-    const logoHeight = 55;
+    const maxLogoWidth = 150;
+    const maxLogoHeight = 80;
+    
+    // Calculate dimensions maintaining aspect ratio
+    let logoWidth = maxLogoWidth;
+    let logoHeight = maxLogoWidth / logoAspectRatio;
+    
+    // If height exceeds max, scale down based on height
+    if (logoHeight > maxLogoHeight) {
+      logoHeight = maxLogoHeight;
+      logoWidth = maxLogoHeight * logoAspectRatio;
+    }
+    
     const logoX = (pageWidth - logoWidth) / 2;
     pdf.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
     y += logoHeight + 40;
@@ -120,13 +132,12 @@ const createPDF = async () => {
   // === TABLE HEADERS ===
   const hasMonthlyPricing = ["website", "mobile", "social"].includes(plan);
 
-  // ✅ Adjusted column widths to fit full text (no cut-off)
   const cols = hasMonthlyPricing
     ? ["Package", "Inclusions", "Total (1 year)", "Monthly (12 months)"]
     : ["Package", "Inclusions", "One-Time Price (P)"];
 
   const colWidths = hasMonthlyPricing
-    ? [100, 220, 90, 110] // expanded last column
+    ? [100, 220, 90, 110]
     : [130, 240, 120];
 
   const colX = [40];
@@ -139,7 +150,6 @@ const createPDF = async () => {
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(10);
 
-  // ✅ Center column text inside column width
   cols.forEach((text, i) => {
     const colCenter = colX[i] + colWidths[i] / 2;
     pdf.text(text, colCenter, y + 17, { align: "center" });
@@ -256,13 +266,23 @@ const createPDF = async () => {
     }
   };
 
-  // load logo
+  // load logo with aspect ratio
   useEffect(() => {
     const getLogo = async () => {
       const response = await fetch("/images/logo.png");
       const blob = await response.blob();
       const reader = new FileReader();
-      reader.onloadend = () => setLogo(reader.result as string);
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setLogo(base64);
+        
+        // Calculate aspect ratio
+        const img = new Image();
+        img.onload = () => {
+          setLogoAspectRatio(img.width / img.height);
+        };
+        img.src = base64;
+      };
       reader.readAsDataURL(blob);
     };
     getLogo();
