@@ -316,7 +316,7 @@ export default function JuanTapSurvey() {
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-3">
-              JuanTap Information Survey
+              JuanTap Information Application
             </h2>
             <p className="text-blue-200 text-lg">
               Help us build your digital profile
