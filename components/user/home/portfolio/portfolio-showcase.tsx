@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { ExternalLink, Eye, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation"; // Add this import
-import { Tooltip } from "react-tooltip";
+import { useRouter } from "next/navigation";
 
 interface Project {
   id: number;
@@ -10,7 +9,6 @@ interface Project {
   description: string;
   image: string;
   url?: string;
-  technologies: string[];
   category: string;
 }
 
@@ -23,7 +21,6 @@ const projects: Project[] = [
       "Complete hotel management system with booking, room management, guest services and billing",
     image: "/websites/eurotel.png",
     url: "https://eurotel-makati.vercel.app/",
-    technologies: ["Next.js", "Laravel", "MySQL", "TypeScript", "Tailwind CSS"],
     category: "Hotel Management",
   },
   {
@@ -33,7 +30,6 @@ const projects: Project[] = [
       "Professional consultancy website with service showcase, client portal and consultation booking",
     image: "/websites/abicconsultancy.png",
     url: "https://abicconsultancy.vercel.app/",
-    technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Corporate Website",
   },
   {
@@ -43,7 +39,6 @@ const projects: Project[] = [
       "Comprehensive hiring and manpower platform with job matching and recruitment management",
     image: "/websites/abicmanpower.png",
     url: "https://abicmanpower.com/",
-    technologies: ["Laravel", "MySQL", "Bootstrap"],
     category: "Recruitment Platform",
   },
   {
@@ -53,7 +48,6 @@ const projects: Project[] = [
       "Real estate website with property listings, virtual tours and client management system",
     image: "/websites/abicrealty.png",
     url: "https://abicrealtyph.com/",
-    technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Real Estate",
   },
   {
@@ -63,7 +57,6 @@ const projects: Project[] = [
       "Full-featured e-commerce platform with inventory management, payment integration and analytics",
     image: "/websites/oppane.png",
     url: "https://oppane.vercel.app/",
-    technologies: ["Next.js", "Laravel", "MySQL", "Node.js", "Tailwind CSS"],
     category: "E-Commerce",
   },
   {
@@ -73,7 +66,6 @@ const projects: Project[] = [
       "Modern e-commerce solution with product catalog, shopping cart and order management",
     image: "/websites/unakichi.png",
     url: "https://unakichi.vercel.app/",
-    technologies: ["TypeScript", "Laravel", "MySQL", "Hero UI", "Node.js"],
     category: "E-Commerce",
   },
   {
@@ -83,7 +75,6 @@ const projects: Project[] = [
       "Diving center booking system with equipment rental, course scheduling and certification tracking",
     image: "/websites/anilao.png",
     url: "https://anilaoscubadivingcenter.vercel.app/",
-    technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Booking System",
   },
   {
@@ -93,7 +84,6 @@ const projects: Project[] = [
       "E-commerce platform with multi-vendor support, payment gateway and inventory management",
     image: "/websites/yamaaraw.png",
     url: "https://yamaaraw-ecom-shopph.vercel.app/",
-    technologies: ["Laravel", "Node.js", "MySQL", "Tailwind CSS", "TypeScript"],
     category: "E-Commerce",
   },
   {
@@ -103,7 +93,6 @@ const projects: Project[] = [
       "Corporate real estate platform with property showcase, investment tracking and client portal",
     image: "/websites/dmci.png",
     url: "https://dmci-agent-website-main.vercel.app/",
-    technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Real Estate",
   },
   {
@@ -113,7 +102,6 @@ const projects: Project[] = [
       "Personal real estate portfolio showcasing luxury properties and professional real estate services",
     image: "/websites/joe.png",
     url: "https://abicrealtyphjoe.com/",
-    technologies: ["Next.js", "TypeScript", "Tailwind CSS", "MySQL", "Laravel"],
     category: "Property Specialist",
   },
   {
@@ -123,7 +111,6 @@ const projects: Project[] = [
       "Professional property consultant website with property listings and client management tools",
     image: "/websites/kaila.png",
     url: "https://abicrealtyphkaila.com/",
-    technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"],
     category: "Property Specialist",
   },
   {
@@ -133,7 +120,6 @@ const projects: Project[] = [
       "Real estate specialist platform featuring premium properties and personalized client services",
     image: "/websites/angely.png",
     url: "https://abicrealtyphangely.com/",
-    technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Property Specialist",
   },
   {
@@ -143,7 +129,6 @@ const projects: Project[] = [
       "Commercial and residential property specialist with advanced search and inquiry management",
     image: "/websites/jayvee.png",
     url: "https://abicrealtyphjayvee.com/",
-    technologies: ["Next.js", "TypeScript", "Laravel", "MySQL", "Hero UI"],
     category: "Property Specialist",
   },
   {
@@ -153,7 +138,6 @@ const projects: Project[] = [
       "Professional real estate consultant website with property showcase and lead generation tools",
     image: "/websites/lloyd.png",
     url: "https://abicrealtyphlloyd.com/",
-    technologies: ["React", "Laravel", "MySQL", "Tailwind CSS", "Node.js"],
     category: "Property Specialist",
   },
   {
@@ -163,7 +147,6 @@ const projects: Project[] = [
       "Luxury property specialist platform with virtual tours and comprehensive property management",
     image: "/websites/janina.png",
     url: "https://abicrealtyphjanina.com/",
-    technologies: ["Next.js", "Laravel", "MySQL", "Shadcn/ui", "TypeScript"],
     category: "Property Specialist",
   },
 ];
@@ -172,7 +155,7 @@ const PortfolioShowcase: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const router = useRouter(); // Add router hook
+  const router = useRouter();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -207,16 +190,6 @@ const PortfolioShowcase: React.FC = () => {
     router.push("/solutions");
   };
 
-  // Function to shuffle array to avoid duplicates appearing together
-  const shuffleArray = (array: Project[]) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
-
   // Create 3 completely different rows with unique projects
   const row1Projects = [
     projects[0],
@@ -232,13 +205,6 @@ const PortfolioShowcase: React.FC = () => {
     projects[8],
     projects[9],
   ]; // Manpower, ABIC Realty, Yamaaraw, DMCI, Joe
-  const row3Projects = [
-    projects[10],
-    projects[11],
-    projects[12],
-    projects[13],
-    projects[14],
-  ]; // Kaila, Angely, Jayvee, Lloyd, Janina
 
   const ProjectCard = ({
     project,
@@ -300,41 +266,9 @@ const PortfolioShowcase: React.FC = () => {
             {project.title}
           </h3>
 
-          <p className="text-slate-700 text-sm md:text-base mb-3 md:mb-4 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-slate-700 text-sm md:text-base mb-4 md:mb-6 line-clamp-2 leading-relaxed font-medium">
             {project.description}
           </p>
-
-          {/* Tech Stack - Optimized size */}
-          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
-            {project.technologies.slice(0, 3).map((tech, i) => (
-              <span
-                key={i}
-                className={`px-2.5 md:px-3 py-1 md:py-1.5 bg-slate-200 text-slate-800 text-xs md:text-sm rounded-full border border-slate-300 transition-all duration-300 font-semibold ${
-                  hoveredProject === project.id
-                    ? "bg-blue-100 text-blue-800 border-blue-300"
-                    : ""
-                }`}
-              >
-                {tech}
-              </span>
-            ))}
-
-            {project.technologies.length > 3 && (
-              <span
-                data-tooltip-id={`my-tooltip-${project.id}`}
-                data-tooltip-content={project.technologies
-                  .slice(3)
-                  .map((tech) => tech)
-                  .join(", ")}
-                className="px-2.5 md:px-3 py-1 md:py-1.5 bg-slate-100 text-slate-700 text-xs md:text-sm rounded-full border border-slate-300 font-semibold"
-              >
-                +{project.technologies.length - 3}
-              </span>
-            )}
-
-            {/* tooltip here */}
-            <Tooltip id={`my-tooltip-${project.id}`} />
-          </div>
 
           {/* Action Button - Compact but readable */}
           <div
@@ -506,11 +440,6 @@ const PortfolioShowcase: React.FC = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-          {/* <div className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600/20 to-cyan-500/20 backdrop-blur-md border border-blue-300/30 rounded-full text-slate-700 font-bold mb-8 shadow-xl">
-            <Eye className="w-6 h-6 mr-3 text-blue-600" />
-            PORTFOLIO SHOWCASE
-          </div> */}
-
           <h1
             className="text-4xl md:text-6xl lg:text-8xl font-black text-slate-800 mb-6 animate-fade-in-up"
             style={{ animationDelay: "0.2s" }}
