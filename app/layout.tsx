@@ -5,6 +5,8 @@ import ConditionalLayout from "@/components/conditional-layout";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { poppins } from "@/config/fonts";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
@@ -190,6 +192,12 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
           
           {/* Floating Components - Hidden on Admin Pages */}
           <FloatingWidgets />
+          
+          {/* Vercel Analytics - Tracks page views and user interactions */}
+          <Analytics />
+          
+          {/* Vercel Speed Insights - Monitors Core Web Vitals */}
+          <SpeedInsights />
         </Providers>
       </body>
     </html>
