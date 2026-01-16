@@ -266,7 +266,7 @@ const PortfolioShowcase: React.FC = () => {
             {project.title}
           </h3>
 
-          <p className="text-slate-700 text-sm md:text-base mb-4 md:mb-6 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-slate-700 text-sm md:text-base mb-3 md:mb-4 line-clamp-2 leading-relaxed font-medium">
             {project.description}
           </p>
 
@@ -275,18 +275,18 @@ const PortfolioShowcase: React.FC = () => {
             className={`transition-all duration-300 ${
               hoveredProject === project.id
                 ? "opacity-100 translate-y-0"
-                : "opacity-90 translate-y-1"
+                : "opacity-100 translate-y-0"
             }`}
           >
             <button
-              className="inline-flex items-center px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm md:text-base font-bold rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs md:text-sm font-bold rounded-lg hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-xl"
               onClick={(e) => {
                 e.stopPropagation();
                 handleProjectClick(project);
               }}
             >
               <span>View Project</span>
-              <ChevronRight className="w-4 md:w-5 h-4 md:h-5 ml-2" />
+              <ChevronRight className="w-3 md:w-4 h-3 md:h-4 ml-1.5" />
             </button>
           </div>
         </div>
