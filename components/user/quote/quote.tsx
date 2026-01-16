@@ -65,17 +65,7 @@ const createPDF = async () => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  let y = 70;
-
-  // === DATE (top right) ===
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(currentDate, pageWidth - 50, 40, { align: "right" });
+  let y = 40;
 
   // === LOGO - Fixed aspect ratio ===
   if (logo) {
@@ -94,7 +84,7 @@ const createPDF = async () => {
     
     const logoX = (pageWidth - logoWidth) / 2;
     pdf.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
-    y += logoHeight + 40;
+    y += logoHeight + 30;
   }
 
   // === CLIENT INFO ===
