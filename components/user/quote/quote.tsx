@@ -79,8 +79,8 @@ const createPDF = async () => {
 
   // === LOGO - Fixed aspect ratio ===
   if (logo) {
-    const maxLogoWidth = 150;
-    const maxLogoHeight = 80;
+    const maxLogoWidth = 250;
+    const maxLogoHeight = 130;
     
     // Calculate dimensions maintaining aspect ratio
     let logoWidth = maxLogoWidth;
