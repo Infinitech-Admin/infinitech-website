@@ -16,14 +16,14 @@ import jsPDF from "jspdf";
 import { sendQuotation } from "@/actions/user";
 import { plans } from "@/data/plans";
 import { Service } from "@/types/user";
- import {
-     LuGlobe,
-     LuSmartphone,
-     LuCreditCard,
-     LuCamera,
-     LuVideo,
-     LuUsers, // Add this for social media management
-   } from "react-icons/lu";
+import {
+  LuGlobe,
+  LuSmartphone,
+  LuCreditCard,
+  LuCamera,
+  LuVideo,
+  LuUsers,
+} from "react-icons/lu";
 
 type ServiceCategory = {
   category: string;
@@ -32,7 +32,7 @@ type ServiceCategory = {
 
 const Quote = () => {
   const quotationRef = useRef<HTMLDivElement>(null);
-  const printRef = useRef<HTMLDivElement>(null); // New ref for PDF content
+  const printRef = useRef<HTMLDivElement>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [plan, setPlan] = useState("website");
@@ -57,189 +57,183 @@ const Quote = () => {
     })).filter(category => category.services.length > 0);
   };
 
-// Generate PDF with clean layout and proper alignment
-const createPDF = async () => {
-  if (!printRef.current) return;
+  // Generate PDF with clean layout and proper alignment
+  const createPDF = async () => {
+    if (!printRef.current) return;
 
-  const pdf = new jsPDF("p", "pt", "a4");
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
+    const pdf = new jsPDF("p", "pt", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-  let y = 40;
+    let y = 40;
 
-  // === LOGO - Fixed aspect ratio ===
-  if (logo) {
-    const maxLogoWidth = 250;
-    const maxLogoHeight = 130;
-    
-    // Calculate dimensions maintaining aspect ratio
-    let logoWidth = maxLogoWidth;
-    let logoHeight = maxLogoWidth / logoAspectRatio;
-    
-    // If height exceeds max, scale down based on height
-    if (logoHeight > maxLogoHeight) {
-      logoHeight = maxLogoHeight;
-      logoWidth = maxLogoHeight * logoAspectRatio;
+    // === LOGO - Fixed aspect ratio ===
+    if (logo) {
+      const maxLogoWidth = 250;
+      const maxLogoHeight = 130;
+      
+      let logoWidth = maxLogoWidth;
+      let logoHeight = maxLogoWidth / logoAspectRatio;
+      
+      if (logoHeight > maxLogoHeight) {
+        logoHeight = maxLogoHeight;
+        logoWidth = maxLogoHeight * logoAspectRatio;
+      }
+      
+      const logoX = (pageWidth - logoWidth) / 2;
+      pdf.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
+      y += logoHeight + 30;
     }
-    
-    const logoX = (pageWidth - logoWidth) / 2;
-    pdf.addImage(logo, "PNG", logoX, y, logoWidth, logoHeight);
-    y += logoHeight + 30;
-  }
 
-  // === CLIENT INFO ===
-  pdf.setFillColor(52, 73, 94);
-  pdf.rect(40, y, pageWidth - 80, 25, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(12);
-  pdf.text("CLIENT INFORMATION", 50, y + 17);
-  y += 35;
+    // === CLIENT INFO ===
+    pdf.setFillColor(52, 73, 94);
+    pdf.rect(40, y, pageWidth - 80, 25, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(12);
+    pdf.text("CLIENT INFORMATION", 50, y + 17);
+    y += 35;
 
-  pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(10);
-  const clientDetails = [
-    `CLIENT NAME : ${clientInfo.name || "N/A"}`,
-    `ADDRESS : ${clientInfo.address || "N/A"}`,
-    `PHONE : ${clientInfo.phone || "N/A"}`,
-    `EMAIL : ${clientInfo.email || "N/A"}`,
-  ];
-  clientDetails.forEach((line) => {
-    pdf.text(line, 50, y);
-    y += 15;
-  });
-  y += 20;
-
-  // === QUOTATION HEADER ===
-  pdf.setFillColor(52, 73, 94);
-  pdf.rect(40, y, pageWidth - 80, 25, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(12);
-  pdf.text("SPECIAL QUOTATION SUMMARY", pageWidth / 2, y + 17, {
-    align: "center",
-  });
-  y += 35;
-
-  // === TABLE HEADERS ===
-  const hasMonthlyPricing = ["website", "mobile", "social"].includes(plan);
-
-  const cols = hasMonthlyPricing
-    ? ["Package", "Inclusions", "Total (1 year)", "Monthly (12 months)"]
-    : ["Package", "Inclusions", "One-Time Price (P)"];
-
-  const colWidths = hasMonthlyPricing
-    ? [100, 220, 90, 110]
-    : [130, 240, 120];
-
-  const colX = [40];
-  for (let i = 1; i < colWidths.length; i++) {
-    colX.push(colX[i - 1] + colWidths[i - 1]);
-  }
-
-  pdf.setFillColor(52, 73, 94);
-  pdf.rect(40, y, pageWidth - 80, 25, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(10);
-
-  cols.forEach((text, i) => {
-    const colCenter = colX[i] + colWidths[i] / 2;
-    pdf.text(text, colCenter, y + 17, { align: "center" });
-  });
-
-  y += 28;
-
-  // === TABLE CONTENT ===
-  pdf.setFontSize(9);
-  pdf.setTextColor(0, 0, 0);
-  const selectedServices = getSelectedServices();
-
-  const addPageIfNeeded = (rowHeight = 0) => {
-    if (y + rowHeight > pageHeight - 100) {
-      pdf.addPage();
-      y = 70;
-    }
-  };
-
-  const allServices = selectedServices.flatMap((cat) =>
-    cat.services.map((s) => ({ ...s, category: cat.category }))
-  );
-
-  allServices.forEach((service, idx) => {
-    const descItems = Array.isArray(service.description)
-      ? service.description.filter((d) => !d.includes("Everything in"))
-      : [service.description];
-    const wrappedDesc = descItems.flatMap((line) =>
-      pdf.splitTextToSize(`• ${line}`, colWidths[1] - 12)
-    );
-
-    const rowHeight = Math.max(35 + wrappedDesc.length * 10, 45);
-    addPageIfNeeded(rowHeight);
-
-    if (idx % 2 === 0) pdf.setFillColor(250, 250, 250);
-    else pdf.setFillColor(242, 245, 248);
-    pdf.rect(40, y, pageWidth - 80, rowHeight, "F");
-
-    // Service name
+    pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(10);
-    pdf.text(service.name, colX[0] + 8, y + 14);
+    const clientDetails = [
+      `CLIENT NAME : ${clientInfo.name || "N/A"}`,
+      `ADDRESS : ${clientInfo.address || "N/A"}`,
+      `PHONE : ${clientInfo.phone || "N/A"}`,
+      `EMAIL : ${clientInfo.email || "N/A"}`,
+    ];
+    clientDetails.forEach((line) => {
+      pdf.text(line, 50, y);
+      y += 15;
+    });
+    y += 20;
 
-    // Description
-    pdf.setFontSize(8);
-    let descY = y + 26;
-    wrappedDesc.forEach((line) => {
-      pdf.text(line, colX[1] + 8, descY);
-      descY += 10;
+    // === QUOTATION HEADER ===
+    pdf.setFillColor(52, 73, 94);
+    pdf.rect(40, y, pageWidth - 80, 25, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(12);
+    pdf.text("SPECIAL QUOTATION SUMMARY", pageWidth / 2, y + 17, {
+      align: "center",
+    });
+    y += 35;
+
+    // === TABLE HEADERS ===
+    const hasMonthlyPricing = ["website", "mobile", "social"].includes(plan);
+
+    const cols = hasMonthlyPricing
+      ? ["Package", "Inclusions", "Total (1 year)", "Monthly (12 months)"]
+      : ["Package", "Inclusions", "One-Time Price (P)"];
+
+    const colWidths = hasMonthlyPricing
+      ? [100, 220, 90, 110]
+      : [130, 240, 120];
+
+    const colX = [40];
+    for (let i = 1; i < colWidths.length; i++) {
+      colX.push(colX[i - 1] + colWidths[i - 1]);
+    }
+
+    pdf.setFillColor(52, 73, 94);
+    pdf.rect(40, y, pageWidth - 80, 25, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(10);
+
+    cols.forEach((text, i) => {
+      const colCenter = colX[i] + colWidths[i] / 2;
+      pdf.text(text, colCenter, y + 17, { align: "center" });
     });
 
-    // Prices
+    y += 28;
+
+    // === TABLE CONTENT ===
     pdf.setFontSize(9);
-    if (hasMonthlyPricing) {
-      pdf.text(`P${formatNumber(service.price)}`, colX[2] + 20, y + 20);
-      pdf.text(
-        `P${formatNumber(service.monthly ?? Math.round(service.price / 12))}`,
-        colX[3] + 20,
-        y + 20
+    pdf.setTextColor(0, 0, 0);
+    const selectedServices = getSelectedServices();
+
+    const addPageIfNeeded = (rowHeight = 0) => {
+      if (y + rowHeight > pageHeight - 100) {
+        pdf.addPage();
+        y = 70;
+      }
+    };
+
+    const allServices = selectedServices.flatMap((cat) =>
+      cat.services.map((s) => ({ ...s, category: cat.category }))
+    );
+
+    allServices.forEach((service, idx) => {
+      const descItems = Array.isArray(service.description)
+        ? service.description.filter((d) => !d.includes("Everything in"))
+        : [service.description];
+      const wrappedDesc = descItems.flatMap((line) =>
+        pdf.splitTextToSize(`• ${line}`, colWidths[1] - 12)
       );
+
+      const rowHeight = Math.max(35 + wrappedDesc.length * 10, 45);
+      addPageIfNeeded(rowHeight);
+
+      if (idx % 2 === 0) pdf.setFillColor(250, 250, 250);
+      else pdf.setFillColor(242, 245, 248);
+      pdf.rect(40, y, pageWidth - 80, rowHeight, "F");
+
+      pdf.setFontSize(10);
+      pdf.text(service.name, colX[0] + 8, y + 14);
+
+      pdf.setFontSize(8);
+      let descY = y + 26;
+      wrappedDesc.forEach((line) => {
+        pdf.text(line, colX[1] + 8, descY);
+        descY += 10;
+      });
+
+      pdf.setFontSize(9);
+      if (hasMonthlyPricing) {
+        pdf.text(`P${formatNumber(service.price)}`, colX[2] + 20, y + 20);
+        pdf.text(
+          `P${formatNumber(service.monthly ?? Math.round(service.price / 12))}`,
+          colX[3] + 20,
+          y + 20
+        );
+      } else {
+        pdf.text(`P${formatNumber(service.price)}`, colX[2] + 20, y + 20);
+      }
+
+      y += rowHeight;
+    });
+
+    // === TOTAL ROW ===
+    pdf.setFillColor(52, 73, 94);
+    pdf.rect(40, y, pageWidth - 80, 25, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(11);
+    pdf.text("TOTAL", colX[0] + 10, y + 17);
+
+    if (hasMonthlyPricing) {
+      pdf.text(`P${formatNumber(total)}`, colX[2] + 20, y + 17);
+      pdf.text(`P${formatNumber(Math.round(total / 12))}`, colX[3] + 20, y + 17);
     } else {
-      pdf.text(`P${formatNumber(service.price)}`, colX[2] + 20, y + 20);
+      pdf.text(`P${formatNumber(total)}`, colX[2] + 20, y + 17);
     }
+    y += 50;
 
-    y += rowHeight;
-  });
+    // === FOOTER ===
+    pdf.setTextColor(100, 100, 100);
+    pdf.setFontSize(9);
+    pdf.text(
+      "INFINITECH Advertising Corporation - 311 Campos Rueda Bldg, Urban Ave, Makati City",
+      pageWidth / 2,
+      pageHeight - 60,
+      { align: "center" }
+    );
+    pdf.text(
+      "Tel: (02) 7001-6157 | (+63) 962-253-0149 | Email: infinitechcorp.ph@gmail.com",
+      pageWidth / 2,
+      pageHeight - 45,
+      { align: "center" }
+    );
 
-  // === TOTAL ROW ===
-  pdf.setFillColor(52, 73, 94);
-  pdf.rect(40, y, pageWidth - 80, 25, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(11);
-  pdf.text("TOTAL", colX[0] + 10, y + 17);
-
-  if (hasMonthlyPricing) {
-    pdf.text(`P${formatNumber(total)}`, colX[2] + 20, y + 17);
-    pdf.text(`P${formatNumber(Math.round(total / 12))}`, colX[3] + 20, y + 17);
-  } else {
-    pdf.text(`P${formatNumber(total)}`, colX[2] + 20, y + 17);
-  }
-  y += 50;
-
-  // === FOOTER ===
-  pdf.setTextColor(100, 100, 100);
-  pdf.setFontSize(9);
-  pdf.text(
-    "INFINITECH Advertising Corporation - 311 Campos Rueda Bldg, Urban Ave, Makati City",
-    pageWidth / 2,
-    pageHeight - 60,
-    { align: "center" }
-  );
-  pdf.text(
-    "Tel: (02) 7001-6157 | (+63) 962-253-0149 | Email: infinitechcorp.ph@gmail.com",
-    pageWidth / 2,
-    pageHeight - 45,
-    { align: "center" }
-  );
-
-  return pdf;
-};
-
+    return pdf;
+  };
 
   const exportToPDF = async () => {
     setIsExporting(true);
@@ -266,7 +260,6 @@ const createPDF = async () => {
         const base64 = reader.result as string;
         setLogo(base64);
         
-        // Calculate aspect ratio
         const img = new Image();
         img.onload = () => {
           setLogoAspectRatio(img.width / img.height);
@@ -336,9 +329,7 @@ const createPDF = async () => {
           <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full mb-6"></div>
         </div>
 
-        {/* Display selected services */}
         {(plan === "website" || plan === "mobile") ? (
-          // Flat layout for website/mobile
           <div className="space-y-4 mb-8">
             {selectedServices.flatMap(category => category.services).map((service, idx) => (
               <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -381,7 +372,6 @@ const createPDF = async () => {
             ))}
           </div>
         ) : (
-          // Grouped by category for other plans
           <div className="space-y-8 mb-8">
             {selectedServices.map((categoryBlock, catIdx) => (
               <div key={catIdx}>
@@ -434,7 +424,6 @@ const createPDF = async () => {
           </div>
         )}
 
-        {/* Total */}
         <div className="border-t-2 border-gray-300 pt-4">
           <div className="flex justify-end items-center gap-4">
             <span className="text-2xl font-bold text-gray-700">Total:</span>
@@ -447,11 +436,11 @@ const createPDF = async () => {
 
   return (
     <section>
-      <div className="flex flex-col justify-center px-4 md:px-12 xl:px-32 2xl:px-48 py-16">
-        {/* Header */}
+      <div className="flex flex-col justify-center px-4 md:px-12 xl:px-32 2xl:px-48 py-24 md:py-32">
+        {/* Header - Added more top padding */}
         <div className="flex flex-col md:flex-row justify-between gap-4 pb-16">
           <div className="max-w-4xl">
-            <h1 className={`text-5xl text-accent ${poetsen_one.className}`}>
+            <h1 className={`text-5xl text-accent mb-4 ${poetsen_one.className}`}>
               GET A QUOTE
             </h1>
             <h1 className={`text-4xl text-primary ${poetsen_one.className}`}>
@@ -506,23 +495,13 @@ const createPDF = async () => {
                     }`}
                   >
                     <CardBody className="flex flex-col items-center justify-center gap-2">
-                    <div className="text-gray-500">
+                      <div className="text-gray-500">
                         {name === "website" && <LuGlobe className="w-5 h-5" />}
-                        {name === "mobile" && (
-                          <LuSmartphone className="w-5 h-5" />
-                        )}
-                        {name === "juantap" && (
-                          <LuCreditCard className="w-5 h-5" />
-                        )}
-                        {name === "photography" && (
-                          <LuCamera className="w-5 h-5" />
-                        )}
-                          {name === "multimedia" && (
-                            <LuVideo className="w-5 h-5" />
-                          )}
-                          {name === "social" && (
-                          <LuUsers className="w-5 h-5" />
-                        )}
+                        {name === "mobile" && <LuSmartphone className="w-5 h-5" />}
+                        {name === "juantap" && <LuCreditCard className="w-5 h-5" />}
+                        {name === "photography" && <LuCamera className="w-5 h-5" />}
+                        {name === "multimedia" && <LuVideo className="w-5 h-5" />}
+                        {name === "social" && <LuUsers className="w-5 h-5" />}
                       </div>
                       <div
                         className={`${
@@ -549,7 +528,6 @@ const createPDF = async () => {
                   <div className="w-24 h-1 bg-gradient-to-r from-primary to-accent rounded-full"></div>
                 </div>
 
-                {/* Display all services in rows of 3 */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {getAllServices().map((service, idx) => (
                     <Card
@@ -557,7 +535,6 @@ const createPDF = async () => {
                       className="rounded-2xl shadow-lg hover:shadow-2xl transition duration-300 border border-gray-200"
                     >
                       <CardBody className="flex flex-col justify-between items-center text-center p-8">
-                        {/* Title with Checkbox */}
                         <Checkbox
                           className="font-semibold text-xl mb-4"
                           value={service.name}
@@ -572,21 +549,17 @@ const createPDF = async () => {
                           {service.name}
                         </Checkbox>
 
-                        {/* Price */}
                         <div className="mb-4">
                           <span className="text-4xl font-bold text-primary block">
                             P{formatNumber(service.price)}
                           </span>
                           <span className="text-gray-500 text-sm">
                             {service.monthly
-                              ? `P${formatNumber(
-                                  service.monthly
-                                )} / month`
+                              ? `P${formatNumber(service.monthly)} / month`
                               : "One-time"}
                           </span>
                         </div>
 
-                        {/* Description */}
                         <div className="text-gray-600 text-sm flex-1">
                           {Array.isArray(service.description) ? (
                             <div className="space-y-1 text-left">
@@ -594,14 +567,10 @@ const createPDF = async () => {
                                 <div key={idx}>
                                   {item.includes("Everything in") ||
                                   item.includes(", plus:") ? (
-                                    <p className="font-medium mb-1">
-                                      {item}
-                                    </p>
+                                    <p className="font-medium mb-1">{item}</p>
                                   ) : (
                                     <div className="flex items-start gap-2">
-                                      <span className="text-primary mt-1.5">
-                                        •
-                                      </span>
+                                      <span className="text-primary mt-1.5">•</span>
                                       <span>{item}</span>
                                     </div>
                                   )}
@@ -618,7 +587,6 @@ const createPDF = async () => {
                 </div>
               </div>
 
-              {/* Total */}
               <div className="flex justify-end items-center gap-2 mt-8">
                 <h1 className="text-lg font-bold">Total:</h1>
                 <span className="text-lg font-semibold">
@@ -651,7 +619,6 @@ const createPDF = async () => {
                           className="rounded-2xl shadow-lg hover:shadow-2xl transition duration-300 border border-gray-200"
                         >
                           <CardBody className="flex flex-col justify-between items-center text-center p-8">
-                            {/* Title with Checkbox */}
                             <Checkbox
                               className="font-semibold text-xl mb-4"
                               value={service.name}
@@ -666,21 +633,17 @@ const createPDF = async () => {
                               {service.name}
                             </Checkbox>
 
-                            {/* Price */}
                             <div className="mb-4">
                               <span className="text-4xl font-bold text-primary block">
                                 P{formatNumber(service.price)}
                               </span>
                               <span className="text-gray-500 text-sm">
                                 {service.monthly
-                                  ? `P${formatNumber(
-                                      service.monthly
-                                    )} / month`
+                                  ? `P${formatNumber(service.monthly)} / month`
                                   : "One-time"}
                               </span>
                             </div>
 
-                            {/* Description */}
                             <div className="text-gray-600 text-sm flex-1">
                               {Array.isArray(service.description) ? (
                                 <div className="space-y-1 text-left">
@@ -688,14 +651,10 @@ const createPDF = async () => {
                                     <div key={idx}>
                                       {item.includes("Everything in") ||
                                       item.includes(", plus:") ? (
-                                        <p className="font-medium mb-1">
-                                          {item}
-                                        </p>
+                                        <p className="font-medium mb-1">{item}</p>
                                       ) : (
                                         <div className="flex items-start gap-2">
-                                          <span className="text-primary mt-1.5">
-                                            •
-                                          </span>
+                                          <span className="text-primary mt-1.5">•</span>
                                           <span>{item}</span>
                                         </div>
                                       )}
@@ -706,7 +665,6 @@ const createPDF = async () => {
                                 <p>{service.description}</p>
                               )}
                             </div>
-
                           </CardBody>
                         </Card>
                       ))}
@@ -715,7 +673,6 @@ const createPDF = async () => {
                 ))}
               </div>
 
-              {/* Total */}
               <div className="flex justify-end items-center gap-2 mt-8">
                 <h1 className="text-lg font-bold">Total:</h1>
                 <span className="text-lg font-semibold">
