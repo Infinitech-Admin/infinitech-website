@@ -1,5 +1,4 @@
 "use client"
-
 import "keen-slider/keen-slider.min.css"
 import React, { useMemo, useState, useEffect } from "react"
 import { Card, CardBody, CardFooter, Divider } from "@heroui/react"
@@ -10,6 +9,7 @@ export interface Testimonial {
   id?: number
   name: string
   position: string
+  company: string
   category: string
   message: string
 }
@@ -67,12 +67,12 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
         {testimonial.message}
       </p>
     </CardBody>
-
     <CardFooter className="px-6 pb-4">
       <div className="w-full">
         <Divider className="my-4 bg-accent" />
         <h4 className="font-semibold uppercase text-2xl">{testimonial.name}</h4>
         <span className="text-sm text-gray-500">{testimonial.position}</span>
+        <span className="text-sm text-gray-600 block mt-1">{testimonial.company}</span>
       </div>
     </CardFooter>
   </Card>
