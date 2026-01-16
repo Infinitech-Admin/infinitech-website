@@ -1,30 +1,38 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import PricingCard from "@/components/pricingCard"
-import { X, ShoppingCart, Mail, Loader2 } from "lucide-react"
-import { useMediaQuery } from 'react-responsive'
+import { useState } from "react";
+import PricingCard from "@/components/pricingCard";
+import { X, ShoppingCart, Mail, Loader2 } from "lucide-react";
+import { useMediaQuery } from "react-responsive";
 
 interface CartItem {
-  planName: string
-  service: string
-  price: number
-  billingPeriod: "monthly" | "yearly" | "piece"
+  planName: string;
+  service: string;
+  price: number;
+  billingPeriod: "monthly" | "yearly" | "piece";
 }
 
 const PricingPage = () => {
-  const [activeService, setActiveService] = useState("website")
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly" | "piece">("monthly")
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [clientEmail, setClientEmail] = useState("")
-  const [isSending, setIsSending] = useState(false)
-  const [emailStatus, setEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
+  const [activeService, setActiveService] = useState("website");
+  const [billingPeriod, setBillingPeriod] = useState<
+    "monthly" | "yearly" | "piece"
+  >("monthly");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [clientEmail, setClientEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
+    null
+  );
 
   const services = {
     website: {
       title: "Website / Web App With Mobile App",
-      description: "Professional website solutions with mobile app and advanced features",
+      description:
+        "Professional website solutions with mobile app and advanced features",
       plans: [
         {
           name: "Standard",
@@ -96,7 +104,8 @@ const PricingPage = () => {
     },
     juantap: {
       title: "JuanTap - Modern NFC Card",
-      description: "Digital business cards with NFC technology (per piece pricing)",
+      description:
+        "Digital business cards with NFC technology (per piece pricing)",
       plans: [
         {
           name: "Standard",
@@ -157,7 +166,8 @@ const PricingPage = () => {
     },
     socialmedia: {
       title: "Social Media Management",
-      description: "Complete social media management and content creation services",
+      description:
+        "Complete social media management and content creation services",
       plans: [
         {
           name: "Standard",
@@ -224,7 +234,8 @@ const PricingPage = () => {
     },
     multimedia: {
       title: "Multimedia Advertising",
-      description: "Professional multimedia content creation and advertising packages",
+      description:
+        "Professional multimedia content creation and advertising packages",
       plans: [
         {
           name: "Standard",
@@ -275,14 +286,18 @@ const PricingPage = () => {
         },
       ],
     },
-  }
+  };
 
-  const currentService = services[activeService as keyof typeof services]
-  const currentPlans = currentService.plans
+  const currentService = services[activeService as keyof typeof services];
+  const currentPlans = currentService.plans;
 
   const removeFromCart = (planName: string, service: string) => {
-    setCart(cart.filter((item) => !(item.planName === planName && item.service === service)))
-  }
+    setCart(
+      cart.filter(
+        (item) => !(item.planName === planName && item.service === service)
+      )
+    );
+  };
 
   const getServiceTitle = (serviceKey: string) => {
     const titles: Record<string, string> = {
@@ -290,29 +305,33 @@ const PricingPage = () => {
       juantap: "JuanTap",
       socialmedia: "Social Media",
       multimedia: "Multimedia",
-    }
-    return titles[serviceKey] || serviceKey
-  }
+    };
+    return titles[serviceKey] || serviceKey;
+  };
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0)
+  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
 
   const handleAddToCart = (plan: any) => {
-    const price = billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice
+    const price =
+      billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
 
     if (price !== undefined) {
-      setCart([...cart, {
-        planName: plan.name,
-        service: activeService,
-        price,
-        billingPeriod: activeService === "juantap" ? "piece" : billingPeriod
-      }])
+      setCart([
+        ...cart,
+        {
+          planName: plan.name,
+          service: activeService,
+          price,
+          billingPeriod: activeService === "juantap" ? "piece" : billingPeriod,
+        },
+      ]);
     }
-  }
+  };
 
   const isDesktopOrLaptop = useMediaQuery({
-    query: '(min-width: 1000px)'
-  })
-  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 999px)' })
+    query: "(min-width: 1000px)",
+  });
+  const isTabletOrMobile = useMediaQuery({ query: "(max-width: 999px)" });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16">
@@ -323,7 +342,8 @@ const PricingPage = () => {
             Our Pricing Plans
           </h1>
           <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
-            Choose the perfect plan for your business. All plans include support and updates.
+            Choose the perfect plan for your business. All plans include support
+            and updates.
           </p>
 
           {/* Service Selector */}
@@ -332,19 +352,20 @@ const PricingPage = () => {
               <button
                 key={key}
                 onClick={() => {
-                  setActiveService(key)
-                  setSelectedCardIndex(null)
+                  setActiveService(key);
+                  setSelectedCardIndex(null);
                   // Reset billing period when switching to/from JuanTap
                   if (key === "juantap") {
-                    setBillingPeriod("piece")
+                    setBillingPeriod("piece");
                   } else if (billingPeriod === "piece") {
-                    setBillingPeriod("monthly")
+                    setBillingPeriod("monthly");
                   }
                 }}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${activeService === key
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
-                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  }`}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
+                  activeService === key
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
               >
                 {key === "website" && "Website"}
                 {key === "juantap" && "JuanTap"}
@@ -359,17 +380,21 @@ const PricingPage = () => {
             <div className="flex justify-center gap-2 mb-4">
               <button
                 onClick={() => setBillingPeriod("monthly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${billingPeriod === "monthly"
-                  ? "bg-cyan-500 text-white"
-                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  }`}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                  billingPeriod === "monthly"
+                    ? "bg-cyan-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingPeriod("yearly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${billingPeriod === "yearly" ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  }`}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                  billingPeriod === "yearly"
+                    ? "bg-cyan-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
               >
                 Yearly
               </button>
@@ -380,31 +405,51 @@ const PricingPage = () => {
         </div>
       </section>
 
-      {isTabletOrMobile &&
+      {isTabletOrMobile && (
         <section className="mx-auto px-6 flex flex-col pb-10 items-center">
           {/* Pricing Cards Container */}
           <div className="flex-1">
             <div className="relative">
               <div className="py-8" onClick={() => setSelectedCardIndex(null)}>
-                <div className="flex-1 justify-center">
-                  {currentPlans.map((plan, index) => (
-                    <div
-                      key={index}
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedCardIndex(selectedCardIndex === index ? null : index)
-                      }}
-                    >
-                      <PricingCard
-                        plan={plan}
-                        billingPeriod={activeService === "juantap" ? "piece" : billingPeriod}
-                        onAddToCart={() => handleAddToCart(plan)}
-                        isHovered={index === selectedCardIndex}
-                        isSmall={selectedCardIndex !== null && index !== selectedCardIndex}
-                      />
-                    </div>
-                  ))}
+                <div
+                  className={
+                    selectedCardIndex === null
+                      ? "flex justify-center gap-6 flex-wrap transition-all duration-300"
+                      : "flex items-stretch justify-center gap-4 transition-all duration-500"
+                  }
+                >
+                  {currentPlans.map((plan, index) => {
+                    const isSelected = selectedCardIndex === index;
+                    const isCollapsed =
+                      selectedCardIndex !== null && index !== selectedCardIndex;
+
+                    return (
+                      <div
+                        key={index}
+                        className={`
+                          transition-all duration-500
+                          ${isSelected ? "z-20" : ""}
+                          ${isCollapsed ? "z-10 flex flex-col" : ""}
+                        `}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCardIndex(isSelected ? null : index);
+                        }}
+                      >
+                        <PricingCard
+                          plan={plan}
+                          billingPeriod={
+                            activeService === "juantap"
+                              ? "piece"
+                              : billingPeriod
+                          }
+                          onAddToCart={() => handleAddToCart(plan)}
+                          isHovered={isSelected}
+                          isSmall={isCollapsed}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -412,7 +457,10 @@ const PricingPage = () => {
 
           {/* Order Summary Sidebar */}
           <div className="w-full lg:w-80 lg:fixed lg:right-8 lg:top-24 lg:h-fit">
-            <div id="order-summary" className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5">
+            <div
+              id="order-summary"
+              className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="w-5 h-5 text-cyan-400" />
                 <h3 className="text-lg font-bold text-white">Order Summary</h3>
@@ -422,16 +470,25 @@ const PricingPage = () => {
                 <div className="text-center py-8">
                   <ShoppingCart className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                   <p className="text-slate-400 text-sm">Your cart is empty</p>
-                  <p className="text-slate-500 text-xs mt-1">Add plans to get started</p>
+                  <p className="text-slate-500 text-xs mt-1">
+                    Add plans to get started
+                  </p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                     {cart.map((item, idx) => (
-                      <div key={idx} className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3">
+                      <div
+                        key={idx}
+                        className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3"
+                      >
                         <div className="min-w-0 flex-1">
-                          <p className="text-white font-medium text-sm truncate">{item.planName}</p>
-                          <p className="text-slate-400 text-xs">{getServiceTitle(item.service)}</p>
+                          <p className="text-white font-medium text-sm truncate">
+                            {item.planName}
+                          </p>
+                          <p className="text-slate-400 text-xs">
+                            {getServiceTitle(item.service)}
+                          </p>
                           <p className="text-cyan-400 text-xs font-semibold">
                             ₱{item.price.toLocaleString()}
                             {item.billingPeriod === "piece"
@@ -440,7 +497,9 @@ const PricingPage = () => {
                           </p>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.planName, item.service)}
+                          onClick={() =>
+                            removeFromCart(item.planName, item.service)
+                          }
                           className="text-slate-400 hover:text-red-400 transition-colors p-1 flex-shrink-0"
                         >
                           <X className="w-4 h-4" />
@@ -451,8 +510,12 @@ const PricingPage = () => {
 
                   <div className="border-t border-slate-600 pt-4">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-slate-300 font-semibold">Total:</span>
-                      <span className="text-2xl font-bold text-cyan-400">₱{cartTotal.toLocaleString()}</span>
+                      <span className="text-slate-300 font-semibold">
+                        Total:
+                      </span>
+                      <span className="text-2xl font-bold text-cyan-400">
+                        ₱{cartTotal.toLocaleString()}
+                      </span>
                     </div>
 
                     <div className="space-y-3">
@@ -464,7 +527,7 @@ const PricingPage = () => {
                         className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 text-sm"
                       />
                       <button
-                        onClick={() => { }}
+                        onClick={() => {}}
                         disabled={isSending}
                         className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
                       >
@@ -482,10 +545,11 @@ const PricingPage = () => {
                       </button>
                       {emailStatus && (
                         <div
-                          className={`text-xs p-2 rounded-lg ${emailStatus.type === "success"
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                            : "bg-red-500/20 text-red-400 border border-red-500/30"
-                            }`}
+                          className={`text-xs p-2 rounded-lg ${
+                            emailStatus.type === "success"
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                          }`}
                         >
                           {emailStatus.message}
                         </div>
@@ -497,9 +561,9 @@ const PricingPage = () => {
             </div>
           </div>
         </section>
-      }
+      )}
 
-      {isDesktopOrLaptop &&
+      {isDesktopOrLaptop && (
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
             {/* Pricing Cards - Left Side (Landscape 2x2 grid) */}
@@ -508,42 +572,63 @@ const PricingPage = () => {
                 {currentService.plans.map((plan, index) => (
                   <PricingCard
                     plan={plan}
-                    billingPeriod={activeService === "juantap" ? "piece" : billingPeriod}
+                    billingPeriod={
+                      activeService === "juantap" ? "piece" : billingPeriod
+                    }
                     onAddToCart={() => handleAddToCart(plan)}
                     isHovered={index === selectedCardIndex}
-                    isSmall={selectedCardIndex !== null && index !== selectedCardIndex}
+                    isSmall={
+                      selectedCardIndex !== null && index !== selectedCardIndex
+                    }
                   />
                 ))}
               </div>
             </div>
 
             <div className="lg:w-80 shrink-0">
-              <div id="order-summary" className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5">
+              <div
+                id="order-summary"
+                className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5"
+              >
                 <div className="flex items-center gap-2 mb-4">
                   <ShoppingCart className="w-5 h-5 text-cyan-400" />
-                  <h3 className="text-lg font-bold text-white">Order Summary</h3>
+                  <h3 className="text-lg font-bold text-white">
+                    Order Summary
+                  </h3>
                 </div>
 
                 {cart.length === 0 ? (
                   <div className="text-center py-8">
                     <ShoppingCart className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400 text-sm">Your cart is empty</p>
-                    <p className="text-slate-500 text-xs mt-1">Add plans to get started</p>
+                    <p className="text-slate-500 text-xs mt-1">
+                      Add plans to get started
+                    </p>
                   </div>
                 ) : (
                   <>
                     <div className="space-y-3 mb-4">
                       {cart.map((item, idx) => (
-                        <div key={idx} className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3">
+                        <div
+                          key={idx}
+                          className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3"
+                        >
                           <div className="min-w-0 flex-1">
-                            <p className="text-white font-medium text-sm truncate">{item.planName}</p>
-                            <p className="text-slate-400 text-xs">{getServiceTitle(item.service)}</p>
+                            <p className="text-white font-medium text-sm truncate">
+                              {item.planName}
+                            </p>
+                            <p className="text-slate-400 text-xs">
+                              {getServiceTitle(item.service)}
+                            </p>
                             <p className="text-cyan-400 text-xs font-semibold">
-                              ₱{item.price.toLocaleString()} / {item.billingPeriod === "yearly" ? "year" : "mo"}
+                              ₱{item.price.toLocaleString()} /{" "}
+                              {item.billingPeriod === "yearly" ? "year" : "mo"}
                             </p>
                           </div>
                           <button
-                            onClick={() => removeFromCart(item.planName, item.service)}
+                            onClick={() =>
+                              removeFromCart(item.planName, item.service)
+                            }
                             className="text-slate-400 hover:text-red-400 transition-colors p-1"
                           >
                             <X className="w-4 h-4" />
@@ -554,8 +639,12 @@ const PricingPage = () => {
 
                     <div className="border-t border-slate-600 pt-4">
                       <div className="flex justify-between items-center mb-4">
-                        <span className="text-slate-300 font-semibold">Total:</span>
-                        <span className="text-2xl font-bold text-cyan-400">₱{cartTotal.toLocaleString()}</span>
+                        <span className="text-slate-300 font-semibold">
+                          Total:
+                        </span>
+                        <span className="text-2xl font-bold text-cyan-400">
+                          ₱{cartTotal.toLocaleString()}
+                        </span>
                       </div>
 
                       <div className="space-y-3">
@@ -567,7 +656,7 @@ const PricingPage = () => {
                           className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 text-sm"
                         />
                         <button
-                          onClick={() => { }}
+                          onClick={() => {}}
                           disabled={isSending}
                           className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
                         >
@@ -585,10 +674,11 @@ const PricingPage = () => {
                         </button>
                         {emailStatus && (
                           <div
-                            className={`text-xs p-2 rounded-lg ${emailStatus.type === "success"
-                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                              : "bg-red-500/20 text-red-400 border border-red-500/30"
-                              }`}
+                            className={`text-xs p-2 rounded-lg ${
+                              emailStatus.type === "success"
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
                           >
                             {emailStatus.message}
                           </div>
@@ -601,9 +691,9 @@ const PricingPage = () => {
             </div>
           </div>
         </section>
-      }
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default PricingPage
+export default PricingPage;
