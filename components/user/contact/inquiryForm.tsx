@@ -49,13 +49,26 @@ const InquiryForm = () => {
     setIsSubmitting(false);
   };
 
+  // Handler to allow only numbers in phone field
+  const handlePhoneInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    const value = e.target.value;
+    // Only allow numbers
+    const numbersOnly = value.replace(/[^0-9]/g, '');
+    // Limit to 11 digits
+    const limitedValue = numbersOnly.slice(0, 11);
+    setFieldValue('phone', limitedValue);
+  };
+
   return (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {() => (
+      {({ setFieldValue }) => (
         <Form>
           <div className="flex flex-col space-y-4">
             {/* Full Name */}
@@ -107,6 +120,8 @@ const InquiryForm = () => {
                     label="Phone Number"
                     variant="bordered"
                     placeholder="eg. 09924401097"
+                    onChange={(e) => handlePhoneInput(e, setFieldValue)}
+                    maxLength={11}
                   />
                   {meta.touched && meta.error && (
                     <small className="text-red-500">{meta.error}</small>
