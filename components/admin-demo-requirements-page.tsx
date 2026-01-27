@@ -372,15 +372,21 @@ export default function AdminDemoRequirementsPage() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="flex gap-1 flex-wrap max-w-xs">
-                            {req.primary_purposes?.slice(0, 2).map((purpose) => (
-                              <Badge key={purpose} variant="secondary" className="text-xs">
-                                {purpose}
-                              </Badge>
-                            ))}
-                            {req.primary_purposes && req.primary_purposes.length > 2 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{req.primary_purposes.length - 2}
-                              </Badge>
+                            {Array.isArray(req.primary_purposes) ? (
+                              <>
+                                {req.primary_purposes.slice(0, 2).map((purpose) => (
+                                  <Badge key={purpose} variant="secondary" className="text-xs">
+                                    {purpose}
+                                  </Badge>
+                                ))}
+                                {req.primary_purposes.length > 2 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    +{req.primary_purposes.length - 2}
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-xs text-slate-600 truncate">{req.primary_purposes}</span>
                             )}
                           </div>
                         </TableCell>
@@ -443,11 +449,15 @@ export default function AdminDemoRequirementsPage() {
                                     <div className="border-b pb-4">
                                       <p className="font-semibold text-slate-700 mb-2">Primary Purposes</p>
                                       <div className="flex flex-wrap gap-2">
-                                        {selectedRequirement.primary_purposes?.map((purpose) => (
-                                          <Badge key={purpose} variant="secondary">
-                                            {purpose}
-                                          </Badge>
-                                        ))}
+                                        {Array.isArray(selectedRequirement.primary_purposes) ? (
+                                          selectedRequirement.primary_purposes.map((purpose) => (
+                                            <Badge key={purpose} variant="secondary">
+                                              {purpose}
+                                            </Badge>
+                                          ))
+                                        ) : (
+                                          <p className="text-sm text-slate-600">{selectedRequirement.primary_purposes}</p>
+                                        )}
                                       </div>
                                     </div>
 
@@ -459,11 +469,15 @@ export default function AdminDemoRequirementsPage() {
                                     <div className="border-b pb-4">
                                       <p className="font-semibold text-slate-700 mb-2">Key Features</p>
                                       <div className="flex flex-wrap gap-2">
-                                        {selectedRequirement.key_features?.map((feature) => (
-                                          <Badge key={feature} variant="outline">
-                                            {feature}
-                                          </Badge>
-                                        ))}
+                                        {Array.isArray(selectedRequirement.key_features) ? (
+                                          selectedRequirement.key_features.map((feature) => (
+                                            <Badge key={feature} variant="outline">
+                                              {feature}
+                                            </Badge>
+                                          ))
+                                        ) : (
+                                          <p className="text-sm text-slate-600">{selectedRequirement.key_features}</p>
+                                        )}
                                       </div>
                                     </div>
 
