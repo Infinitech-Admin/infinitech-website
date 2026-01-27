@@ -86,7 +86,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Video size={20} />
             <span>Video Survey</span>
           </a>
-
+<a href="/admin/demo-requirements" onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive("/admin/video-survey") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"}`}>
+            <Video size={20} />
+            <span>Demo Website Requirements</span>
+          </a>
           <a href="/admin/support-tickets" onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive("/admin/support-tickets") ? "bg-cyan-600 text-white" : "hover:bg-cyan-800/50 text-cyan-100"}`}>
             <Ticket size={20} />
             <span>Support Tickets</span>
