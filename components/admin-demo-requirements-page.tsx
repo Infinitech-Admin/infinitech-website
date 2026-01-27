@@ -40,10 +40,10 @@ interface DemoRequirement {
   contact_info: string
   tagline: string
   primary_purposes: string[]
-  primary_purposes_other:string[]
+  primary_purposes_other: string[]
   target_audience: string
   key_features: string[]
-   key_features_other: string[]
+  key_features_other: string[]
   product_image_sources: string[]
   color_style: string
   social_media_links: string[]
@@ -173,6 +173,25 @@ export default function AdminDemoRequirementsPage() {
     completed: Array.isArray(requirements)
       ? requirements.filter((r) => r.business_name && r.contact_info).length
       : 0,
+  }
+
+  // Helper function to display array items, handling "Other" cases
+  const displayArrayItems = (items: string[] | string, otherValue?: string[] | string) => {
+    if (Array.isArray(items)) {
+      return items.map((item, idx) => {
+        // If item is "Other" and we have an otherValue, use that instead
+        if (item === "Other" && otherValue) {
+          const otherText = Array.isArray(otherValue) ? otherValue.join(", ") : otherValue
+          return otherText || item
+        }
+        return item
+      })
+    }
+    // If items is "Other" and we have otherValue, use that
+    if (items === "Other" && otherValue) {
+      return Array.isArray(otherValue) ? otherValue : [otherValue]
+    }
+    return [items]
   }
 
   if (loading) {
@@ -356,237 +375,223 @@ export default function AdminDemoRequirementsPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedRequirements.map((req) => (
-                      <TableRow
-                        key={req.id}
-                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                      >
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                              {req.business_name?.charAt(0)?.toUpperCase() || "?"}
+                    paginatedRequirements.map((req) => {
+                      const displayedPurposes = displayArrayItems(req.primary_purposes, req.primary_purposes_other)
+                      
+                      return (
+                        <TableRow
+                          key={req.id}
+                          className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                                {req.business_name?.charAt(0)?.toUpperCase() || "?"}
+                              </div>
+                              <span className="truncate">{req.business_name}</span>
                             </div>
-                            <span className="truncate">{req.business_name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant="outline">{req.business_type}</Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="flex gap-1 flex-wrap max-w-xs">
-                            {Array.isArray(req.primary_purposes) ? (
-                              <>
-                                {req.primary_purposes.slice(0, 2).map((purpose) => (
-                                  <Badge key={purpose} variant="secondary" className="text-xs">
-                                    {purpose}
-                                  </Badge>
-                                ))}
-                                {req.primary_purposes.length > 2 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    +{req.primary_purposes.length - 2}
-                                  </Badge>
-                                )}
-                              </>
-                            ) : req.primary_purposes === "Other" && req.primary_purposes_other ? (
-                              <span className="text-xs text-slate-600 truncate">{req.primary_purposes_other}</span>
-                            ) : (
-                              <span className="text-xs text-slate-600 truncate">{req.primary_purposes}</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(req.created_at).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedRequirement(req)}
-                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="hidden sm:inline ml-1">View</span>
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2">
-                                <DialogHeader>
-                                  <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                    <Building2 className="h-6 w-6 text-blue-600" />
-                                    Demo Requirement Details
-                                  </DialogTitle>
-                                  <DialogDescription>
-                                    Submitted: {new Date(selectedRequirement?.created_at || "").toLocaleString()}
-                                  </DialogDescription>
-                                </DialogHeader>
-
-                                {selectedRequirement && (
-                                  <div className="space-y-4 text-sm">
-                                    <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                                      <div>
-                                        <p className="font-semibold text-slate-700">Business Name</p>
-                                        <p>{selectedRequirement.business_name}</p>
-                                      </div>
-                                      <div>
-                                        <p className="font-semibold text-slate-700">Business Type</p>
-                                        <p>{selectedRequirement.business_type}</p>
-                                      </div>
-                                    </div>
-
-                                    {selectedRequirement.tagline && (
-                                      <div className="border-b pb-4">
-                                        <p className="font-semibold text-slate-700 mb-1">Tagline</p>
-                                        <p>{selectedRequirement.tagline}</p>
-                                      </div>
-                                    )}
-
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-1">Contact Info</p>
-                                      <p>{selectedRequirement.contact_info}</p>
-                                    </div>
-
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-2">Primary Purposes</p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {Array.isArray(selectedRequirement.primary_purposes) ? (
-                                          selectedRequirement.primary_purposes.map((purpose) => (
-                                            <Badge key={purpose} variant="secondary">
-                                              {purpose}
-                                            </Badge>
-                                          ))
-                                        ) : selectedRequirement.primary_purposes === "Other" && selectedRequirement.primary_purposes_other ? (
-                                          <p className="text-sm text-slate-600">{selectedRequirement.primary_purposes_other}</p>
-                                        ) : (
-                                          <p className="text-sm text-slate-600">{selectedRequirement.primary_purposes}</p>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-1">Target Audience</p>
-                                      <p>{selectedRequirement.target_audience}</p>
-                                    </div>
-
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-2">Key Features</p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {Array.isArray(selectedRequirement.key_features) ? (
-                                          selectedRequirement.key_features.map((feature) => (
-                                            <Badge key={feature} variant="outline">
-                                              {feature}
-                                            </Badge>
-                                          ))
-                                        ) : selectedRequirement.key_features === "Other" && selectedRequirement.key_features_other ? (
-                                          <p className="text-sm text-slate-600">{selectedRequirement.key_features_other}</p>
-                                        ) : (
-                                          <p className="text-sm text-slate-600">{selectedRequirement.key_features}</p>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {selectedRequirement.product_image_sources &&
-                                      selectedRequirement.product_image_sources.length > 0 && (
-                                        <div className="border-b pb-4">
-                                          <p className="font-semibold text-slate-700 mb-2">Product Image Sources</p>
-                                          <div className="space-y-2">
-                                            {selectedRequirement.product_image_sources.map((source, idx) => (
-                                              <a
-                                                key={idx}
-                                                href={source}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline break-all"
-                                              >
-                                                {source}
-                                              </a>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-1">Color Style</p>
-                                      <p>{selectedRequirement.color_style}</p>
-                                    </div>
-
-                                    {selectedRequirement.social_media_links &&
-                                      selectedRequirement.social_media_links.length > 0 && (
-                                        <div className="border-b pb-4">
-                                          <p className="font-semibold text-slate-700 mb-2">Social Media Links</p>
-                                          <div className="space-y-2">
-                                            {selectedRequirement.social_media_links.map((link, idx) => (
-                                              <a
-                                                key={idx}
-                                                href={link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline break-all"
-                                              >
-                                                {link}
-                                              </a>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                    {selectedRequirement.location && (
-                                      <div>
-                                        <p className="font-semibold text-slate-700 mb-1">Location</p>
-                                        <p>{selectedRequirement.location}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-
-                            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setRequirementToDelete(req)}
-                                  className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Delete Demo Requirement</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to delete the requirement for {requirementToDelete?.business_name}?
-                                    This action cannot be undone.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-3 mt-6">
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Badge variant="outline">{req.business_type}</Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <div className="flex gap-1 flex-wrap max-w-xs">
+                              {displayedPurposes.slice(0, 2).map((purpose, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {purpose}
+                                </Badge>
+                              ))}
+                              {displayedPurposes.length > 2 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{displayedPurposes.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(req.created_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
                                   <Button
                                     variant="outline"
-                                    onClick={() => setDeleteDialogOpen(false)}
-                                    disabled={deleting}
+                                    size="sm"
+                                    onClick={() => setSelectedRequirement(req)}
+                                    className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
                                   >
-                                    Cancel
+                                    <Eye className="h-4 w-4" />
+                                    <span className="hidden sm:inline ml-1">View</span>
                                   </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                                      <Building2 className="h-6 w-6 text-blue-600" />
+                                      Demo Requirement Details
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Submitted: {new Date(selectedRequirement?.created_at || "").toLocaleString()}
+                                    </DialogDescription>
+                                  </DialogHeader>
+
+                                  {selectedRequirement && (
+                                    <div className="space-y-4 text-sm">
+                                      <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                        <div>
+                                          <p className="font-semibold text-slate-700">Business Name</p>
+                                          <p>{selectedRequirement.business_name}</p>
+                                        </div>
+                                        <div>
+                                          <p className="font-semibold text-slate-700">Business Type</p>
+                                          <p>{selectedRequirement.business_type}</p>
+                                        </div>
+                                      </div>
+
+                                      {selectedRequirement.tagline && (
+                                        <div className="border-b pb-4">
+                                          <p className="font-semibold text-slate-700 mb-1">Tagline</p>
+                                          <p>{selectedRequirement.tagline}</p>
+                                        </div>
+                                      )}
+
+                                      <div className="border-b pb-4">
+                                        <p className="font-semibold text-slate-700 mb-1">Contact Info</p>
+                                        <p>{selectedRequirement.contact_info}</p>
+                                      </div>
+
+                                      <div className="border-b pb-4">
+                                        <p className="font-semibold text-slate-700 mb-2">Primary Purposes</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {displayArrayItems(
+                                            selectedRequirement.primary_purposes,
+                                            selectedRequirement.primary_purposes_other
+                                          ).map((purpose, idx) => (
+                                            <Badge key={idx} variant="secondary">
+                                              {purpose}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      <div className="border-b pb-4">
+                                        <p className="font-semibold text-slate-700 mb-1">Target Audience</p>
+                                        <p>{selectedRequirement.target_audience}</p>
+                                      </div>
+
+                                      <div className="border-b pb-4">
+                                        <p className="font-semibold text-slate-700 mb-2">Key Features</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {displayArrayItems(
+                                            selectedRequirement.key_features,
+                                            selectedRequirement.key_features_other
+                                          ).map((feature, idx) => (
+                                            <Badge key={idx} variant="outline">
+                                              {feature}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      {selectedRequirement.product_image_sources &&
+                                        selectedRequirement.product_image_sources.length > 0 && (
+                                          <div className="border-b pb-4">
+                                            <p className="font-semibold text-slate-700 mb-2">Product Image Sources</p>
+                                            <div className="space-y-2">
+                                              {selectedRequirement.product_image_sources.map((source, idx) => (
+                                                <a
+                                                  key={idx}
+                                                  href={source}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline break-all block"
+                                                >
+                                                  {source}
+                                                </a>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                      <div className="border-b pb-4">
+                                        <p className="font-semibold text-slate-700 mb-1">Color Style</p>
+                                        <p>{selectedRequirement.color_style}</p>
+                                      </div>
+
+                                      {selectedRequirement.social_media_links &&
+                                        selectedRequirement.social_media_links.length > 0 && (
+                                          <div className="border-b pb-4">
+                                            <p className="font-semibold text-slate-700 mb-2">Social Media Links</p>
+                                            <div className="space-y-2">
+                                              {selectedRequirement.social_media_links.map((link, idx) => (
+                                                <a
+                                                  key={idx}
+                                                  href={link}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline break-all block"
+                                                >
+                                                  {link}
+                                                </a>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                      {selectedRequirement.location && (
+                                        <div>
+                                          <p className="font-semibold text-slate-700 mb-1">Location</p>
+                                          <p>{selectedRequirement.location}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+
+                              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                                <DialogTrigger asChild>
                                   <Button
-                                    variant="destructive"
-                                    onClick={handleDeleteRequirement}
-                                    disabled={deleting}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setRequirementToDelete(req)}
+                                    className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
                                   >
-                                    {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
-                                    Delete
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Delete Demo Requirement</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to delete the requirement for{" "}
+                                      {requirementToDelete?.business_name}? This action cannot be undone.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex gap-3 mt-6">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => setDeleteDialogOpen(false)}
+                                      disabled={deleting}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button variant="destructive" onClick={handleDeleteRequirement} disabled={deleting}>
+                                      {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                   )}
                 </TableBody>
               </Table>
