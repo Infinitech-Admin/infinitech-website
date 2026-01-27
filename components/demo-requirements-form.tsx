@@ -18,6 +18,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({})
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -42,8 +43,157 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
     features: false,
   })
 
+  const validateStep = (step: number): boolean => {
+    // Clear previous errors
+    setFieldErrors({})
+    
+    // Step 1: Business Information
+    if (step === 1) {
+      const errors: Record<string, boolean> = {}
+      
+      if (!formData.business_name.trim()) {
+        errors.business_name = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please enter your business name",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (!formData.business_type.trim()) {
+        errors.business_type = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please enter your business type",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (!formData.contact_info.trim()) {
+        errors.contact_info = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please enter your contact information",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      return true
+    }
+
+    // Step 2: Purpose & Audience
+    if (step === 2) {
+      const errors: Record<string, boolean> = {}
+      
+      if (formData.primary_purposes.length === 0) {
+        errors.primary_purposes = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please select at least one primary purpose",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (formData.primary_purposes.includes("Other") && !formData.primary_purposes_other.trim()) {
+        errors.primary_purposes_other = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please specify your other primary purpose",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (!formData.target_audience.trim()) {
+        errors.target_audience = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please describe your target audience",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      return true
+    }
+
+    // Step 3: Features & Design
+    if (step === 3) {
+      const errors: Record<string, boolean> = {}
+      
+      if (formData.key_features.length === 0) {
+        errors.key_features = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please select at least one key feature",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (formData.key_features.includes("Other") && !formData.key_features_other.trim()) {
+        errors.key_features_other = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please specify your other key feature",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      if (!formData.color_style.trim()) {
+        errors.color_style = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please enter your color style preference",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      return true
+    }
+
+    // Step 4: Media & Final (social media links required)
+    if (step === 4) {
+      const errors: Record<string, boolean> = {}
+      
+      if (formData.social_media_links.filter((link) => link.trim()).length === 0) {
+        errors.social_media_links = true
+        toast({
+          title: "Required Field Missing",
+          description: "Please add at least one social media link",
+          variant: "destructive",
+        })
+        setFieldErrors(errors)
+        return false
+      }
+      return true
+    }
+
+    return true
+  }
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +212,14 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
         return { ...prev, [field]: currentArray.filter((item) => item !== value) }
       }
     })
+    // Clear error for this field when user makes a selection
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
   }
 
   const handleOtherToggle = (field: "purposes" | "features", checked: boolean) => {
@@ -141,70 +299,13 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
   }
 
   const handleSubmit = async () => {
-    // Validation
-    if (!formData.business_name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Business name is required",
-        variant: "destructive",
-      })
-      return
-    }
-    if (!formData.business_type.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Business type is required",
-        variant: "destructive",
-      })
-      return
-    }
-    if (!formData.contact_info.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Contact info is required",
-        variant: "destructive",
-      })
-      return
-    }
-    if (formData.primary_purposes.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least one primary purpose",
-        variant: "destructive",
-      })
-      return
-    }
-    if (!formData.target_audience.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Target audience is required",
-        variant: "destructive",
-      })
-      return
-    }
-    if (formData.key_features.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least one key feature",
-        variant: "destructive",
-      })
-      return
-    }
-    if (!formData.color_style.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Color style preference is required",
-        variant: "destructive",
-      })
-      return
-    }
-    if (formData.social_media_links.filter((link) => link.trim()).length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one social media link",
-        variant: "destructive",
-      })
-      return
+    // Final validation check (should already be validated at each step)
+    for (let step = 1; step <= 4; step++) {
+      if (!validateStep(step)) {
+        // If any step validation fails, navigate to that step
+        setCurrentStep(step)
+        return
+      }
     }
 
     setIsSubmitting(true)
@@ -276,16 +377,16 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
 
   if (submitted) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-gradient-to-br from-[#2B4C9F]/95 via-[#1E3A8A]/95 to-[#2B4C9F]/95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <Card className="w-full max-w-lg bg-white shadow-2xl border-0 rounded-3xl overflow-hidden">
           <CardContent className="pt-16 pb-16 text-center px-8">
             <div className="mb-8 flex justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-emerald-500 rounded-full blur-2xl opacity-30 animate-pulse"></div>
-                <CheckCircle2 className="w-24 h-24 text-emerald-500 relative z-10" strokeWidth={1.5} />
+                <div className="absolute inset-0 bg-[#FBBF24] rounded-full blur-2xl opacity-30 animate-pulse"></div>
+                <CheckCircle2 className="w-24 h-24 text-[#FBBF24] relative z-10" strokeWidth={1.5} />
               </div>
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-slate-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-4 text-slate-900 bg-gradient-to-r from-[#2B4C9F] to-[#FBBF24] bg-clip-text text-transparent">
               Thank You!
             </h2>
             <p className="text-slate-600 text-lg leading-relaxed mb-2">
@@ -295,9 +396,9 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
               Our team will review and contact you soon.
             </p>
             <div className="mt-8 flex justify-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="w-2 h-2 bg-[#FBBF24] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-[#FBBF24] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-[#FBBF24] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
           </CardContent>
         </Card>
@@ -386,6 +487,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">Business Information</h2>
                   <p className="text-slate-600">Let's start with the basics about your business</p>
+                  <p className="text-sm text-slate-500 mt-2">All fields marked with <span className="text-red-500">*</span> are required to continue</p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -397,10 +499,19 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                     <Input
                       id="businessName"
                       placeholder="Enter your business name"
-                      className="h-12 border-2 border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl transition-all bg-white"
+                      className={`h-12 border-2 rounded-xl transition-all bg-white ${
+                        fieldErrors.business_name 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                          : 'border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20'
+                      }`}
                       value={formData.business_name}
                       onChange={(e) => handleInputChange("business_name", e.target.value)}
                     />
+                    {fieldErrors.business_name && (
+                      <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                        <span className="font-medium">⚠</span> This field is required
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -411,10 +522,19 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                     <Input
                       id="businessType"
                       placeholder="e.g., Restaurant, Retail, Service"
-                      className="h-12 border-2 border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl transition-all bg-white"
+                      className={`h-12 border-2 rounded-xl transition-all bg-white ${
+                        fieldErrors.business_type 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                          : 'border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20'
+                      }`}
                       value={formData.business_type}
                       onChange={(e) => handleInputChange("business_type", e.target.value)}
                     />
+                    {fieldErrors.business_type && (
+                      <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                        <span className="font-medium">⚠</span> This field is required
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -434,7 +554,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                       />
                     </div>
                     {formData.business_logo && (
-                      <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm text-[#FBBF24] bg-[#FBBF24]/10 px-3 py-2 rounded-lg">
                         <CheckCircle2 className="w-4 h-4" />
                         <span className="font-medium">{formData.business_logo.name}</span>
                       </div>
@@ -464,10 +584,19 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                   <Input
                     id="contactInfo"
                     placeholder="Email, phone, or website"
-                    className="h-12 border-2 border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl transition-all bg-white"
+                    className={`h-12 border-2 rounded-xl transition-all bg-white ${
+                      fieldErrors.contact_info 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-100' 
+                        : 'border-slate-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20'
+                    }`}
                     value={formData.contact_info}
                     onChange={(e) => handleInputChange("contact_info", e.target.value)}
                   />
+                  {fieldErrors.contact_info && (
+                    <p className="text-sm text-red-500 flex items-center gap-1 mt-1">
+                      <span className="font-medium">⚠</span> This field is required
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -481,6 +610,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">Purpose & Audience</h2>
                   <p className="text-slate-600">What do you want to achieve and who are you targeting?</p>
+                  <p className="text-sm text-slate-500 mt-2">All fields marked with <span className="text-red-500">*</span> are required to continue</p>
                 </div>
 
                 <div className="space-y-6">
@@ -492,7 +622,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                     {[
                       { value: "Booking", icon: "📅" },
                       { value: "Menu/Catalogue Display", icon: "📋" },
-                      { value: "Portfolio", icon: "🎨" },
+                      { value: "Portfolio", icon: "👤" },
                       { value: "Service Showcase", icon: "⭐" },
                       { value: "Online Store/E-commerce", icon: "🛍️" },
                       { value: "Lead Generation", icon: "🎯" },
@@ -544,7 +674,10 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                     </div>
                   </div>
                   {otherSelections.purposes && (
-                    <div className="ml-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="ml-4 animate-in fade-in slide-in-from-top-2 space-y-2">
+                      <Label className="text-sm font-medium text-slate-700">
+                        Specify other purpose <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         placeholder="Please specify your purpose"
                         value={formData.primary_purposes_other}
@@ -580,6 +713,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">Features & Design</h2>
                   <p className="text-slate-600">Choose the features and style for your website</p>
+                  <p className="text-sm text-slate-500 mt-2">All fields marked with <span className="text-red-500">*</span> are required to continue</p>
                 </div>
 
                 <div className="space-y-6">
@@ -643,12 +777,15 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                     </div>
                   </div>
                   {otherSelections.features && (
-                    <div className="ml-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="ml-4 animate-in fade-in slide-in-from-top-2 space-y-2">
+                      <Label className="text-sm font-medium text-slate-700">
+                        Specify other feature <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         placeholder="Please specify your feature"
                         value={formData.key_features_other}
                         onChange={(e) => handleInputChange("key_features_other", e.target.value)}
-                        className="h-12 border-2 border-indigo-200 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl bg-white"
+                        className="h-12 border-2 border-[#2B4C9F]/30 focus:border-[#2B4C9F] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl bg-white"
                       />
                     </div>
                   )}
@@ -683,11 +820,12 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">Media & Final Details</h2>
                   <p className="text-slate-600">Add your images, social links, and location</p>
+                  <p className="text-sm text-slate-500 mt-2">Fields marked with <span className="text-red-500">*</span> are required</p>
                 </div>
 
                 <div className="space-y-4">
                   <Label className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-emerald-500" />
+                    <ImageIcon className="w-5 h-5 text-[#FBBF24]" />
                     Sample Product Image Sources
                   </Label>
                   <p className="text-sm text-slate-500">Provide links to sample images you'd like to use</p>
@@ -699,7 +837,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                             placeholder="https://example.com/image.jpg"
                             value={source}
                             onChange={(e) => updateProductImageSource(index, e.target.value)}
-                            className="h-12 border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl pl-10 bg-white"
+                            className="h-12 border-2 border-slate-200 focus:border-[#FBBF24] focus:ring-4 focus:ring-[#2B4C9F]/20 rounded-xl pl-10 bg-white"
                           />
                           <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         </div>
@@ -720,7 +858,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                       type="button"
                       variant="outline"
                       onClick={addProductImageSource}
-                      className="w-full border-2 border-dashed border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 text-emerald-600 h-12 rounded-xl font-semibold"
+                      className="w-full border-2 border-dashed border-[#FBBF24]/50 hover:bg-[#FBBF24]/10 hover:border-[#FBBF24] text-[#FBBF24] h-12 rounded-xl font-semibold"
                     >
                       <Plus className="h-5 w-5 mr-2" />
                       Add Another Image
@@ -800,8 +938,8 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
               
               {currentStep < 4 ? (
                 <Button
-                  onClick={() => setCurrentStep(currentStep + 1)}
-                  className="flex-1 h-12 bg-gradient-to-r from-[#2B4C9F] to-[#3B5FAF] hover:from-blue-600 hover:to-purple-600 text-white font-bold shadow-lg hover:shadow-xl transition-all rounded-xl"
+                  onClick={handleNextStep}
+                  className="flex-1 h-12 bg-gradient-to-r from-[#2B4C9F] to-[#3B5FAF] hover:from-[#1E3A8A] hover:to-[#2B4C9F] text-white font-bold shadow-lg hover:shadow-xl transition-all rounded-xl"
                 >
                   Next Step
                 </Button>
@@ -809,7 +947,7 @@ export default function DemoRequirementsForm({ onClose, onSubmitSuccess }: DemoR
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="flex-1 h-12 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg hover:shadow-xl transition-all rounded-xl"
+                  className="flex-1 h-12 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] hover:from-[#F59E0B] hover:to-[#D97706] text-slate-900 font-bold shadow-lg hover:shadow-xl transition-all rounded-xl"
                 >
                   {isSubmitting ? (
                     <>
