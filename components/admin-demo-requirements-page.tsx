@@ -178,19 +178,26 @@ export default function AdminDemoRequirementsPage() {
   // Helper function to display array items, handling "Other" cases
   const displayArrayItems = (items: string[] | string, otherValue?: string[] | string) => {
     if (Array.isArray(items)) {
-      return items.map((item, idx) => {
-        // If item is "Other" and we have an otherValue, use that instead
-        if (item === "Other" && otherValue) {
-          const otherText = Array.isArray(otherValue) ? otherValue.join(", ") : otherValue
-          return otherText || item
-        }
-        return item
-      })
+      // Check if "Other" exists in the array
+      const hasOther = items.includes("Other")
+      
+      if (hasOther && otherValue) {
+        // Filter out ALL "Other" entries (even if there are duplicates) and add the custom values
+        const filteredItems = items.filter(item => item !== "Other")
+        const otherArray = Array.isArray(otherValue) ? otherValue : [otherValue]
+        // Remove duplicates from the final result
+        return [...new Set([...filteredItems, ...otherArray])]
+      }
+      
+      // Remove any duplicates from regular items
+      return [...new Set(items)]
     }
+    
     // If items is "Other" and we have otherValue, use that
     if (items === "Other" && otherValue) {
       return Array.isArray(otherValue) ? otherValue : [otherValue]
     }
+    
     return [items]
   }
 
