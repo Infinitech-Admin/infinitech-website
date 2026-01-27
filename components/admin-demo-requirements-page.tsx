@@ -40,8 +40,10 @@ interface DemoRequirement {
   contact_info: string
   tagline: string
   primary_purposes: string[]
+  primary_purposes_other:string[]
   target_audience: string
   key_features: string[]
+   key_features_other: string[]
   product_image_sources: string[]
   color_style: string
   social_media_links: string[]
