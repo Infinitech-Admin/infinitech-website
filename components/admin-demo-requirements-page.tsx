@@ -186,11 +186,12 @@ export default function AdminDemoRequirementsPage() {
         const filteredItems = items.filter(item => item !== "Other")
         const otherArray = Array.isArray(otherValue) ? otherValue : [otherValue]
         // Remove duplicates from the final result
-        return [...new Set([...filteredItems, ...otherArray])]
+        const combined = [...filteredItems, ...otherArray]
+        return Array.from(new Set(combined))
       }
       
       // Remove any duplicates from regular items
-      return [...new Set(items)]
+      return Array.from(new Set(items))
     }
     
     // If items is "Other" and we have otherValue, use that
