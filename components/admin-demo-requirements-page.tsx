@@ -385,6 +385,8 @@ export default function AdminDemoRequirementsPage() {
                                   </Badge>
                                 )}
                               </>
+                            ) : req.primary_purposes === "Other" && req.primary_purposes_other ? (
+                              <span className="text-xs text-slate-600 truncate">{req.primary_purposes_other}</span>
                             ) : (
                               <span className="text-xs text-slate-600 truncate">{req.primary_purposes}</span>
                             )}
@@ -455,6 +457,8 @@ export default function AdminDemoRequirementsPage() {
                                               {purpose}
                                             </Badge>
                                           ))
+                                        ) : selectedRequirement.primary_purposes === "Other" && selectedRequirement.primary_purposes_other ? (
+                                          <p className="text-sm text-slate-600">{selectedRequirement.primary_purposes_other}</p>
                                         ) : (
                                           <p className="text-sm text-slate-600">{selectedRequirement.primary_purposes}</p>
                                         )}
@@ -475,6 +479,8 @@ export default function AdminDemoRequirementsPage() {
                                               {feature}
                                             </Badge>
                                           ))
+                                        ) : selectedRequirement.key_features === "Other" && selectedRequirement.key_features_other ? (
+                                          <p className="text-sm text-slate-600">{selectedRequirement.key_features_other}</p>
                                         ) : (
                                           <p className="text-sm text-slate-600">{selectedRequirement.key_features}</p>
                                         )}
