@@ -16,7 +16,9 @@ import {
   ShieldAlert,
   TrendingUp,
   Calendar,
+  Download,
 } from "lucide-react";
+import jsPDF from "jspdf";
 
 /* ─── types ────────────────────────────────────────────── */
 type Phase = "nameEntry" | "timeIn" | "timeOut" | "done";
@@ -39,6 +41,15 @@ interface TotalHoursData {
   completed_days: number;
 }
 
+interface AttendanceRecord {
+  id: number;
+  full_name: string;
+  date: string;
+  time_in: string;
+  time_out: string | null;
+  total_minutes: number | null;
+}
+
 /* ─── helpers ──────────────────────────────────────────── */
 const nowDate = (): Date => new Date();
 const pad = (n: number): string => String(n).padStart(2, "0");
@@ -51,6 +62,22 @@ function computeHours(timeIn: string, timeOut: string): string | null {
   const diff = (oh * 60 + om) - (ih * 60 + im);
   if (diff <= 0) return null;
   return `${Math.floor(diff / 60)}h ${pad(diff % 60)}m`;
+}
+
+function formatHoursMinutes(minutes: number | null): string {
+  if (!minutes || minutes === 0) return "—";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${pad(mins)}m`;
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
 }
 
 /* ─── API helpers ── */
@@ -74,6 +101,12 @@ async function fetchTotalHours(name: string): Promise<TotalHoursData | null> {
   return data.success ? data : null;
 }
 
+async function fetchAllRecords(name: string): Promise<AttendanceRecord[]> {
+  const res = await fetch(`${BASE}/api/attendance/history?name=${encodeURIComponent(name)}`);
+  const data = await res.json();
+  return data.success ? data.records || [] : [];
+}
+
 async function postTimeIn(name: string, timeIn: string): Promise<{ success: boolean; message?: string }> {
   const res = await fetch(`${BASE}/api/attendance`, {
     method: "POST",
@@ -92,6 +125,140 @@ async function putTimeOut(name: string, timeOut: string): Promise<{ success: boo
   return res.json();
 }
 
+/* ─── PDF Generation Helper ── */
+function generatePDF(records: AttendanceRecord[], name: string, totalHours: string, completedDays: number) {
+  const doc = new jsPDF();
+  
+  // Colors
+  const primaryBlue = [43, 76, 159];
+  const accentGold = [251, 191, 36];
+  const textGray = [100, 116, 139];
+  const lightGray = [241, 245, 249];
+  
+  // Header Section
+  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+  doc.rect(0, 0, 210, 40, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("OJT Attendance Report", 105, 20, { align: "center" });
+  
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(name, 105, 30, { align: "center" });
+  
+  // Summary Section
+  let yPos = 55;
+  doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 20, yPos);
+  
+  yPos += 15;
+  
+  // Summary Box
+  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+  doc.roundedRect(20, yPos, 170, 30, 3, 3, 'F');
+  
+  doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("Summary", 25, yPos + 10);
+  
+  doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Total Hours: ${totalHours}`, 25, yPos + 18);
+  doc.text(`Days Completed: ${completedDays}`, 25, yPos + 25);
+  
+  yPos += 45;
+  
+  // Table Header
+  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+  doc.rect(20, yPos, 170, 10, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Date", 25, yPos + 7);
+  doc.text("Time In", 70, yPos + 7);
+  doc.text("Time Out", 110, yPos + 7);
+  doc.text("Total Hours", 155, yPos + 7);
+  
+  yPos += 10;
+  
+  // Table Rows
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+  
+  let isAlternate = false;
+  records.forEach((record, index) => {
+    // Check if we need a new page
+    if (yPos > 270) {
+      doc.addPage();
+      yPos = 20;
+      
+      // Redraw header on new page
+      doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+      doc.rect(20, yPos, 170, 10, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Date", 25, yPos + 7);
+      doc.text("Time In", 70, yPos + 7);
+      doc.text("Time Out", 110, yPos + 7);
+      doc.text("Total Hours", 155, yPos + 7);
+      
+      yPos += 10;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+    }
+    
+    // Alternating row colors
+    if (isAlternate) {
+      doc.setFillColor(249, 250, 251);
+      doc.rect(20, yPos, 170, 8, 'F');
+    }
+    
+    const date = formatDate(record.date);
+    const timeOut = record.time_out || "—";
+    const hours = formatHoursMinutes(record.total_minutes);
+    
+    doc.setFontSize(9);
+    doc.text(date, 25, yPos + 6);
+    doc.text(record.time_in, 70, yPos + 6);
+    doc.text(timeOut, 110, yPos + 6);
+    doc.text(hours, 155, yPos + 6);
+    
+    yPos += 8;
+    isAlternate = !isAlternate;
+  });
+  
+  // Footer
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      105,
+      290,
+      { align: "center" }
+    );
+    doc.text(
+      "OJT Attendance System",
+      20,
+      290
+    );
+  }
+  
+  // Save the PDF
+  doc.save(`${name.replace(/\s+/g, '_')}_Attendance_Report.pdf`);
+}
+
 /* ═══════════════════ COMPONENT ═════════════════════════ */
 export default function AttendanceForm() {
   const { toast } = useToast();
@@ -108,6 +275,7 @@ export default function AttendanceForm() {
   const [loadingTrainees, setLoadingTrainees] = useState<boolean>(true);
   const [totalHoursData, setTotalHoursData] = useState<TotalHoursData | null>(null);
   const [loadingTotalHours, setLoadingTotalHours] = useState<boolean>(false);
+  const [downloadingReport, setDownloadingReport] = useState<boolean>(false);
 
   useEffect(() => {
     const tick = setInterval(() => setCurrentTime(nowDate()), 1_000);
@@ -135,11 +303,60 @@ export default function AttendanceForm() {
 
   const currentHHMM: string = formatTime(currentTime);
   const isPast5PM: boolean  = currentTime.getHours() >= 17;
+  
+  const isTimeInOpen: boolean = (() => {
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const timeInStartMinutes = 7 * 60 + 50;
+    return totalMinutes >= timeInStartMinutes;
+  })();
 
   const isRegistered = (name: string): boolean => {
     return registeredTrainees.some(
       trainee => trainee.full_name.toLowerCase().trim() === name.toLowerCase().trim()
     );
+  };
+
+  /* ── download report ── */
+  const handleDownloadReport = async () => {
+    if (!name.trim()) return;
+    
+    setDownloadingReport(true);
+    try {
+      const records = await fetchAllRecords(name.trim());
+      
+      if (records.length === 0) {
+        toast({
+          title: "No Records",
+          description: "You don't have any attendance records yet.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const totalData = totalHoursData || await fetchTotalHours(name.trim());
+      generatePDF(
+        records, 
+        name.trim(), 
+        totalData?.total_hours || "0h 00m",
+        totalData?.completed_days || 0
+      );
+      
+      toast({
+        title: "Download Complete! 📥",
+        description: "Your attendance report has been downloaded as PDF.",
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download Failed",
+        description: "Unable to download your report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingReport(false);
+    }
   };
 
   /* ── name entry ── */
@@ -168,13 +385,11 @@ export default function AttendanceForm() {
     setError("");
     
     try {
-      // Fetch total hours first
       setLoadingTotalHours(true);
       const totalData = await fetchTotalHours(name.trim());
       setTotalHoursData(totalData);
       setLoadingTotalHours(false);
 
-      // Check if user already has a record today
       const record = await fetchRecord(name.trim());
       
       if (!record) {
@@ -221,6 +436,21 @@ export default function AttendanceForm() {
       });
       return; 
     }
+    
+    const [hours, minutes] = timeIn.split(':').map(Number);
+    const timeInMinutes = hours * 60 + minutes;
+    const minTimeInMinutes = 7 * 60 + 50;
+    
+    if (timeInMinutes < minTimeInMinutes) {
+      setError("Time In cannot be before 7:50 AM.");
+      toast({
+        title: "Invalid Time",
+        description: "Time In must be 7:50 AM or later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true); setError("");
     try {
       const res = await postTimeIn(name.trim(), timeIn);
@@ -283,7 +513,6 @@ export default function AttendanceForm() {
           description: `You worked ${totalHours || "—"} today. Great job!`,
         });
         
-        // Refresh total hours after time out
         const totalData = await fetchTotalHours(name.trim());
         setTotalHoursData(totalData);
       }
@@ -361,6 +590,13 @@ export default function AttendanceForm() {
     color:"#64748b", fontSize:14, fontWeight:600, cursor:"pointer",
   };
 
+  const downloadBtn: React.CSSProperties = {
+    width:"100%", height:42, marginTop:10, borderRadius:12,
+    border:"2px solid #fbbf24", background:"linear-gradient(135deg,#fbbf24,#f59e0b)",
+    color:"#fff", fontSize:14, fontWeight:600, cursor:"pointer",
+    display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+  };
+
   /* ═══════════════════ RENDER ═════════════════════════ */
   return (
     <div className="min-h-screen w-full"
@@ -389,7 +625,12 @@ export default function AttendanceForm() {
             {isPast5PM ? <Moon size={16} color="#2b4c9f" /> : <Sun size={16} color="#f59e0b" />}
             <span style={{ fontWeight:700, color:"#1e293b", fontSize:14 }}>{currentHHMM}</span>
             <span style={{ color:"#94a3b8", fontSize:12 }}>
-              {isPast5PM ? "— Time Out is now open" : "— Time Out opens at 17:00"}
+              {phase === "timeIn" && !isTimeInOpen 
+                ? "— Time In opens at 7:50 AM"
+                : isPast5PM 
+                ? "— Time Out is now open" 
+                : "— Time Out opens at 17:00"
+              }
             </span>
           </div>
         </div>
@@ -476,31 +717,60 @@ export default function AttendanceForm() {
         {phase === "timeIn" && (
           <div style={cardStyle}>
             <div className="flex justify-center mb-4">
-              <div style={{ width:52, height:52, borderRadius:16, background:"linear-gradient(135deg,#2b4c9f,#3b5faf)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
-                <LogIn size={24} color="#fff" />
+              <div style={{ width:52, height:52, borderRadius:16, background: isTimeInOpen ? "linear-gradient(135deg,#2b4c9f,#3b5faf)" : "linear-gradient(135deg,#94a3b8,#cbd5e1)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
+                {isTimeInOpen ? <LogIn size={24} color="#fff" /> : <Lock size={22} color="#fff" />}
               </div>
             </div>
-            <h2 className="text-center" style={{ fontSize:20, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>Good Morning!</h2>
+            <h2 className="text-center" style={{ fontSize:20, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>
+              {isTimeInOpen ? "Good Morning!" : "Too Early..."}
+            </h2>
             <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 20px" }}>
-              Pick your Time In for today, <strong style={{ color:"#2b4c9f" }}>{name}</strong>.
+              {isTimeInOpen 
+                ? <>Pick your Time In for today, <strong style={{ color:"#2b4c9f" }}>{name}</strong>.</>
+                : <>Time In will be available at <strong>7:50 AM</strong>. Come back later.</>
+              }
             </p>
 
             <div style={lbl}><User size={13} /> Full Name</div>
             <div style={readOnly}>{name}</div>
 
-            <div style={{ ...lbl, marginTop:18 }}><LogIn size={13} /> Time In</div>
-            <input
-              type="time" value={timeIn}
-              onChange={(e) => { setTimeIn(e.target.value); setError(""); }}
-              style={inp(!!error && !timeIn, "#2b4c9f")}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#2b4c9f")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !timeIn) ? "#ef4444" : "#e2e8f0")}
-            />
+            <div style={{ ...lbl, marginTop:18 }}>
+              <LogIn size={13} /> Time In
+              {!isTimeInOpen && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 7:50 AM</span>}
+            </div>
+            
+            {isTimeInOpen ? (
+              <input
+                type="time" value={timeIn}
+                min="07:50"
+                onChange={(e) => { setTimeIn(e.target.value); setError(""); }}
+                style={inp(!!error && !timeIn, "#2b4c9f")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#2b4c9f")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !timeIn) ? "#ef4444" : "#e2e8f0")}
+              />
+            ) : (
+              <div style={disabled}><Lock size={16} /> Locked until 7:50 AM</div>
+            )}
+            
             {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
 
-            <button onClick={handleTimeInSubmit} disabled={loading} style={{ ...btn(loading), marginTop:22 }}>
+            <button onClick={handleTimeInSubmit} disabled={loading || !isTimeInOpen} style={{ ...btn(loading || !isTimeInOpen), marginTop:22 }}>
               {loading ? <><Loader2 size={20} className="animate-spin" /> Saving…</> : <><CheckCircle2 size={18} /> Submit Time In</>}
             </button>
+            
+            {/* Download Button */}
+            <button 
+              onClick={handleDownloadReport} 
+              disabled={downloadingReport}
+              style={downloadBtn}
+            >
+              {downloadingReport ? (
+                <><Loader2 size={16} className="animate-spin" /> Generating PDF...</>
+              ) : (
+                <><Download size={16} /> Download PDF Report</>
+              )}
+            </button>
+            
             <button onClick={reset} style={backBtn}>← Back</button>
           </div>
         )}
@@ -565,6 +835,20 @@ export default function AttendanceForm() {
             <button onClick={handleTimeOutSubmit} disabled={loading || !isPast5PM} style={{ ...btn(loading || !isPast5PM), marginTop:22 }}>
               {loading ? <><Loader2 size={20} className="animate-spin" /> Saving…</> : <><CheckCircle2 size={18} /> Submit Time Out</>}
             </button>
+            
+            {/* Download Button */}
+            <button 
+              onClick={handleDownloadReport} 
+              disabled={downloadingReport}
+              style={downloadBtn}
+            >
+              {downloadingReport ? (
+                <><Loader2 size={16} className="animate-spin" /> Generating PDF...</>
+              ) : (
+                <><Download size={16} /> Download PDF Report</>
+              )}
+            </button>
+            
             <button onClick={reset} style={backBtn}>← Back</button>
           </div>
         )}
@@ -608,13 +892,27 @@ export default function AttendanceForm() {
                 <div key={d} className="w-2.5 h-2.5 rounded-full bg-yellow-400" style={{ animation:"bounce 1.2s infinite", animationDelay:`${d}ms` }} />
               ))}
             </div>
-            <button onClick={reset} style={{ ...btn(), width:"auto", padding:"0 40px", minWidth:200 }}>Done</button>
+            
+            <button onClick={reset} style={{ ...btn(), width:"auto", padding:"0 40px", minWidth:200, marginBottom:12 }}>Done</button>
+            
+            {/* Download Button on success screen */}
+            <button 
+              onClick={handleDownloadReport} 
+              disabled={downloadingReport}
+              style={{ ...downloadBtn, width:"auto", padding:"0 32px", minWidth:200, margin:"0 auto" }}
+            >
+              {downloadingReport ? (
+                <><Loader2 size={16} className="animate-spin" /> Generating PDF...</>
+              ) : (
+                <><Download size={16} /> Download PDF Report</>
+              )}
+            </button>
           </div>
         )}
 
         {/* footer */}
         <p className="text-center" style={{ color:"#94a3b8", fontSize:12, maxWidth:520, margin:"20px auto 0" }}>
-          Morning → Time In • After 5:00 PM → Time Out • Total Hours computed automatically
+          Time In: 7:50 AM onwards • Time Out: After 5:00 PM • Total Hours computed automatically
         </p>
       </div>
 
