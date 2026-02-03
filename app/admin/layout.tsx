@@ -21,7 +21,7 @@ const navItems = [
   { path: "/admin/juantap-survey", label: "Juantap Survey", icon: ClipboardList },
   { path: "/admin/survey", label: "Survey", icon: ClipboardList },
   { path: "/admin/video-survey", label: "Video Survey", icon: Video },
-  { path: "/admin/demo-website-requirements", label: "Demo Website Requirements", icon: IdCard },
+  { path: "/admin/demo-requirements", label: "Demo Website Requirements", icon: IdCard },
   { path: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
 ]
 
