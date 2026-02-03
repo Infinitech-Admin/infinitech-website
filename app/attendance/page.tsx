@@ -14,6 +14,8 @@ import {
   Moon,
   Lock,
   ShieldAlert,
+  TrendingUp,
+  Calendar,
 } from "lucide-react";
 
 /* ─── types ────────────────────────────────────────────── */
@@ -28,6 +30,13 @@ interface ExistingRecord {
 interface RegisteredTrainee {
   id: number;
   full_name: string;
+}
+
+interface TotalHoursData {
+  total_minutes: number;
+  total_hours: string;
+  total_days: number;
+  completed_days: number;
 }
 
 /* ─── helpers ──────────────────────────────────────────── */
@@ -57,6 +66,12 @@ async function fetchRecord(name: string): Promise<ExistingRecord | null> {
   const res = await fetch(`${BASE}/api/attendance/lookup?name=${encodeURIComponent(name)}`);
   const data = await res.json();
   return data.record || null;
+}
+
+async function fetchTotalHours(name: string): Promise<TotalHoursData | null> {
+  const res = await fetch(`${BASE}/api/attendance/total?name=${encodeURIComponent(name)}`);
+  const data = await res.json();
+  return data.success ? data : null;
 }
 
 async function postTimeIn(name: string, timeIn: string): Promise<{ success: boolean; message?: string }> {
@@ -91,6 +106,8 @@ export default function AttendanceForm() {
   const [completedPhase, setCompletedPhase] = useState<"timeIn"|"timeOut">("timeIn");
   const [registeredTrainees, setRegisteredTrainees] = useState<RegisteredTrainee[]>([]);
   const [loadingTrainees, setLoadingTrainees] = useState<boolean>(true);
+  const [totalHoursData, setTotalHoursData] = useState<TotalHoursData | null>(null);
+  const [loadingTotalHours, setLoadingTotalHours] = useState<boolean>(false);
 
   useEffect(() => {
     const tick = setInterval(() => setCurrentTime(nowDate()), 1_000);
@@ -98,7 +115,6 @@ export default function AttendanceForm() {
   }, []);
 
   useEffect(() => {
-    // Load registered trainees on component mount
     const loadTrainees = async () => {
       try {
         const trainees = await fetchRegisteredTrainees();
@@ -120,7 +136,6 @@ export default function AttendanceForm() {
   const currentHHMM: string = formatTime(currentTime);
   const isPast5PM: boolean  = currentTime.getHours() >= 17;
 
-  // Check if name is registered
   const isRegistered = (name: string): boolean => {
     return registeredTrainees.some(
       trainee => trainee.full_name.toLowerCase().trim() === name.toLowerCase().trim()
@@ -139,7 +154,6 @@ export default function AttendanceForm() {
       return; 
     }
 
-    // Check if name is registered
     if (!isRegistered(name.trim())) {
       setError("You are not registered in the system.");
       toast({
@@ -154,18 +168,22 @@ export default function AttendanceForm() {
     setError("");
     
     try {
+      // Fetch total hours first
+      setLoadingTotalHours(true);
+      const totalData = await fetchTotalHours(name.trim());
+      setTotalHoursData(totalData);
+      setLoadingTotalHours(false);
+
       // Check if user already has a record today
       const record = await fetchRecord(name.trim());
       
       if (!record) {
-        // No record - go to Time In
         setPhase("timeIn");
         toast({
           title: "Welcome!",
           description: `Hi ${name}! Please record your Time In.`,
         });
       } else if (record.time_out) {
-        // Already timed out
         setError("You have already timed out for today.");
         toast({
           title: "Already Completed",
@@ -173,7 +191,6 @@ export default function AttendanceForm() {
           variant: "destructive",
         });
       } else {
-        // Has time in but no time out - go to Time Out
         setExistingTimeIn(record.time_in);
         setPhase("timeOut");
         toast({
@@ -265,6 +282,10 @@ export default function AttendanceForm() {
           title: "Time Out Recorded! 👋",
           description: `You worked ${totalHours || "—"} today. Great job!`,
         });
+        
+        // Refresh total hours after time out
+        const totalData = await fetchTotalHours(name.trim());
+        setTotalHoursData(totalData);
       }
       else { 
         setError(res.message || "Failed to save."); 
@@ -289,6 +310,7 @@ export default function AttendanceForm() {
   const reset = (): void => {
     setPhase("nameEntry"); setName(""); setTimeIn("");
     setTimeOut(""); setExistingTimeIn(""); setError("");
+    setTotalHoursData(null);
   };
 
   /* ─── shared style helpers ─── */
@@ -371,6 +393,28 @@ export default function AttendanceForm() {
             </span>
           </div>
         </div>
+
+        {/* Total Hours Badge - Shows after name entry */}
+        {totalHoursData && phase !== "nameEntry" && (
+          <div className="flex justify-center mb-5">
+            <div className="inline-flex flex-col items-center gap-1"
+              style={{ background:"linear-gradient(135deg,rgba(251,191,36,0.15),rgba(245,158,11,0.1))", backdropFilter:"blur(8px)", borderRadius:16, padding:"12px 20px", boxShadow:"0 4px 16px rgba(251,191,36,0.2)", border:"2px solid rgba(251,191,36,0.3)" }}
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp size={18} color="#f59e0b" />
+                <span style={{ fontWeight:700, color:"#1e293b", fontSize:16 }}>
+                  Total Hours: {totalHoursData.total_hours}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs" style={{ color:"#64748b" }}>
+                <span className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  {totalHoursData.completed_days} days completed
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ════ NAME ENTRY ════ */}
         {phase === "nameEntry" && (
@@ -543,6 +587,22 @@ export default function AttendanceForm() {
             <p style={{ color:"#94a3b8", fontSize:13, margin:"0 0 24px" }}>
               {completedPhase === "timeOut" ? "You're done for today. Have a great evening!" : "Come back after 5:00 PM to Time Out."}
             </p>
+            
+            {/* Show updated total hours after completion */}
+            {totalHoursData && completedPhase === "timeOut" && (
+              <div className="mb-6 p-4 rounded-lg"
+                style={{ background:"linear-gradient(135deg,rgba(251,191,36,0.15),rgba(245,158,11,0.1))", border:"2px solid rgba(251,191,36,0.3)" }}
+              >
+                <p style={{ fontSize:12, color:"#64748b", margin:"0 0 4px", fontWeight:600 }}>Your Grand Total</p>
+                <p style={{ fontSize:24, fontWeight:800, color:"#f59e0b", margin:0 }}>
+                  {totalHoursData.total_hours}
+                </p>
+                <p style={{ fontSize:11, color:"#94a3b8", margin:"4px 0 0" }}>
+                  across {totalHoursData.completed_days} completed days
+                </p>
+              </div>
+            )}
+            
             <div className="flex justify-center gap-2 mb-6">
               {[0,150,300].map((d) => (
                 <div key={d} className="w-2.5 h-2.5 rounded-full bg-yellow-400" style={{ animation:"bounce 1.2s infinite", animationDelay:`${d}ms` }} />
