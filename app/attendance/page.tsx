@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   CheckCircle2,
   Loader2,
@@ -12,6 +13,7 @@ import {
   Sun,
   Moon,
   Lock,
+  ShieldAlert,
 } from "lucide-react";
 
 /* ─── types ────────────────────────────────────────────── */
@@ -21,6 +23,11 @@ interface ExistingRecord {
   full_name: string;
   time_in: string;
   time_out: string | null;
+}
+
+interface RegisteredTrainee {
+  id: number;
+  full_name: string;
 }
 
 /* ─── helpers ──────────────────────────────────────────── */
@@ -39,6 +46,12 @@ function computeHours(timeIn: string, timeOut: string): string | null {
 
 /* ─── API helpers ── */
 const BASE = "";
+
+async function fetchRegisteredTrainees(): Promise<RegisteredTrainee[]> {
+  const res = await fetch(`${BASE}/api/trainees`);
+  const data = await res.json();
+  return data.trainees || [];
+}
 
 async function fetchRecord(name: string): Promise<ExistingRecord | null> {
   const res = await fetch(`${BASE}/api/attendance/lookup?name=${encodeURIComponent(name)}`);
@@ -66,6 +79,7 @@ async function putTimeOut(name: string, timeOut: string): Promise<{ success: boo
 
 /* ═══════════════════ COMPONENT ═════════════════════════ */
 export default function AttendanceForm() {
+  const { toast } = useToast();
   const [phase, setPhase]                   = useState<Phase>("nameEntry");
   const [name, setName]                     = useState<string>("");
   const [timeIn, setTimeIn]                 = useState<string>("");
@@ -75,20 +89,65 @@ export default function AttendanceForm() {
   const [error, setError]                   = useState<string>("");
   const [currentTime, setCurrentTime]       = useState<Date>(nowDate());
   const [completedPhase, setCompletedPhase] = useState<"timeIn"|"timeOut">("timeIn");
+  const [registeredTrainees, setRegisteredTrainees] = useState<RegisteredTrainee[]>([]);
+  const [loadingTrainees, setLoadingTrainees] = useState<boolean>(true);
 
   useEffect(() => {
     const tick = setInterval(() => setCurrentTime(nowDate()), 1_000);
     return () => clearInterval(tick);
   }, []);
 
+  useEffect(() => {
+    // Load registered trainees on component mount
+    const loadTrainees = async () => {
+      try {
+        const trainees = await fetchRegisteredTrainees();
+        setRegisteredTrainees(trainees);
+      } catch (error) {
+        console.error("Failed to load registered trainees:", error);
+        toast({
+          title: "Warning",
+          description: "Unable to load registered trainees list.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingTrainees(false);
+      }
+    };
+    loadTrainees();
+  }, [toast]);
+
   const currentHHMM: string = formatTime(currentTime);
   const isPast5PM: boolean  = currentTime.getHours() >= 17;
+
+  // Check if name is registered
+  const isRegistered = (name: string): boolean => {
+    return registeredTrainees.some(
+      trainee => trainee.full_name.toLowerCase().trim() === name.toLowerCase().trim()
+    );
+  };
 
   /* ── name entry ── */
   const handleNameSubmit = async (): Promise<void> => {
     if (!name.trim()) { 
       setError("Please enter your full name."); 
+      toast({
+        title: "Name Required",
+        description: "Please enter your full name to continue.",
+        variant: "destructive",
+      });
       return; 
+    }
+
+    // Check if name is registered
+    if (!isRegistered(name.trim())) {
+      setError("You are not registered in the system.");
+      toast({
+        title: "Access Denied",
+        description: "This name is not registered. Please contact your supervisor.",
+        variant: "destructive",
+      });
+      return;
     }
     
     setLoading(true); 
@@ -101,16 +160,34 @@ export default function AttendanceForm() {
       if (!record) {
         // No record - go to Time In
         setPhase("timeIn");
+        toast({
+          title: "Welcome!",
+          description: `Hi ${name}! Please record your Time In.`,
+        });
       } else if (record.time_out) {
         // Already timed out
         setError("You have already timed out for today.");
+        toast({
+          title: "Already Completed",
+          description: "You have already timed out for today. See you tomorrow!",
+          variant: "destructive",
+        });
       } else {
         // Has time in but no time out - go to Time Out
         setExistingTimeIn(record.time_in);
         setPhase("timeOut");
+        toast({
+          title: "Welcome Back!",
+          description: `Your Time In was recorded at ${record.time_in}. You can now Time Out.`,
+        });
       }
     } catch {
       setError("Something went wrong. Please try again.");
+      toast({
+        title: "Connection Error",
+        description: "Unable to check your attendance. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -118,26 +195,93 @@ export default function AttendanceForm() {
 
   /* ── time in ── */
   const handleTimeInSubmit = async (): Promise<void> => {
-    if (!timeIn) { setError("Please pick your Time In."); return; }
+    if (!timeIn) { 
+      setError("Please pick your Time In."); 
+      toast({
+        title: "Time Required",
+        description: "Please select your Time In before submitting.",
+        variant: "destructive",
+      });
+      return; 
+    }
     setLoading(true); setError("");
     try {
       const res = await postTimeIn(name.trim(), timeIn);
-      if (res.success) { setCompletedPhase("timeIn"); setPhase("done"); }
-      else             { setError(res.message || "Failed to save."); }
-    } catch { setError("Something went wrong. Please try again."); }
+      if (res.success) { 
+        setCompletedPhase("timeIn"); 
+        setPhase("done"); 
+        toast({
+          title: "Time In Recorded! 🎉",
+          description: `Successfully logged in at ${timeIn}. Have a productive day!`,
+        });
+      }
+      else { 
+        setError(res.message || "Failed to save."); 
+        toast({
+          title: "Failed to Save",
+          description: res.message || "Unable to record your Time In. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch { 
+      setError("Something went wrong. Please try again."); 
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
     finally { setLoading(false); }
   };
 
   /* ── time out ── */
   const handleTimeOutSubmit = async (): Promise<void> => {
-    if (!timeOut)                      { setError("Please pick your Time Out."); return; }
-    if (timeOut <= existingTimeIn)     { setError("Time Out must be after Time In."); return; }
+    if (!timeOut) { 
+      setError("Please pick your Time Out."); 
+      toast({
+        title: "Time Required",
+        description: "Please select your Time Out before submitting.",
+        variant: "destructive",
+      });
+      return; 
+    }
+    if (timeOut <= existingTimeIn) { 
+      setError("Time Out must be after Time In."); 
+      toast({
+        title: "Invalid Time",
+        description: "Time Out must be after your Time In.",
+        variant: "destructive",
+      });
+      return; 
+    }
     setLoading(true); setError("");
     try {
       const res = await putTimeOut(name.trim(), timeOut);
-      if (res.success) { setCompletedPhase("timeOut"); setPhase("done"); }
-      else             { setError(res.message || "Failed to save."); }
-    } catch { setError("Something went wrong. Please try again."); }
+      if (res.success) { 
+        setCompletedPhase("timeOut"); 
+        setPhase("done"); 
+        const totalHours = computeHours(existingTimeIn, timeOut);
+        toast({
+          title: "Time Out Recorded! 👋",
+          description: `You worked ${totalHours || "—"} today. Great job!`,
+        });
+      }
+      else { 
+        setError(res.message || "Failed to save."); 
+        toast({
+          title: "Failed to Save",
+          description: res.message || "Unable to record your Time Out. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch { 
+      setError("Something went wrong. Please try again."); 
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
     finally { setLoading(false); }
   };
 
@@ -231,31 +375,56 @@ export default function AttendanceForm() {
         {/* ════ NAME ENTRY ════ */}
         {phase === "nameEntry" && (
           <div style={cardStyle}>
-            <div className="flex justify-center mb-5">
-              <div style={{ width:56, height:56, borderRadius:16, background:"linear-gradient(135deg,#2b4c9f,#3b5faf)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
-                <Timer size={28} color="#fff" />
+            {loadingTrainees ? (
+              <div className="text-center py-8">
+                <Loader2 size={32} className="animate-spin mx-auto mb-3" color="#2b4c9f" />
+                <p style={{ color:"#64748b", fontSize:14 }}>Loading registered trainees...</p>
               </div>
-            </div>
-            <h2 className="text-center" style={{ fontSize:21, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>Hi, Trainee!</h2>
-            <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 22px" }}>
-              Enter your full name to get started.
-            </p>
+            ) : (
+              <>
+                <div className="flex justify-center mb-5">
+                  <div style={{ width:56, height:56, borderRadius:16, background:"linear-gradient(135deg,#2b4c9f,#3b5faf)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
+                    <Timer size={28} color="#fff" />
+                  </div>
+                </div>
+                <h2 className="text-center" style={{ fontSize:21, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>Hi, Trainee!</h2>
+                <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 12px" }}>
+                  Enter your full name to get started.
+                </p>
 
-            <div style={lbl}><User size={13} /> Full Name</div>
-            <input
-              type="text" placeholder="e.g. Juan dela Cruz"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setError(""); }}
-              onKeyDown={(e) => e.key === "Enter" && handleNameSubmit()}
-              style={inp(!!error && !name.trim())}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#2b4c9f")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !name.trim()) ? "#ef4444" : "#e2e8f0")}
-            />
-            {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
+                {/* Registered trainees notice */}
+                <div className="mb-4 p-3 rounded-lg" style={{ background:"#f8fafc", border:"1px solid #e2e8f0" }}>
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert size={16} color="#64748b" style={{ marginTop:2, flexShrink:0 }} />
+                    <div>
+                      <p style={{ fontSize:12, color:"#64748b", margin:"0 0 6px", fontWeight:600 }}>
+                        Only registered trainees can access this system
+                      </p>
+                      <p style={{ fontSize:11, color:"#94a3b8", margin:0 }}>
+                        {registeredTrainees.length} trainee{registeredTrainees.length !== 1 ? 's' : ''} registered
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-            <button onClick={handleNameSubmit} disabled={loading} style={{ ...btn(loading), marginTop:20 }}>
-              {loading ? <><Loader2 size={20} className="animate-spin" /> Checking…</> : <><LogIn size={18} /> Time In</>}
-            </button>
+                <div style={lbl}><User size={13} /> Full Name</div>
+                <input
+                  type="text" placeholder="e.g. Juan dela Cruz"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleNameSubmit()}
+                  style={inp(!!error && !name.trim())}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "#2b4c9f")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !name.trim()) ? "#ef4444" : "#e2e8f0")}
+                  disabled={loadingTrainees}
+                />
+                {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
+
+                <button onClick={handleNameSubmit} disabled={loading || loadingTrainees} style={{ ...btn(loading || loadingTrainees), marginTop:20 }}>
+                  {loading ? <><Loader2 size={20} className="animate-spin" /> Checking…</> : <><LogIn size={18} /> Continue</>}
+                </button>
+              </>
+            )}
           </div>
         )}
 
