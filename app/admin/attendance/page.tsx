@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -33,8 +34,12 @@ import {
   LogIn,
   LogOut,
   User,
+  UserPlus,
+  Users,
+  ShieldCheck,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface AttendanceRecord {
   id: number
@@ -45,6 +50,12 @@ interface AttendanceRecord {
   total_minutes: number | null
   created_at: string
   updated_at: string
+}
+
+interface Trainee {
+  id: number
+  full_name: string
+  created_at: string
 }
 
 const ITEMS_PER_PAGE = 10
@@ -85,6 +96,16 @@ export default function AdminAttendancePage() {
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Trainee management states
+  const [traineesDialogOpen, setTraineesDialogOpen] = useState(false)
+  const [addTraineeDialogOpen, setAddTraineeDialogOpen] = useState(false)
+  const [trainees, setTrainees] = useState<Trainee[]>([])
+  const [loadingTrainees, setLoadingTrainees] = useState(false)
+  const [newTraineeName, setNewTraineeName] = useState("")
+  const [submittingTrainee, setSubmittingTrainee] = useState(false)
+  const [traineeToDelete, setTraineeToDelete] = useState<Trainee | null>(null)
+  const [deleteTraineeDialogOpen, setDeleteTraineeDialogOpen] = useState(false)
+
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
     if (!token) {
@@ -95,36 +116,158 @@ export default function AdminAttendancePage() {
     fetchRecords(token)
   }, [router])
 
-  const fetchRecords = async (token: string) => {
+  // Find this function in your component (around line 159)
+const fetchRecords = async (token: string) => {
+  try {
+    const response = await fetch("/api/admin/attendance", {
+      // Remove the Authorization header completely
+      // headers: {
+      //   Authorization: `Bearer ${token}`,
+      // },
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch attendance records")
+    }
+
+    const data = await response.json()
+
+    let recordsData = []
+    if (data.success && data.data) {
+      if (data.data.data && Array.isArray(data.data.data)) {
+        recordsData = data.data.data
+      } else if (Array.isArray(data.data)) {
+        recordsData = data.data
+      }
+    }
+
+    setRecords(recordsData)
+  } catch (error) {
+    console.error("Error fetching records:", error)
+    setMessage("Failed to load attendance records")
+    setRecords([])
+  } finally {
+    setLoading(false)
+  }
+}
+
+ // Find this function (around line 181)
+const fetchTrainees = async () => {
+  const token = localStorage.getItem("adminToken")
+  if (!token) return
+
+  setLoadingTrainees(true)
+  try {
+    const response = await fetch("/api/admin/trainees", {
+      // Remove the Authorization header
+      // headers: {
+      //   Authorization: `Bearer ${token}`,
+      // },
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch trainees")
+    }
+
+    const data = await response.json()
+    setTrainees(data.trainees || [])
+  } catch (error) {
+    console.error("Error fetching trainees:", error)
+    toast({
+      title: "Error",
+      description: "Failed to load registered trainees",
+      variant: "destructive",
+    })
+  } finally {
+    setLoadingTrainees(false)
+  }
+}
+
+// Around line 207
+const handleAddTrainee = async () => {
+  if (!newTraineeName.trim()) {
+    toast({
+      title: "Name Required",
+      description: "Please enter a trainee name",
+      variant: "destructive",
+    })
+    return
+  }
+
+  const token = localStorage.getItem("adminToken")
+  if (!token) return
+
+  setSubmittingTrainee(true)
+  try {
+    const response = await fetch("/api/admin/trainees", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Remove Authorization header
+      },
+      body: JSON.stringify({ full_name: newTraineeName.trim() }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to add trainee")
+    }
+
+    toast({
+      title: "Success! 🎉",
+      description: `${newTraineeName} has been registered!`,
+    })
+
+    setNewTraineeName("")
+    setAddTraineeDialogOpen(false)
+    fetchTrainees()
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message || "Failed to add trainee",
+      variant: "destructive",
+    })
+  } finally {
+    setSubmittingTrainee(false)
+  }
+}
+
+  const handleDeleteTrainee = async () => {
+    if (!traineeToDelete) return
+
+    const token = localStorage.getItem("adminToken")
+    if (!token) return
+
+    setSubmittingTrainee(true)
     try {
-      const response = await fetch("/api/admin/attendance", {
+      const response = await fetch(`/api/admin/trainees/${traineeToDelete.id}`, {
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
       if (!response.ok) {
-        throw new Error("Failed to fetch attendance records")
+        throw new Error("Failed to delete trainee")
       }
 
-      const data = await response.json()
+      toast({
+        title: "Success",
+        description: `${traineeToDelete.full_name} has been removed`,
+      })
 
-      let recordsData = []
-      if (data.success && data.data) {
-        if (data.data.data && Array.isArray(data.data.data)) {
-          recordsData = data.data.data
-        } else if (Array.isArray(data.data)) {
-          recordsData = data.data
-        }
-      }
-
-      setRecords(recordsData)
+      setDeleteTraineeDialogOpen(false)
+      setTraineeToDelete(null)
+      fetchTrainees() // Refresh the list
     } catch (error) {
-      console.error("Error fetching records:", error)
-      setMessage("Failed to load attendance records")
-      setRecords([])
+      toast({
+        title: "Error",
+        description: "Failed to delete trainee",
+        variant: "destructive",
+      })
     } finally {
-      setLoading(false)
+      setSubmittingTrainee(false)
     }
   }
 
@@ -168,12 +311,40 @@ export default function AdminAttendancePage() {
     }
   }
 
-  const formatHoursMinutes = (minutes: number | null) => {
-    if (!minutes) return "—"
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${hours}h ${mins}m`
-  }
+  // Helper function to calculate minutes from time strings
+  const calculateMinutes = (timeIn: string, timeOut: string | null) => {
+    if (!timeOut) return 0;
+    
+    const [inHour, inMin] = timeIn.split(':').map(Number);
+    const [outHour, outMin] = timeOut.split(':').map(Number);
+    const totalMins = (outHour * 60 + outMin) - (inHour * 60 + inMin);
+    
+    return totalMins > 0 ? totalMins : 0;
+  };
+
+  // Helper function to get actual minutes for a record
+  const getActualMinutes = (record: AttendanceRecord): number => {
+    if (record.total_minutes) {
+      return record.total_minutes;
+    }
+    return calculateMinutes(record.time_in, record.time_out);
+  };
+
+  // Format minutes to hours and minutes display
+  const formatHoursMinutes = (minutes: number | null, timeIn?: string | null, timeOut?: string | null) => {
+    let totalMinutes = minutes;
+    
+    // If minutes is null but we have time_in and time_out, calculate it
+    if (!totalMinutes && timeIn && timeOut) {
+      totalMinutes = calculateMinutes(timeIn, timeOut);
+    }
+    
+    if (!totalMinutes || totalMinutes === 0) return "—";
+    
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${hours}h ${mins}m`;
+  };
 
   const filteredRecords = Array.isArray(records)
     ? records.filter((record) => {
@@ -195,7 +366,7 @@ export default function AdminAttendancePage() {
     completed: Array.isArray(records) ? records.filter((r) => r.time_out !== null).length : 0,
     pending: Array.isArray(records) ? records.filter((r) => r.time_out === null).length : 0,
     totalHours: Array.isArray(records)
-      ? Math.floor(records.reduce((sum, r) => sum + (r.total_minutes || 0), 0) / 60)
+      ? Math.floor(records.reduce((sum, r) => sum + getActualMinutes(r), 0) / 60)
       : 0,
   }
 
@@ -227,11 +398,197 @@ export default function AdminAttendancePage() {
               </h1>
               <p className="text-blue-100">Manage and view all trainee attendance logs</p>
             </div>
-            <Link href="/admin/dashboard">
-              <Button variant="secondary" className="bg-white hover:bg-gray-100 text-blue-900">
-                Back to Dashboard
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              {/* Manage Trainees Button */}
+              <Dialog open={traineesDialogOpen} onOpenChange={(open) => {
+                setTraineesDialogOpen(open)
+                if (open) fetchTrainees()
+              }}>
+                <DialogTrigger asChild>
+                  <Button variant="secondary" className="bg-white hover:bg-gray-100 text-blue-900">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Trainees
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl flex items-center gap-2">
+                      <ShieldCheck className="h-6 w-6 text-blue-600" />
+                      Registered Trainees
+                    </DialogTitle>
+                    <DialogDescription>
+                      Manage who can access the attendance system
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    {/* Stats */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Registered</p>
+                          <p className="text-2xl font-bold text-blue-600">{trainees.length}</p>
+                        </div>
+                        <Dialog open={addTraineeDialogOpen} onOpenChange={setAddTraineeDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button className="bg-gradient-to-r from-blue-600 to-purple-600">
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Add Trainee
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Add New Trainee</DialogTitle>
+                              <DialogDescription>
+                                Register a new trainee to allow them access to the attendance system
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="trainee-name">Full Name</Label>
+                                <Input
+                                  id="trainee-name"
+                                  placeholder="e.g. Juan dela Cruz"
+                                  value={newTraineeName}
+                                  onChange={(e) => setNewTraineeName(e.target.value)}
+                                  onKeyDown={(e) => e.key === "Enter" && handleAddTrainee()}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button
+                                variant="outline"
+                                onClick={() => setAddTraineeDialogOpen(false)}
+                                disabled={submittingTrainee}
+                              >
+                                Cancel
+                              </Button>
+                              <Button onClick={handleAddTrainee} disabled={submittingTrainee}>
+                                {submittingTrainee ? (
+                                  <>
+                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                    Adding...
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    Add Trainee
+                                  </>
+                                )}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+
+                    {/* Trainees List */}
+                    {loadingTrainees ? (
+                      <div className="text-center py-8">
+                        <Loader className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
+                        <p className="text-sm text-muted-foreground">Loading trainees...</p>
+                      </div>
+                    ) : trainees.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-2" />
+                        <p className="text-muted-foreground font-medium">No registered trainees</p>
+                        <p className="text-sm text-muted-foreground">Add your first trainee to get started</p>
+                      </div>
+                    ) : (
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-slate-50 dark:bg-slate-800">
+                              <TableHead>Name</TableHead>
+                              <TableHead>Registered</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {trainees.map((trainee) => (
+                              <TableRow key={trainee.id}>
+                                <TableCell className="font-medium">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
+                                      {trainee.full_name?.charAt(0)?.toUpperCase()}
+                                    </div>
+                                    {trainee.full_name}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatDate(trainee.created_at)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                    Active
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Dialog open={deleteTraineeDialogOpen && traineeToDelete?.id === trainee.id} onOpenChange={setDeleteTraineeDialogOpen}>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setTraineeToDelete(trainee)}
+                                        className="border-red-200 hover:bg-red-50 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>Remove Trainee</DialogTitle>
+                                        <DialogDescription>
+                                          Are you sure you want to remove <strong>{traineeToDelete?.full_name}</strong>? 
+                                          They will no longer be able to log attendance.
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <DialogFooter className="mt-4">
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => setDeleteTraineeDialogOpen(false)}
+                                          disabled={submittingTrainee}
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <Button
+                                          variant="destructive"
+                                          onClick={handleDeleteTrainee}
+                                          disabled={submittingTrainee}
+                                        >
+                                          {submittingTrainee ? (
+                                            <>
+                                              <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                              Removing...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Trash2 className="h-4 w-4 mr-2" />
+                                              Remove
+                                            </>
+                                          )}
+                                        </Button>
+                                      </DialogFooter>
+                                    </DialogContent>
+                                  </Dialog>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Link href="/admin/dashboard">
+                <Button variant="secondary" className="bg-white hover:bg-gray-100 text-blue-900">
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -411,7 +768,7 @@ export default function AdminAttendancePage() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <Badge variant="outline" className="font-mono">
-                            {formatHoursMinutes(record.total_minutes)}
+                            {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -488,7 +845,7 @@ export default function AdminAttendancePage() {
                                         Total Hours
                                       </p>
                                       <p className="text-2xl font-bold text-purple-600">
-                                        {formatHoursMinutes(selectedRecord.total_minutes)}
+                                        {formatHoursMinutes(selectedRecord.total_minutes, selectedRecord.time_in, selectedRecord.time_out)}
                                       </p>
                                     </div>
 
