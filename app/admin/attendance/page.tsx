@@ -37,6 +37,7 @@ import {
   UserPlus,
   Users,
   ShieldCheck,
+  X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -105,6 +106,9 @@ export default function AdminAttendancePage() {
   const [submittingTrainee, setSubmittingTrainee] = useState(false)
   const [traineeToDelete, setTraineeToDelete] = useState<Trainee | null>(null)
   const [deleteTraineeDialogOpen, setDeleteTraineeDialogOpen] = useState(false)
+  
+  // Filter by selected trainee
+  const [selectedTraineeName, setSelectedTraineeName] = useState<string | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
@@ -114,124 +118,105 @@ export default function AdminAttendancePage() {
     }
 
     fetchRecords(token)
+    fetchTrainees() // Load trainees on mount
   }, [router])
 
-  // Find this function in your component (around line 159)
-const fetchRecords = async (token: string) => {
-  try {
-    const response = await fetch("/api/admin/attendance", {
-      // Remove the Authorization header completely
-      // headers: {
-      //   Authorization: `Bearer ${token}`,
-      // },
-    })
+  const fetchRecords = async (token: string) => {
+    try {
+      const response = await fetch("/api/admin/attendance")
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch attendance records")
-    }
-
-    const data = await response.json()
-
-    let recordsData = []
-    if (data.success && data.data) {
-      if (data.data.data && Array.isArray(data.data.data)) {
-        recordsData = data.data.data
-      } else if (Array.isArray(data.data)) {
-        recordsData = data.data
+      if (!response.ok) {
+        throw new Error("Failed to fetch attendance records")
       }
+
+      const data = await response.json()
+
+      let recordsData = []
+      if (data.success && data.data) {
+        if (data.data.data && Array.isArray(data.data.data)) {
+          recordsData = data.data.data
+        } else if (Array.isArray(data.data)) {
+          recordsData = data.data
+        }
+      }
+
+      setRecords(recordsData)
+    } catch (error) {
+      console.error("Error fetching records:", error)
+      setMessage("Failed to load attendance records")
+      setRecords([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchTrainees = async () => {
+    setLoadingTrainees(true)
+    try {
+      const response = await fetch("/api/admin/trainees")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch trainees")
+      }
+
+      const data = await response.json()
+      setTrainees(data.trainees || [])
+    } catch (error) {
+      console.error("Error fetching trainees:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load registered trainees",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingTrainees(false)
+    }
+  }
+
+  const handleAddTrainee = async () => {
+    if (!newTraineeName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a trainee name",
+        variant: "destructive",
+      })
+      return
     }
 
-    setRecords(recordsData)
-  } catch (error) {
-    console.error("Error fetching records:", error)
-    setMessage("Failed to load attendance records")
-    setRecords([])
-  } finally {
-    setLoading(false)
-  }
-}
+    setSubmittingTrainee(true)
+    try {
+      const response = await fetch("/api/admin/trainees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ full_name: newTraineeName.trim() }),
+      })
 
- // Find this function (around line 181)
-const fetchTrainees = async () => {
-  const token = localStorage.getItem("adminToken")
-  if (!token) return
+      const data = await response.json()
 
-  setLoadingTrainees(true)
-  try {
-    const response = await fetch("/api/admin/trainees", {
-      // Remove the Authorization header
-      // headers: {
-      //   Authorization: `Bearer ${token}`,
-      // },
-    })
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add trainee")
+      }
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch trainees")
+      toast({
+        title: "Success! 🎉",
+        description: `${newTraineeName} has been registered!`,
+      })
+
+      setNewTraineeName("")
+      setAddTraineeDialogOpen(false)
+      fetchTrainees()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add trainee",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmittingTrainee(false)
     }
-
-    const data = await response.json()
-    setTrainees(data.trainees || [])
-  } catch (error) {
-    console.error("Error fetching trainees:", error)
-    toast({
-      title: "Error",
-      description: "Failed to load registered trainees",
-      variant: "destructive",
-    })
-  } finally {
-    setLoadingTrainees(false)
   }
-}
-
-// Around line 207
-const handleAddTrainee = async () => {
-  if (!newTraineeName.trim()) {
-    toast({
-      title: "Name Required",
-      description: "Please enter a trainee name",
-      variant: "destructive",
-    })
-    return
-  }
-
-  const token = localStorage.getItem("adminToken")
-  if (!token) return
-
-  setSubmittingTrainee(true)
-  try {
-    const response = await fetch("/api/admin/trainees", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Remove Authorization header
-      },
-      body: JSON.stringify({ full_name: newTraineeName.trim() }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to add trainee")
-    }
-
-    toast({
-      title: "Success! 🎉",
-      description: `${newTraineeName} has been registered!`,
-    })
-
-    setNewTraineeName("")
-    setAddTraineeDialogOpen(false)
-    fetchTrainees()
-  } catch (error: any) {
-    toast({
-      title: "Error",
-      description: error.message || "Failed to add trainee",
-      variant: "destructive",
-    })
-  } finally {
-    setSubmittingTrainee(false)
-  }
-}
 
   const handleDeleteTrainee = async () => {
     if (!traineeToDelete) return
@@ -259,7 +244,7 @@ const handleAddTrainee = async () => {
 
       setDeleteTraineeDialogOpen(false)
       setTraineeToDelete(null)
-      fetchTrainees() // Refresh the list
+      fetchTrainees()
     } catch (error) {
       toast({
         title: "Error",
@@ -357,16 +342,23 @@ const handleAddTrainee = async () => {
           (filterStatus === "completed" && record.time_out !== null) ||
           (filterStatus === "pending" && record.time_out === null)
 
-        return matchesSearch && matchesFilter
+        const matchesTrainee = selectedTraineeName === null || record.full_name === selectedTraineeName
+
+        return matchesSearch && matchesFilter && matchesTrainee
       })
     : []
 
+  // Get stats for selected trainee or all
+  const statsRecords = selectedTraineeName 
+    ? records.filter(r => r.full_name === selectedTraineeName)
+    : records
+
   const stats = {
-    total: Array.isArray(records) ? records.length : 0,
-    completed: Array.isArray(records) ? records.filter((r) => r.time_out !== null).length : 0,
-    pending: Array.isArray(records) ? records.filter((r) => r.time_out === null).length : 0,
-    totalHours: Array.isArray(records)
-      ? Math.floor(records.reduce((sum, r) => sum + getActualMinutes(r), 0) / 60)
+    total: Array.isArray(statsRecords) ? statsRecords.length : 0,
+    completed: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out !== null).length : 0,
+    pending: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out === null).length : 0,
+    totalHours: Array.isArray(statsRecords)
+      ? Math.floor(statsRecords.reduce((sum, r) => sum + getActualMinutes(r), 0) / 60)
       : 0,
   }
 
@@ -594,343 +586,463 @@ const handleAddTrainee = async () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="border-2 border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Records</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+        {/* Main Content with Sidebar */}
+        <div className="flex gap-6">
+          {/* LEFT SIDEBAR - Trainee Filter */}
+          <Card className="w-80 h-fit border-2 border-slate-200 dark:border-slate-800 shadow-lg sticky top-4">
+            <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Filter by Trainee
+              </CardTitle>
+              <CardDescription>Click a name to filter records</CardDescription>
+            </CardHeader>
+            <CardContent className="p-3">
+              {loadingTrainees ? (
+                <div className="text-center py-8">
+                  <Loader className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
+                  <p className="text-xs text-muted-foreground">Loading...</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
-                  <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              ) : trainees.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">No trainees yet</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-green-200 dark:border-green-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats.completed}</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
-                  <LogOut className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-yellow-200 dark:border-yellow-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Pending</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{stats.pending}</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl">
-                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Hours</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats.totalHours}h</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
-                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {message && (
-          <Alert className="mb-6 border-2" variant={message.includes("successfully") ? "default" : "destructive"}>
-            <AlertDescription className="font-medium">{message}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Records Table */}
-        <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                  All Records
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of {filteredRecords.length}
-                </CardDescription>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1 sm:min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or date..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
+              ) : (
+                <div className="space-y-2">
+                  {/* Show All Button */}
+                  <Button
+                    variant={selectedTraineeName === null ? "default" : "outline"}
+                    className={`w-full justify-between ${
+                      selectedTraineeName === null
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                        : "hover:bg-slate-50"
+                    }`}
+                    onClick={() => {
+                      setSelectedTraineeName(null)
                       setCurrentPage(1)
                     }}
-                    className="pl-9 border-2"
-                  />
-                </div>
-                <Select
-                  value={filterStatus}
-                  onValueChange={(value) => {
-                    setFilterStatus(value)
-                    setCurrentPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-full sm:w-[180px] border-2">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 overflow-hidden">
-            <div className="w-full overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <TableHead className="font-semibold">Name</TableHead>
-                    <TableHead className="font-semibold hidden md:table-cell">Date</TableHead>
-                    <TableHead className="font-semibold">Time In</TableHead>
-                    <TableHead className="font-semibold">Time Out</TableHead>
-                    <TableHead className="font-semibold hidden lg:table-cell">Total Hours</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedRecords.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12">
-                        <div className="flex flex-col items-center gap-2">
-                          <Clock className="h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-muted-foreground font-medium">No attendance records found</p>
-                          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedRecords.map((record) => (
-                      <TableRow
-                        key={record.id}
-                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">All Trainees</span>
+                    </span>
+                    <Badge variant="secondary" className="ml-2">
+                      {records.length}
+                    </Badge>
+                  </Button>
+
+                  {/* Individual Trainees */}
+                  {trainees.map((trainee) => {
+                    const traineeRecordCount = records.filter(
+                      (r) => r.full_name === trainee.full_name
+                    ).length
+
+                    return (
+                      <Button
+                        key={trainee.id}
+                        variant={selectedTraineeName === trainee.full_name ? "default" : "outline"}
+                        className={`w-full justify-between text-left ${
+                          selectedTraineeName === trainee.full_name
+                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                            : "hover:bg-slate-50"
+                        }`}
+                        onClick={() => {
+                          setSelectedTraineeName(trainee.full_name)
+                          setCurrentPage(1)
+                        }}
                       >
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                              {record.full_name?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-                            <span className="truncate">{record.full_name}</span>
+                        <span className="flex items-center gap-2 min-w-0">
+                          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                            {trainee.full_name?.charAt(0)?.toUpperCase()}
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {formatDate(record.date)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm">
-                            <LogIn className="h-4 w-4 text-green-600" />
-                            {record.time_in}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {record.time_out ? (
-                            <div className="flex items-center gap-1 text-sm">
-                              <LogOut className="h-4 w-4 text-blue-600" />
-                              {record.time_out}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <Badge variant="outline" className="font-mono">
-                            {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {record.time_out ? (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-100">
-                              Completed
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100">
-                              Pending
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedRecord(record)}
-                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="hidden sm:inline ml-1">View</span>
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl border-2">
-                                <DialogHeader>
-                                  <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                    <User className="h-6 w-6 text-blue-600" />
-                                    Attendance Details
-                                  </DialogTitle>
-                                  <DialogDescription>
-                                    Record created: {formatDateTime(selectedRecord?.created_at || "")}
-                                  </DialogDescription>
-                                </DialogHeader>
+                          <span className="font-medium truncate">{trainee.full_name}</span>
+                        </span>
+                        <Badge 
+                          variant="secondary" 
+                          className={`ml-2 flex-shrink-0 ${
+                            selectedTraineeName === trainee.full_name 
+                              ? "bg-white/20 text-white" 
+                              : ""
+                          }`}
+                        >
+                          {traineeRecordCount}
+                        </Badge>
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                                {selectedRecord && (
-                                  <div className="space-y-4 text-sm">
-                                    <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                                      <div>
-                                        <p className="font-semibold text-slate-700 mb-1">Full Name</p>
-                                        <p>{selectedRecord.full_name}</p>
-                                      </div>
-                                      <div>
-                                        <p className="font-semibold text-slate-700 mb-1">Date</p>
-                                        <p>{formatDate(selectedRecord.date)}</p>
-                                      </div>
-                                    </div>
+          {/* RIGHT CONTENT - Records Table */}
+          <div className="flex-1 space-y-6">
+            {/* Active Filter Badge */}
+            {selectedTraineeName && (
+              <Alert className="border-2 border-blue-200 bg-blue-50/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="font-medium text-blue-900">
+                      Showing records for: <strong>{selectedTraineeName}</strong>
+                    </AlertDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTraineeName(null)
+                      setCurrentPage(1)
+                    }}
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear Filter
+                  </Button>
+                </div>
+              </Alert>
+            )}
 
-                                    <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                                      <div>
-                                        <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                          <LogIn className="h-4 w-4 text-green-600" />
-                                          Time In
-                                        </p>
-                                        <p className="text-lg font-mono">{selectedRecord.time_in}</p>
-                                      </div>
-                                      <div>
-                                        <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                          <LogOut className="h-4 w-4 text-blue-600" />
-                                          Time Out
-                                        </p>
-                                        <p className="text-lg font-mono">
-                                          {selectedRecord.time_out || "Not yet recorded"}
-                                        </p>
-                                      </div>
-                                    </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <Card className="border-2 border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Records</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
+                      <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                                    <div className="border-b pb-4">
-                                      <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                        <Clock className="h-4 w-4 text-purple-600" />
-                                        Total Hours
-                                      </p>
-                                      <p className="text-2xl font-bold text-purple-600">
-                                        {formatHoursMinutes(selectedRecord.total_minutes, selectedRecord.time_in, selectedRecord.time_out)}
-                                      </p>
-                                    </div>
+              <Card className="border-2 border-green-200 dark:border-green-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Completed</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats.completed}</p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
+                      <LogOut className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                                    <div>
-                                      <p className="font-semibold text-slate-700 mb-1">Status</p>
-                                      {selectedRecord.time_out ? (
-                                        <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                                      ) : (
-                                        <Badge className="bg-yellow-100 text-yellow-800">Pending Time Out</Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
+              <Card className="border-2 border-yellow-200 dark:border-yellow-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Pending</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-yellow-600">{stats.pending}</p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl">
+                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setRecordToDelete(record)}
-                                  className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Delete Attendance Record</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to delete the attendance record for{" "}
-                                    {recordToDelete?.full_name} on {formatDate(recordToDelete?.date || "")}? This action cannot be undone.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-3 mt-6">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => setDeleteDialogOpen(false)}
-                                    disabled={deleting}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button variant="destructive" onClick={handleDeleteRecord} disabled={deleting}>
-                                    {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
-                                    Delete
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
+              <Card className="border-2 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Hours</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats.totalHours}h</p>
+                    </div>
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {message && (
+              <Alert className="mb-6 border-2" variant={message.includes("successfully") ? "default" : "destructive"}>
+                <AlertDescription className="font-medium">{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Records Table */}
+            <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+              <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                      {selectedTraineeName ? `${selectedTraineeName}'s Records` : "All Records"}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Showing {startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of {filteredRecords.length}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1 sm:min-w-[200px]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or date..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value)
+                          setCurrentPage(1)
+                        }}
+                        className="pl-9 border-2"
+                      />
+                    </div>
+                    <Select
+                      value={filterStatus}
+                      onValueChange={(value) => {
+                        setFilterStatus(value)
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <SelectTrigger className="w-full sm:w-[180px] border-2">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 overflow-hidden">
+                <div className="w-full overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <TableHead className="font-semibold">Name</TableHead>
+                        <TableHead className="font-semibold hidden md:table-cell">Date</TableHead>
+                        <TableHead className="font-semibold">Time In</TableHead>
+                        <TableHead className="font-semibold">Time Out</TableHead>
+                        <TableHead className="font-semibold hidden lg:table-cell">Total Hours</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedRecords.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-12">
+                            <div className="flex flex-col items-center gap-2">
+                              <Clock className="h-12 w-12 text-muted-foreground/50" />
+                              <p className="text-muted-foreground font-medium">No attendance records found</p>
+                              <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedRecords.map((record) => (
+                          <TableRow
+                            key={record.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                          >
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                                  {record.full_name?.charAt(0)?.toUpperCase() || "?"}
+                                </div>
+                                <span className="truncate">{record.full_name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                {formatDate(record.date)}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm">
+                                <LogIn className="h-4 w-4 text-green-600" />
+                                {record.time_in}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {record.time_out ? (
+                                <div className="flex items-center gap-1 text-sm">
+                                  <LogOut className="h-4 w-4 text-blue-600" />
+                                  {record.time_out}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <Badge variant="outline" className="font-mono">
+                                {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {record.time_out ? (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-100">
+                                  Completed
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100">
+                                  Pending
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setSelectedRecord(record)}
+                                      className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      <span className="hidden sm:inline ml-1">View</span>
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl border-2">
+                                    <DialogHeader>
+                                      <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                                        <User className="h-6 w-6 text-blue-600" />
+                                        Attendance Details
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        Record created: {formatDateTime(selectedRecord?.created_at || "")}
+                                      </DialogDescription>
+                                    </DialogHeader>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="text-sm font-medium">
-              Page {currentPage} of {totalPages}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                                    {selectedRecord && (
+                                      <div className="space-y-4 text-sm">
+                                        <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                          <div>
+                                            <p className="font-semibold text-slate-700 mb-1">Full Name</p>
+                                            <p>{selectedRecord.full_name}</p>
+                                          </div>
+                                          <div>
+                                            <p className="font-semibold text-slate-700 mb-1">Date</p>
+                                            <p>{formatDate(selectedRecord.date)}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                          <div>
+                                            <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                              <LogIn className="h-4 w-4 text-green-600" />
+                                              Time In
+                                            </p>
+                                            <p className="text-lg font-mono">{selectedRecord.time_in}</p>
+                                          </div>
+                                          <div>
+                                            <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                              <LogOut className="h-4 w-4 text-blue-600" />
+                                              Time Out
+                                            </p>
+                                            <p className="text-lg font-mono">
+                                              {selectedRecord.time_out || "Not yet recorded"}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <div className="border-b pb-4">
+                                          <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                            <Clock className="h-4 w-4 text-purple-600" />
+                                            Total Hours
+                                          </p>
+                                          <p className="text-2xl font-bold text-purple-600">
+                                            {formatHoursMinutes(selectedRecord.total_minutes, selectedRecord.time_in, selectedRecord.time_out)}
+                                          </p>
+                                        </div>
+
+                                        <div>
+                                          <p className="font-semibold text-slate-700 mb-1">Status</p>
+                                          {selectedRecord.time_out ? (
+                                            <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                                          ) : (
+                                            <Badge className="bg-yellow-100 text-yellow-800">Pending Time Out</Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </DialogContent>
+                                </Dialog>
+
+                                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setRecordToDelete(record)}
+                                      className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Delete Attendance Record</DialogTitle>
+                                      <DialogDescription>
+                                        Are you sure you want to delete the attendance record for{" "}
+                                        {recordToDelete?.full_name} on {formatDate(recordToDelete?.date || "")}? This action cannot be undone.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex gap-3 mt-6">
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => setDeleteDialogOpen(false)}
+                                        disabled={deleting}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button variant="destructive" onClick={handleDeleteRecord} disabled={deleting}>
+                                        {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
+                                        Delete
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm font-medium">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
