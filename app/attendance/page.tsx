@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Calendar,
   Download,
+  Ban,
 } from "lucide-react";
 import jsPDF from "jspdf";
 
@@ -78,6 +79,11 @@ function formatDate(dateString: string): string {
     month: 'short', 
     day: 'numeric' 
   });
+}
+
+function getDayName(date: Date): string {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[date.getDay()];
 }
 
 /* ─── API helpers ── */
@@ -151,19 +157,17 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
   const accentGold = [251, 191, 36];
   const textGray = [100, 116, 139];
   const lightGray = [241, 245, 249];
-  const lightBlue = [96, 165, 250]; // Light blue for watermark
+  const lightBlue = [96, 165, 250];
   
   // Load logo
   const logoBase64 = await getLogoBase64();
   
   // Function to add watermark on each page
   const addWatermark = () => {
-    // Use a very light color instead of opacity
-    doc.setTextColor(220, 235, 252); // Very light blue
+    doc.setTextColor(220, 235, 252);
     doc.setFontSize(60);
     doc.setFont("helvetica", "bold");
     
-    // Rotate and center the watermark
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
@@ -177,7 +181,6 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
   const addFooter = (pageNumber: number, totalPages: number) => {
     const footerY = 285;
     
-    // Company info
     doc.setFontSize(7);
     doc.setTextColor(textGray[0], textGray[1], textGray[2]);
     doc.setFont("helvetica", "bold");
@@ -188,32 +191,27 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
     doc.text("311 Campos Rueda Building, Urban Avenue, Makati City", 105, footerY + 3, { align: "center" });
     doc.text("Tel no.: (02)7001-6157 | Mobile no.: (+63) 919-587-4915 | Email: infinitechcorp.ph@gmail.com", 105, footerY + 6, { align: "center" });
     
-    // Page number
     doc.setFontSize(8);
     doc.text(`Page ${pageNumber} of ${totalPages}`, 105, footerY + 11, { align: "center" });
   };
   
-  // Add watermark to first page
   addWatermark();
   
   // Header Section with Logo
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(0, 0, 210, 50, 'F');
   
-  // Add logo if loaded
   if (logoBase64) {
     try {
       doc.addImage(logoBase64, 'PNG', 15, 10, 30, 30);
     } catch (e) {
       console.error('Failed to add logo to PDF:', e);
-      // Fallback text
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text("INFINITECH", 20, 28);
     }
   } else {
-    // Fallback if logo doesn't load
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
@@ -277,20 +275,15 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
   let currentPage = 1;
   
   records.forEach((record, index) => {
-    // Check if we need a new page
     if (yPos > 265) {
-      // Add footer to current page before adding new page
       addFooter(currentPage, Math.ceil(records.length / 20) + 1);
       
       doc.addPage();
       currentPage++;
-      
-      // Add watermark to new page
       addWatermark();
       
       yPos = 20;
       
-      // Redraw header on new page
       doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
       doc.rect(20, yPos, 170, 10, 'F');
       
@@ -308,7 +301,6 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
       isAlternate = false;
     }
     
-    // Alternating row colors
     if (isAlternate) {
       doc.setFillColor(249, 250, 251);
       doc.rect(20, yPos, 170, 8, 'F');
@@ -328,14 +320,12 @@ async function generatePDF(records: AttendanceRecord[], name: string, totalHours
     isAlternate = !isAlternate;
   });
   
-  // Add footer to all pages
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     addFooter(i, pageCount);
   }
   
-  // Save the PDF
   doc.save(`${name.replace(/\s+/g, '_')}_Attendance_Report.pdf`);
 }
 
@@ -354,9 +344,17 @@ export default function AttendanceForm() {
   const [totalHoursData, setTotalHoursData] = useState<TotalHoursData | null>(null);
   const [loadingTotalHours, setLoadingTotalHours] = useState<boolean>(false);
   const [downloadingReport, setDownloadingReport] = useState<boolean>(false);
+  const [isWeekend, setIsWeekend] = useState<boolean>(false);
 
   useEffect(() => {
-    const tick = setInterval(() => setCurrentTime(nowDate()), 1_000);
+    const tick = setInterval(() => {
+      const now = nowDate();
+      setCurrentTime(now);
+      
+      // Check if it's weekend (0 = Sunday, 6 = Saturday)
+      const dayOfWeek = now.getDay();
+      setIsWeekend(dayOfWeek === 0 || dayOfWeek === 6);
+    }, 1_000);
     return () => clearInterval(tick);
   }, []);
 
@@ -383,6 +381,7 @@ export default function AttendanceForm() {
   const isPast5PM: boolean  = currentTime.getHours() >= 17;
   
   const isTimeInOpen: boolean = (() => {
+    if (isWeekend) return false; // BLOCKED ON WEEKENDS
     const hours = currentTime.getHours();
     const minutes = currentTime.getMinutes();
     const totalMinutes = hours * 60 + minutes;
@@ -505,7 +504,17 @@ export default function AttendanceForm() {
 
   /* ── time in ── */
   const handleTimeInSubmit = async (): Promise<void> => {
-    // Get current time automatically
+    // WEEKEND CHECK
+    if (isWeekend) {
+      setError("Time In is disabled on weekends.");
+      toast({
+        title: "Weekend Mode 🚫",
+        description: "Attendance is not allowed on weekends. Come back Monday!",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const now = nowDate();
     const currentTimeStr = formatTime(now);
     
@@ -537,11 +546,8 @@ export default function AttendanceForm() {
         });
       }
       else { 
-        // When there's an error, always check if they already have a record
-        // This catches all "already timed in" scenarios regardless of message format
         const record = await fetchRecord(name.trim());
         if (record && !record.time_out) {
-          // They already have a Time In record, redirect to Time Out phase
           setExistingTimeIn(record.time_in);
           setPhase("timeOut");
           setError("");
@@ -551,7 +557,6 @@ export default function AttendanceForm() {
           });
           return;
         } else if (record && record.time_out) {
-          // They already completed today
           setError("You have already timed out for today.");
           toast({
             title: "Already Completed",
@@ -561,7 +566,6 @@ export default function AttendanceForm() {
           return;
         }
         
-        // Some other error
         setError(res.message || "Failed to save."); 
         toast({
           title: "Failed to Save",
@@ -582,7 +586,17 @@ export default function AttendanceForm() {
 
   /* ── time out ── */
   const handleTimeOutSubmit = async (): Promise<void> => {
-    // Get current time automatically
+    // WEEKEND CHECK
+    if (isWeekend) {
+      setError("Time Out is disabled on weekends.");
+      toast({
+        title: "Weekend Mode 🚫",
+        description: "Attendance is not allowed on weekends. Come back Monday!",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const now = nowDate();
     const currentTimeStr = formatTime(now);
     
@@ -725,20 +739,42 @@ export default function AttendanceForm() {
           <p style={{ color:"#64748b", fontSize:15, margin:0 }}>Log your on-the-job training hours</p>
         </div>
 
+        {/* WEEKEND WARNING BANNER */}
+        {isWeekend && (
+          <div className="flex justify-center mb-5">
+            <div className="inline-flex items-center gap-2"
+              style={{ background:"linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1))", backdropFilter:"blur(8px)", borderRadius:14, padding:"12px 20px", boxShadow:"0 4px 16px rgba(239,68,68,0.3)", border:"2px solid rgba(239,68,68,0.4)", maxWidth:480 }}
+            >
+              <Ban size={20} color="#dc2626" />
+              <div>
+                <p style={{ fontWeight:700, color:"#dc2626", fontSize:14, margin:0 }}>
+                  Weekend Mode Active
+                </p>
+                <p style={{ color:"#991b1b", fontSize:12, margin:0 }}>
+                  Attendance is disabled on {getDayName(currentTime)}. Come back on Monday!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* clock badge */}
         <div className="flex justify-center mb-5">
           <div className="inline-flex items-center gap-2"
-            style={{ background:"rgba(255,255,255,0.85)", backdropFilter:"blur(8px)", borderRadius:14, padding:"8px 16px", boxShadow:"0 2px 12px rgba(0,0,0,0.08)", border:"1px solid rgba(255,255,255,0.6)" }}
+            style={{ 
+              background: isWeekend ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.85)", 
+              backdropFilter:"blur(8px)", 
+              borderRadius:14, 
+              padding:"8px 16px", 
+              boxShadow:"0 2px 12px rgba(0,0,0,0.08)", 
+              border: isWeekend ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(255,255,255,0.6)"
+            }}
           >
             {isPast5PM ? <Moon size={16} color="#2b4c9f" /> : <Sun size={16} color="#f59e0b" />}
-            <span style={{ fontWeight:700, color:"#1e293b", fontSize:14 }}>{currentHHMM}</span>
-            <span style={{ color:"#94a3b8", fontSize:12 }}>
-              {phase === "timeIn" && !isTimeInOpen 
-                ? "— Time In opens at 7:50 AM"
-                : isPast5PM 
-                ? "— Time Out is now open" 
-                : "— Time Out opens at 17:00"
-              }
+            <span style={{ fontWeight:700, color: isWeekend ? "#dc2626" : "#1e293b", fontSize:14 }}>{currentHHMM}</span>
+            <span style={{ color: isWeekend ? "#dc2626" : "#94a3b8", fontSize:12 }}>
+              {getDayName(currentTime)}
+              {isWeekend && " — Closed"}
             </span>
           </div>
         </div>
@@ -825,15 +861,17 @@ export default function AttendanceForm() {
         {phase === "timeIn" && (
           <div style={cardStyle}>
             <div className="flex justify-center mb-4">
-              <div style={{ width:52, height:52, borderRadius:16, background: isTimeInOpen ? "linear-gradient(135deg,#2b4c9f,#3b5faf)" : "linear-gradient(135deg,#94a3b8,#cbd5e1)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
-                {isTimeInOpen ? <LogIn size={24} color="#fff" /> : <Lock size={22} color="#fff" />}
+              <div style={{ width:52, height:52, borderRadius:16, background: (isTimeInOpen && !isWeekend) ? "linear-gradient(135deg,#2b4c9f,#3b5faf)" : "linear-gradient(135deg,#94a3b8,#cbd5e1)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.35)" }}>
+                {(isTimeInOpen && !isWeekend) ? <LogIn size={24} color="#fff" /> : <Lock size={22} color="#fff" />}
               </div>
             </div>
             <h2 className="text-center" style={{ fontSize:20, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>
-              {isTimeInOpen ? "Good Morning!" : "Too Early..."}
+              {isWeekend ? "Weekend - Closed" : isTimeInOpen ? "Good Morning!" : "Too Early..."}
             </h2>
             <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 20px" }}>
-              {isTimeInOpen 
+              {isWeekend 
+                ? <>Attendance is <strong style={{ color:"#dc2626" }}>disabled on weekends</strong>. Come back Monday!</>
+                : isTimeInOpen 
                 ? <>Click below to record your Time In, <strong style={{ color:"#2b4c9f" }}>{name}</strong>.</>
                 : <>Time In will be available at <strong>7:50 AM</strong>. Come back later.</>
               }
@@ -844,25 +882,28 @@ export default function AttendanceForm() {
 
             <div style={{ ...lbl, marginTop:18 }}>
               <LogIn size={13} /> Time In (Auto-detected)
-              {!isTimeInOpen && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 7:50 AM</span>}
+              {isWeekend && <span style={{ color:"#dc2626", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🚫 disabled on weekends</span>}
+              {!isTimeInOpen && !isWeekend && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 7:50 AM</span>}
             </div>
             
-            {isTimeInOpen ? (
+            {(isTimeInOpen && !isWeekend) ? (
               <div style={autoTimeDisplay}>
                 <Clock size={18} className="animate-pulse" />
                 Current Time: {currentHHMM}
               </div>
             ) : (
-              <div style={disabled}><Lock size={16} /> Locked until 7:50 AM</div>
+              <div style={disabled}>
+                <Lock size={16} /> 
+                {isWeekend ? "Closed on Weekends" : "Locked until 7:50 AM"}
+              </div>
             )}
             
             {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
 
-            <button onClick={handleTimeInSubmit} disabled={loading || !isTimeInOpen} style={{ ...btn(loading || !isTimeInOpen), marginTop:22 }}>
+            <button onClick={handleTimeInSubmit} disabled={loading || !isTimeInOpen || isWeekend} style={{ ...btn(loading || !isTimeInOpen || isWeekend), marginTop:22 }}>
               {loading ? <><Loader2 size={20} className="animate-spin" /> Recording…</> : <><CheckCircle2 size={18} /> Record Time In Now</>}
             </button>
             
-            {/* Download Button */}
             <button 
               onClick={handleDownloadReport} 
               disabled={downloadingReport}
@@ -883,15 +924,17 @@ export default function AttendanceForm() {
         {phase === "timeOut" && (
           <div style={cardStyle}>
             <div className="flex justify-center mb-4">
-              <div style={{ width:52, height:52, borderRadius:16, background: isPast5PM ? "linear-gradient(135deg,#f59e0b,#fbbf24)" : "linear-gradient(135deg,#94a3b8,#cbd5e1)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.2)" }}>
-                {isPast5PM ? <LogOut size={24} color="#fff" /> : <Lock size={22} color="#fff" />}
+              <div style={{ width:52, height:52, borderRadius:16, background: (isPast5PM && !isWeekend) ? "linear-gradient(135deg,#f59e0b,#fbbf24)" : "linear-gradient(135deg,#94a3b8,#cbd5e1)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(43,76,159,0.2)" }}>
+                {(isPast5PM && !isWeekend) ? <LogOut size={24} color="#fff" /> : <Lock size={22} color="#fff" />}
               </div>
             </div>
             <h2 className="text-center" style={{ fontSize:20, fontWeight:700, color:"#1e293b", margin:"0 0 4px" }}>
-              {isPast5PM ? "Good Afternoon!" : "Not Yet…"}
+              {isWeekend ? "Weekend - Closed" : isPast5PM ? "Good Afternoon!" : "Not Yet…"}
             </h2>
             <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 20px" }}>
-              {isPast5PM
+              {isWeekend
+                ? <>Attendance is <strong style={{ color:"#dc2626" }}>disabled on weekends</strong>. Come back Monday!</>
+                : isPast5PM
                 ? <><strong style={{ color:"#2b4c9f" }}>{name}</strong> — click below to record your Time Out.</>
                 : <>Time Out will be available at <strong>17:00</strong>. Come back later.</>
               }
@@ -908,19 +951,23 @@ export default function AttendanceForm() {
 
             <div style={{ ...lbl, marginTop:18 }}>
               <LogOut size={13} /> Time Out (Auto-detected)
-              {!isPast5PM && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 17:00</span>}
+              {isWeekend && <span style={{ color:"#dc2626", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🚫 disabled on weekends</span>}
+              {!isPast5PM && !isWeekend && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 17:00</span>}
             </div>
 
-            {isPast5PM ? (
+            {(isPast5PM && !isWeekend) ? (
               <div style={autoTimeDisplay}>
                 <Clock size={18} className="animate-pulse" />
                 Current Time: {currentHHMM}
               </div>
             ) : (
-              <div style={disabled}><Lock size={16} /> Locked until 17:00</div>
+              <div style={disabled}>
+                <Lock size={16} /> 
+                {isWeekend ? "Closed on Weekends" : "Locked until 17:00"}
+              </div>
             )}
 
-            {isPast5PM && existingTimeIn && (
+            {(isPast5PM && !isWeekend) && existingTimeIn && (
               <div className="mt-3 flex items-center justify-center gap-2 rounded-lg px-4 py-2"
                 style={{ background:"linear-gradient(135deg,#2b4c9f12,#fbbf2412)", border:"1px solid #2b4c9f22" }}
               >
@@ -933,11 +980,10 @@ export default function AttendanceForm() {
 
             {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
 
-            <button onClick={handleTimeOutSubmit} disabled={loading || !isPast5PM} style={{ ...btn(loading || !isPast5PM), marginTop:22 }}>
+            <button onClick={handleTimeOutSubmit} disabled={loading || !isPast5PM || isWeekend} style={{ ...btn(loading || !isPast5PM || isWeekend), marginTop:22 }}>
               {loading ? <><Loader2 size={20} className="animate-spin" /> Recording…</> : <><CheckCircle2 size={18} /> Record Time Out Now</>}
             </button>
             
-            {/* Download Button */}
             <button 
               onClick={handleDownloadReport} 
               disabled={downloadingReport}
@@ -973,7 +1019,6 @@ export default function AttendanceForm() {
               {completedPhase === "timeOut" ? "You're done for today. Have a great evening!" : "Come back after 5:00 PM to Time Out."}
             </p>
             
-            {/* Show updated total hours after completion */}
             {totalHoursData && completedPhase === "timeOut" && (
               <div className="mb-6 p-4 rounded-lg"
                 style={{ background:"linear-gradient(135deg,rgba(251,191,36,0.15),rgba(245,158,11,0.1))", border:"2px solid rgba(251,191,36,0.3)" }}
@@ -996,7 +1041,6 @@ export default function AttendanceForm() {
             
             <button onClick={reset} style={{ ...btn(), width:"auto", padding:"0 40px", minWidth:200, marginBottom:12 }}>Done</button>
             
-            {/* Download Button on success screen */}
             <button 
               onClick={handleDownloadReport} 
               disabled={downloadingReport}
@@ -1013,7 +1057,7 @@ export default function AttendanceForm() {
 
         {/* footer */}
         <p className="text-center" style={{ color:"#94a3b8", fontSize:12, maxWidth:520, margin:"20px auto 0" }}>
-          Time In: 7:50 AM onwards • Time Out: After 5:00 PM • Time automatically recorded when you click the button
+          Time In: 7:50 AM onwards • Time Out: After 5:00 PM • <strong style={{ color:"#dc2626" }}>Weekends: Closed</strong>
         </p>
       </div>
 
