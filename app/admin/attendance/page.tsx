@@ -17,7 +17,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import {
   ChevronLeft,
@@ -38,9 +39,15 @@ import {
   Users,
   ShieldCheck,
   X,
+  AlertTriangle,
+  Wifi,
+  Smartphone,
+  Monitor,
+  MapPin,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import React from "react"
 
 interface AttendanceRecord {
   id: number
@@ -51,12 +58,26 @@ interface AttendanceRecord {
   total_minutes: number | null
   created_at: string
   updated_at: string
+  ip_address?: string
+  user_agent?: string
 }
 
 interface Trainee {
   id: number
   full_name: string
   created_at: string
+}
+
+interface SuspiciousActivity {
+  type: string
+  severity: 'low' | 'medium' | 'high'
+  record?: AttendanceRecord
+  trainee?: string
+  reason: string
+  ip_count?: number
+  count?: number
+  date?: string
+  details?: any
 }
 
 const ITEMS_PER_PAGE = 10
@@ -83,6 +104,17 @@ const formatDateTime = (dateString: string) => {
   });
 };
 
+// Device type detector
+const getDeviceType = (userAgent?: string): { icon: any, label: string } => {
+  if (!userAgent) return { icon: Monitor, label: 'Unknown' };
+  
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+    return { icon: Smartphone, label: 'Mobile' };
+  }
+  return { icon: Monitor, label: 'Desktop' };
+};
+
 export default function AdminAttendancePage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -92,7 +124,7 @@ export default function AdminAttendancePage() {
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null)
   const [message, setMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all") // all, completed, pending
+  const [filterStatus, setFilterStatus] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -107,6 +139,11 @@ export default function AdminAttendancePage() {
   const [traineeToDelete, setTraineeToDelete] = useState<Trainee | null>(null)
   const [deleteTraineeDialogOpen, setDeleteTraineeDialogOpen] = useState(false)
   
+  // Security monitoring states
+  const [suspiciousActivities, setSuspiciousActivities] = useState<SuspiciousActivity[]>([])
+  const [loadingSuspicious, setLoadingSuspicious] = useState(false)
+  const [securityDialogOpen, setSecurityDialogOpen] = useState(false)
+  
   // Filter by selected trainee
   const [selectedTraineeName, setSelectedTraineeName] = useState<string | null>(null)
 
@@ -118,7 +155,8 @@ export default function AdminAttendancePage() {
     }
 
     fetchRecords(token)
-    fetchTrainees() // Load trainees on mount
+    fetchTrainees()
+    fetchSuspiciousActivity() // NEW: Load suspicious activity
   }, [router])
 
   const fetchRecords = async (token: string) => {
@@ -170,6 +208,26 @@ export default function AdminAttendancePage() {
       })
     } finally {
       setLoadingTrainees(false)
+    }
+  }
+
+  // NEW: Fetch suspicious activity
+  const fetchSuspiciousActivity = async () => {
+    setLoadingSuspicious(true)
+    try {
+      const response = await fetch("/api/admin/analytics/suspicious")
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch suspicious activity")
+      }
+
+      const data = await response.json()
+      setSuspiciousActivities(data.records || [])
+    } catch (error) {
+      console.error("Error fetching suspicious activity:", error)
+      // Silently fail - this is optional monitoring
+    } finally {
+      setLoadingSuspicious(false)
     }
   }
 
@@ -296,7 +354,6 @@ export default function AdminAttendancePage() {
     }
   }
 
-  // Helper function to calculate minutes from time strings
   const calculateMinutes = (timeIn: string, timeOut: string | null) => {
     if (!timeOut) return 0;
     
@@ -307,7 +364,6 @@ export default function AdminAttendancePage() {
     return totalMins > 0 ? totalMins : 0;
   };
 
-  // Helper function to get actual minutes for a record
   const getActualMinutes = (record: AttendanceRecord): number => {
     if (record.total_minutes) {
       return record.total_minutes;
@@ -315,11 +371,9 @@ export default function AdminAttendancePage() {
     return calculateMinutes(record.time_in, record.time_out);
   };
 
-  // Format minutes to hours and minutes display
   const formatHoursMinutes = (minutes: number | null, timeIn?: string | null, timeOut?: string | null) => {
     let totalMinutes = minutes;
     
-    // If minutes is null but we have time_in and time_out, calculate it
     if (!totalMinutes && timeIn && timeOut) {
       totalMinutes = calculateMinutes(timeIn, timeOut);
     }
@@ -348,7 +402,6 @@ export default function AdminAttendancePage() {
       })
     : []
 
-  // Get stats for selected trainee or all
   const statsRecords = selectedTraineeName 
     ? records.filter(r => r.full_name === selectedTraineeName)
     : records
@@ -360,7 +413,18 @@ export default function AdminAttendancePage() {
     totalHours: Array.isArray(statsRecords)
       ? Math.floor(statsRecords.reduce((sum, r) => sum + getActualMinutes(r), 0) / 60)
       : 0,
+    suspicious: suspiciousActivities.length,
   }
+
+  // Get severity color
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   if (loading) {
     return (
@@ -391,6 +455,83 @@ export default function AdminAttendancePage() {
               <p className="text-blue-100">Manage and view all trainee attendance logs</p>
             </div>
             <div className="flex gap-2">
+              {/* NEW: Security Monitoring Button */}
+              <Dialog open={securityDialogOpen} onOpenChange={(open) => {
+                setSecurityDialogOpen(open)
+                if (open) fetchSuspiciousActivity()
+              }}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="secondary" 
+                    className="bg-white hover:bg-gray-100 text-blue-900 relative"
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Security Monitor
+                    {stats.suspicious > 0 && (
+                      <Badge className="ml-2 bg-red-500 text-white">
+                        {stats.suspicious}
+                      </Badge>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl flex items-center gap-2">
+                      <AlertTriangle className="h-6 w-6 text-orange-600" />
+                      Security Monitoring
+                    </DialogTitle>
+                    <DialogDescription>
+                      Suspicious attendance patterns and potential policy violations
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {loadingSuspicious ? (
+                    <div className="text-center py-12">
+                      <Loader className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
+                      <p className="text-sm text-muted-foreground">Analyzing activity...</p>
+                    </div>
+                  ) : suspiciousActivities.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ShieldCheck className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                      <p className="text-lg font-semibold text-green-700">All Clear! ✅</p>
+                      <p className="text-sm text-muted-foreground">No suspicious activity detected</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {suspiciousActivities.map((activity, index) => (
+                        <Alert key={index} className={`border-2 ${getSeverityColor(activity.severity)}`}>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle className="font-semibold">
+                            {activity.type}
+                            <Badge className="ml-2" variant="outline">
+                              {activity.severity.toUpperCase()}
+                            </Badge>
+                          </AlertTitle>
+                          <AlertDescription className="mt-2">
+                            <p className="font-medium mb-2">{activity.reason}</p>
+                            {activity.trainee && (
+                              <p className="text-sm">Trainee: <strong>{activity.trainee}</strong></p>
+                            )}
+                            {activity.ip_count && (
+                              <p className="text-sm">Different IPs used: <strong>{activity.ip_count}</strong></p>
+                            )}
+                            {activity.date && (
+                              <p className="text-sm">Date: <strong>{formatDate(activity.date)}</strong></p>
+                            )}
+                            {activity.record && (
+                              <div className="mt-2 p-2 bg-white/50 rounded text-xs">
+                                <p>Time In: {activity.record.time_in} | Time Out: {activity.record.time_out || 'N/A'}</p>
+                                <p>Total: {formatHoursMinutes(activity.record.total_minutes)}</p>
+                              </div>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      ))}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
               {/* Manage Trainees Button */}
               <Dialog open={traineesDialogOpen} onOpenChange={(open) => {
                 setTraineesDialogOpen(open)
@@ -414,7 +555,6 @@ export default function AdminAttendancePage() {
                   </DialogHeader>
 
                   <div className="space-y-4">
-                    {/* Stats */}
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                       <div className="flex items-center justify-between">
                         <div>
@@ -474,7 +614,6 @@ export default function AdminAttendancePage() {
                       </div>
                     </div>
 
-                    {/* Trainees List */}
                     {loadingTrainees ? (
                       <div className="text-center py-8">
                         <Loader className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
@@ -586,9 +725,8 @@ export default function AdminAttendancePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Main Content with Sidebar */}
         <div className="flex gap-6">
-          {/* LEFT SIDEBAR - Trainee Filter */}
+          {/* LEFT SIDEBAR */}
           <Card className="w-80 h-fit border-2 border-slate-200 dark:border-slate-800 shadow-lg sticky top-4">
             <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -610,7 +748,6 @@ export default function AdminAttendancePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {/* Show All Button */}
                   <Button
                     variant={selectedTraineeName === null ? "default" : "outline"}
                     className={`w-full justify-between ${
@@ -632,7 +769,6 @@ export default function AdminAttendancePage() {
                     </Badge>
                   </Button>
 
-                  {/* Individual Trainees */}
                   {trainees.map((trainee) => {
                     const traineeRecordCount = records.filter(
                       (r) => r.full_name === trainee.full_name
@@ -676,9 +812,8 @@ export default function AdminAttendancePage() {
             </CardContent>
           </Card>
 
-          {/* RIGHT CONTENT - Records Table */}
+          {/* RIGHT CONTENT */}
           <div className="flex-1 space-y-6">
-            {/* Active Filter Badge */}
             {selectedTraineeName && (
               <Alert className="border-2 border-blue-200 bg-blue-50/50">
                 <div className="flex items-center justify-between">
@@ -704,7 +839,7 @@ export default function AdminAttendancePage() {
               </Alert>
             )}
 
-            {/* Stats Cards */}
+            {/* Stats Cards - NOW WITH SUSPICIOUS ACTIVITY COUNT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card className="border-2 border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
                 <CardContent className="p-4 sm:p-6">
@@ -748,15 +883,18 @@ export default function AdminAttendancePage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+              {/* NEW: Suspicious Activity Card */}
+              <Card className="border-2 border-orange-200 dark:border-orange-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur cursor-pointer"
+                onClick={() => setSecurityDialogOpen(true)}
+              >
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Hours</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats.totalHours}h</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Suspicious</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-orange-600">{stats.suspicious}</p>
                     </div>
-                    <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
-                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
+                      <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -825,6 +963,7 @@ export default function AdminAttendancePage() {
                         <TableHead className="font-semibold">Time In</TableHead>
                         <TableHead className="font-semibold">Time Out</TableHead>
                         <TableHead className="font-semibold hidden lg:table-cell">Total Hours</TableHead>
+                        <TableHead className="font-semibold hidden xl:table-cell">IP Address</TableHead> {/* NEW */}
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
@@ -832,7 +971,7 @@ export default function AdminAttendancePage() {
                     <TableBody>
                       {paginatedRecords.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12">
+                          <TableCell colSpan={8} className="text-center py-12">
                             <div className="flex flex-col items-center gap-2">
                               <Clock className="h-12 w-12 text-muted-foreground/50" />
                               <p className="text-muted-foreground font-medium">No attendance records found</p>
@@ -841,175 +980,210 @@ export default function AdminAttendancePage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        paginatedRecords.map((record) => (
-                          <TableRow
-                            key={record.id}
-                            className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                          >
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                                  {record.full_name?.charAt(0)?.toUpperCase() || "?"}
+                        paginatedRecords.map((record) => {
+                          const deviceInfo = getDeviceType(record.user_agent);
+                          const DeviceIcon = deviceInfo.icon;
+                          
+                          return (
+                            <TableRow
+                              key={record.id}
+                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                                    {record.full_name?.charAt(0)?.toUpperCase() || "?"}
+                                  </div>
+                                  <span className="truncate">{record.full_name}</span>
                                 </div>
-                                <span className="truncate">{record.full_name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                {formatDate(record.date)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1 text-sm">
-                                <LogIn className="h-4 w-4 text-green-600" />
-                                {record.time_in}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {record.time_out ? (
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                                  {formatDate(record.date)}
+                                </div>
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex items-center gap-1 text-sm">
-                                  <LogOut className="h-4 w-4 text-blue-600" />
-                                  {record.time_out}
+                                  <LogIn className="h-4 w-4 text-green-600" />
+                                  {record.time_in}
                                 </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <Badge variant="outline" className="font-mono">
-                                {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {record.time_out ? (
-                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-100">
-                                  Completed
+                              </TableCell>
+                              <TableCell>
+                                {record.time_out ? (
+                                  <div className="flex items-center gap-1 text-sm">
+                                    <LogOut className="h-4 w-4 text-blue-600" />
+                                    {record.time_out}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <Badge variant="outline" className="font-mono">
+                                  {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
                                 </Badge>
-                              ) : (
-                                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100">
-                                  Pending
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setSelectedRecord(record)}
-                                      className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      <span className="hidden sm:inline ml-1">View</span>
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl border-2">
-                                    <DialogHeader>
-                                      <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-                                        <User className="h-6 w-6 text-blue-600" />
-                                        Attendance Details
-                                      </DialogTitle>
-                                      <DialogDescription>
-                                        Record created: {formatDateTime(selectedRecord?.created_at || "")}
-                                      </DialogDescription>
-                                    </DialogHeader>
-
-                                    {selectedRecord && (
-                                      <div className="space-y-4 text-sm">
-                                        <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                                          <div>
-                                            <p className="font-semibold text-slate-700 mb-1">Full Name</p>
-                                            <p>{selectedRecord.full_name}</p>
-                                          </div>
-                                          <div>
-                                            <p className="font-semibold text-slate-700 mb-1">Date</p>
-                                            <p>{formatDate(selectedRecord.date)}</p>
-                                          </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                                          <div>
-                                            <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                              <LogIn className="h-4 w-4 text-green-600" />
-                                              Time In
-                                            </p>
-                                            <p className="text-lg font-mono">{selectedRecord.time_in}</p>
-                                          </div>
-                                          <div>
-                                            <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                              <LogOut className="h-4 w-4 text-blue-600" />
-                                              Time Out
-                                            </p>
-                                            <p className="text-lg font-mono">
-                                              {selectedRecord.time_out || "Not yet recorded"}
-                                            </p>
-                                          </div>
-                                        </div>
-
-                                        <div className="border-b pb-4">
-                                          <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                            <Clock className="h-4 w-4 text-purple-600" />
-                                            Total Hours
-                                          </p>
-                                          <p className="text-2xl font-bold text-purple-600">
-                                            {formatHoursMinutes(selectedRecord.total_minutes, selectedRecord.time_in, selectedRecord.time_out)}
-                                          </p>
-                                        </div>
-
-                                        <div>
-                                          <p className="font-semibold text-slate-700 mb-1">Status</p>
-                                          {selectedRecord.time_out ? (
-                                            <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                                          ) : (
-                                            <Badge className="bg-yellow-100 text-yellow-800">Pending Time Out</Badge>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </DialogContent>
-                                </Dialog>
-
-                                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setRecordToDelete(record)}
-                                      className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Delete Attendance Record</DialogTitle>
-                                      <DialogDescription>
-                                        Are you sure you want to delete the attendance record for{" "}
-                                        {recordToDelete?.full_name} on {formatDate(recordToDelete?.date || "")}? This action cannot be undone.
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="flex gap-3 mt-6">
+                              </TableCell>
+                              {/* NEW: IP Address Column */}
+                              <TableCell className="hidden xl:table-cell">
+                                <div className="flex items-center gap-2">
+                                  <Wifi className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs font-mono text-muted-foreground">
+                                    {record.ip_address || 'N/A'}
+                                  </span>
+                                  <DeviceIcon className="h-3 w-3 text-muted-foreground" />
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {record.time_out ? (
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-100">
+                                    Completed
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100">
+                                    Pending
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Dialog>
+                                    <DialogTrigger asChild>
                                       <Button
                                         variant="outline"
-                                        onClick={() => setDeleteDialogOpen(false)}
-                                        disabled={deleting}
+                                        size="sm"
+                                        onClick={() => setSelectedRecord(record)}
+                                        className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
                                       >
-                                        Cancel
+                                        <Eye className="h-4 w-4" />
+                                        <span className="hidden sm:inline ml-1">View</span>
                                       </Button>
-                                      <Button variant="destructive" onClick={handleDeleteRecord} disabled={deleting}>
-                                        {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
-                                        Delete
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-2xl border-2">
+                                      <DialogHeader>
+                                        <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+                                          <User className="h-6 w-6 text-blue-600" />
+                                          Attendance Details
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Record created: {formatDateTime(selectedRecord?.created_at || "")}
+                                        </DialogDescription>
+                                      </DialogHeader>
+
+                                      {selectedRecord && (
+                                        <div className="space-y-4 text-sm">
+                                          <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1">Full Name</p>
+                                              <p>{selectedRecord.full_name}</p>
+                                            </div>
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1">Date</p>
+                                              <p>{formatDate(selectedRecord.date)}</p>
+                                            </div>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                                <LogIn className="h-4 w-4 text-green-600" />
+                                                Time In
+                                              </p>
+                                              <p className="text-lg font-mono">{selectedRecord.time_in}</p>
+                                            </div>
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                                <LogOut className="h-4 w-4 text-blue-600" />
+                                                Time Out
+                                              </p>
+                                              <p className="text-lg font-mono">
+                                                {selectedRecord.time_out || "Not yet recorded"}
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          <div className="border-b pb-4">
+                                            <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                              <Clock className="h-4 w-4 text-purple-600" />
+                                              Total Hours
+                                            </p>
+                                            <p className="text-2xl font-bold text-purple-600">
+                                              {formatHoursMinutes(selectedRecord.total_minutes, selectedRecord.time_in, selectedRecord.time_out)}
+                                            </p>
+                                          </div>
+
+                                          {/* NEW: Security Info Section */}
+                                          <div className="grid grid-cols-2 gap-4 border-b pb-4 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                                <Wifi className="h-4 w-4 text-blue-600" />
+                                                IP Address
+                                              </p>
+                                              <p className="font-mono text-sm">{selectedRecord.ip_address || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                              <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                                {React.createElement(getDeviceType(selectedRecord.user_agent).icon, { 
+                                                  className: "h-4 w-4 text-blue-600" 
+                                                })}
+                                                Device
+                                              </p>
+                                              <p className="text-sm">{getDeviceType(selectedRecord.user_agent).label}</p>
+                                            </div>
+                                          </div>
+
+                                          <div>
+                                            <p className="font-semibold text-slate-700 mb-1">Status</p>
+                                            {selectedRecord.time_out ? (
+                                              <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                                            ) : (
+                                              <Badge className="bg-yellow-100 text-yellow-800">Pending Time Out</Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </DialogContent>
+                                  </Dialog>
+
+                                  <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setRecordToDelete(record)}
+                                        className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
                                       </Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>Delete Attendance Record</DialogTitle>
+                                        <DialogDescription>
+                                          Are you sure you want to delete the attendance record for{" "}
+                                          {recordToDelete?.full_name} on {formatDate(recordToDelete?.date || "")}? This action cannot be undone.
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <div className="flex gap-3 mt-6">
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => setDeleteDialogOpen(false)}
+                                          disabled={deleting}
+                                        >
+                                          Cancel
+                                        </Button>
+                                        <Button variant="destructive" onClick={handleDeleteRecord} disabled={deleting}>
+                                          {deleting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
+                                          Delete
+                                        </Button>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })
                       )}
                     </TableBody>
                   </Table>
@@ -1017,7 +1191,6 @@ export default function AdminAttendancePage() {
               </CardContent>
             </Card>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-6">
                 <Button
