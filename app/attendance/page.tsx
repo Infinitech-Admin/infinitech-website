@@ -264,8 +264,6 @@ export default function AttendanceForm() {
   const { toast } = useToast();
   const [phase, setPhase]                   = useState<Phase>("nameEntry");
   const [name, setName]                     = useState<string>("");
-  const [timeIn, setTimeIn]                 = useState<string>("");
-  const [timeOut, setTimeOut]               = useState<string>("");
   const [existingTimeIn, setExistingTimeIn] = useState<string>("");
   const [loading, setLoading]               = useState<boolean>(false);
   const [error, setError]                   = useState<string>("");
@@ -427,39 +425,35 @@ export default function AttendanceForm() {
 
   /* ── time in ── */
   const handleTimeInSubmit = async (): Promise<void> => {
-    if (!timeIn) { 
-      setError("Please pick your Time In."); 
-      toast({
-        title: "Time Required",
-        description: "Please select your Time In before submitting.",
-        variant: "destructive",
-      });
-      return; 
-    }
+    // Get current time automatically
+    const now = nowDate();
+    const currentTimeStr = formatTime(now);
     
-    const [hours, minutes] = timeIn.split(':').map(Number);
+    const [hours, minutes] = currentTimeStr.split(':').map(Number);
     const timeInMinutes = hours * 60 + minutes;
     const minTimeInMinutes = 7 * 60 + 50;
     
     if (timeInMinutes < minTimeInMinutes) {
       setError("Time In cannot be before 7:50 AM.");
       toast({
-        title: "Invalid Time",
-        description: "Time In must be 7:50 AM or later.",
+        title: "Too Early",
+        description: "Time In must be 7:50 AM or later. Please wait.",
         variant: "destructive",
       });
       return;
     }
     
-    setLoading(true); setError("");
+    setLoading(true); 
+    setError("");
+    
     try {
-      const res = await postTimeIn(name.trim(), timeIn);
+      const res = await postTimeIn(name.trim(), currentTimeStr);
       if (res.success) { 
         setCompletedPhase("timeIn"); 
         setPhase("done"); 
         toast({
           title: "Time In Recorded! 🎉",
-          description: `Successfully logged in at ${timeIn}. Have a productive day!`,
+          description: `Successfully logged in at ${currentTimeStr}. Have a productive day!`,
         });
       }
       else { 
@@ -483,16 +477,11 @@ export default function AttendanceForm() {
 
   /* ── time out ── */
   const handleTimeOutSubmit = async (): Promise<void> => {
-    if (!timeOut) { 
-      setError("Please pick your Time Out."); 
-      toast({
-        title: "Time Required",
-        description: "Please select your Time Out before submitting.",
-        variant: "destructive",
-      });
-      return; 
-    }
-    if (timeOut <= existingTimeIn) { 
+    // Get current time automatically
+    const now = nowDate();
+    const currentTimeStr = formatTime(now);
+    
+    if (currentTimeStr <= existingTimeIn) { 
       setError("Time Out must be after Time In."); 
       toast({
         title: "Invalid Time",
@@ -501,13 +490,16 @@ export default function AttendanceForm() {
       });
       return; 
     }
-    setLoading(true); setError("");
+    
+    setLoading(true); 
+    setError("");
+    
     try {
-      const res = await putTimeOut(name.trim(), timeOut);
+      const res = await putTimeOut(name.trim(), currentTimeStr);
       if (res.success) { 
         setCompletedPhase("timeOut"); 
         setPhase("done"); 
-        const totalHours = computeHours(existingTimeIn, timeOut);
+        const totalHours = computeHours(existingTimeIn, currentTimeStr);
         toast({
           title: "Time Out Recorded! 👋",
           description: `You worked ${totalHours || "—"} today. Great job!`,
@@ -537,8 +529,10 @@ export default function AttendanceForm() {
 
   /* ── reset ── */
   const reset = (): void => {
-    setPhase("nameEntry"); setName(""); setTimeIn("");
-    setTimeOut(""); setExistingTimeIn(""); setError("");
+    setPhase("nameEntry"); 
+    setName(""); 
+    setExistingTimeIn(""); 
+    setError("");
     setTotalHoursData(null);
   };
 
@@ -567,6 +561,15 @@ export default function AttendanceForm() {
     padding:"0 16px", fontSize:15, fontWeight:600,
     background:"#f1f5f9", border:"2px dashed #cbd5e1", color:"#94a3b8",
     display:"flex", alignItems:"center", gap:8, cursor:"not-allowed",
+  };
+
+  const autoTimeDisplay: React.CSSProperties = {
+    width:"100%", boxSizing:"border-box" as const, minHeight:50, borderRadius:14,
+    padding:"12px 16px", fontSize:15, fontWeight:700,
+    background:"linear-gradient(135deg,#10b981,#059669)", 
+    border:"2px solid #34d399", 
+    color:"#fff",
+    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
   };
 
   const lbl: React.CSSProperties = {
@@ -726,7 +729,7 @@ export default function AttendanceForm() {
             </h2>
             <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 20px" }}>
               {isTimeInOpen 
-                ? <>Pick your Time In for today, <strong style={{ color:"#2b4c9f" }}>{name}</strong>.</>
+                ? <>Click below to record your Time In, <strong style={{ color:"#2b4c9f" }}>{name}</strong>.</>
                 : <>Time In will be available at <strong>7:50 AM</strong>. Come back later.</>
               }
             </p>
@@ -735,19 +738,15 @@ export default function AttendanceForm() {
             <div style={readOnly}>{name}</div>
 
             <div style={{ ...lbl, marginTop:18 }}>
-              <LogIn size={13} /> Time In
+              <LogIn size={13} /> Time In (Auto-detected)
               {!isTimeInOpen && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 7:50 AM</span>}
             </div>
             
             {isTimeInOpen ? (
-              <input
-                type="time" value={timeIn}
-                min="07:50"
-                onChange={(e) => { setTimeIn(e.target.value); setError(""); }}
-                style={inp(!!error && !timeIn, "#2b4c9f")}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#2b4c9f")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !timeIn) ? "#ef4444" : "#e2e8f0")}
-              />
+              <div style={autoTimeDisplay}>
+                <Clock size={18} className="animate-pulse" />
+                Current Time: {currentHHMM}
+              </div>
             ) : (
               <div style={disabled}><Lock size={16} /> Locked until 7:50 AM</div>
             )}
@@ -755,7 +754,7 @@ export default function AttendanceForm() {
             {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
 
             <button onClick={handleTimeInSubmit} disabled={loading || !isTimeInOpen} style={{ ...btn(loading || !isTimeInOpen), marginTop:22 }}>
-              {loading ? <><Loader2 size={20} className="animate-spin" /> Saving…</> : <><CheckCircle2 size={18} /> Submit Time In</>}
+              {loading ? <><Loader2 size={20} className="animate-spin" /> Recording…</> : <><CheckCircle2 size={18} /> Record Time In Now</>}
             </button>
             
             {/* Download Button */}
@@ -788,7 +787,7 @@ export default function AttendanceForm() {
             </h2>
             <p className="text-center" style={{ color:"#64748b", fontSize:14, margin:"0 0 20px" }}>
               {isPast5PM
-                ? <><strong style={{ color:"#2b4c9f" }}>{name}</strong> — pick your Time Out below.</>
+                ? <><strong style={{ color:"#2b4c9f" }}>{name}</strong> — click below to record your Time Out.</>
                 : <>Time Out will be available at <strong>17:00</strong>. Come back later.</>
               }
             </p>
@@ -803,29 +802,26 @@ export default function AttendanceForm() {
             <div style={readOnly}>{existingTimeIn}</div>
 
             <div style={{ ...lbl, marginTop:18 }}>
-              <LogOut size={13} /> Time Out
+              <LogOut size={13} /> Time Out (Auto-detected)
               {!isPast5PM && <span style={{ color:"#f59e0b", fontWeight:700, letterSpacing:0, textTransform:"none", fontSize:11 }}>🔒 opens at 17:00</span>}
             </div>
 
             {isPast5PM ? (
-              <input
-                type="time" value={timeOut}
-                onChange={(e) => { setTimeOut(e.target.value); setError(""); }}
-                style={inp(!!error && !timeOut, "#f59e0b")}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#f59e0b")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = (!!error && !timeOut) ? "#ef4444" : "#e2e8f0")}
-              />
+              <div style={autoTimeDisplay}>
+                <Clock size={18} className="animate-pulse" />
+                Current Time: {currentHHMM}
+              </div>
             ) : (
               <div style={disabled}><Lock size={16} /> Locked until 17:00</div>
             )}
 
-            {timeOut && existingTimeIn && (
+            {isPast5PM && existingTimeIn && (
               <div className="mt-3 flex items-center justify-center gap-2 rounded-lg px-4 py-2"
                 style={{ background:"linear-gradient(135deg,#2b4c9f12,#fbbf2412)", border:"1px solid #2b4c9f22" }}
               >
                 <Clock size={15} color="#2b4c9f" />
                 <span style={{ fontWeight:700, color:"#2b4c9f", fontSize:14 }}>
-                  Total: {computeHours(existingTimeIn, timeOut) || "—"}
+                  Total: {computeHours(existingTimeIn, currentHHMM) || "—"}
                 </span>
               </div>
             )}
@@ -833,7 +829,7 @@ export default function AttendanceForm() {
             {error && <p style={{ color:"#ef4444", fontSize:13, marginTop:6 }}>⚠ {error}</p>}
 
             <button onClick={handleTimeOutSubmit} disabled={loading || !isPast5PM} style={{ ...btn(loading || !isPast5PM), marginTop:22 }}>
-              {loading ? <><Loader2 size={20} className="animate-spin" /> Saving…</> : <><CheckCircle2 size={18} /> Submit Time Out</>}
+              {loading ? <><Loader2 size={20} className="animate-spin" /> Recording…</> : <><CheckCircle2 size={18} /> Record Time Out Now</>}
             </button>
             
             {/* Download Button */}
@@ -912,13 +908,12 @@ export default function AttendanceForm() {
 
         {/* footer */}
         <p className="text-center" style={{ color:"#94a3b8", fontSize:12, maxWidth:520, margin:"20px auto 0" }}>
-          Time In: 7:50 AM onwards • Time Out: After 5:00 PM • Total Hours computed automatically
+          Time In: 7:50 AM onwards • Time Out: After 5:00 PM • Time automatically recorded when you click the button
         </p>
       </div>
 
       <style>{`
         @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-        input[type="time"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:0.6}
         input::placeholder{color:#94a3b8}
       `}</style>
     </div>
