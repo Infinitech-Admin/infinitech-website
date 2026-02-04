@@ -125,8 +125,25 @@ async function putTimeOut(name: string, timeOut: string): Promise<{ success: boo
   return res.json();
 }
 
+/* ─── Load logo as base64 ── */
+async function getLogoBase64(): Promise<string | null> {
+  try {
+    const response = await fetch('/images/logo.png');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Failed to load logo:', error);
+    return null;
+  }
+}
+
 /* ─── PDF Generation Helper ── */
-function generatePDF(records: AttendanceRecord[], name: string, totalHours: string, completedDays: number) {
+async function generatePDF(records: AttendanceRecord[], name: string, totalHours: string, completedDays: number) {
   const doc = new jsPDF();
   
   // Colors
@@ -134,22 +151,86 @@ function generatePDF(records: AttendanceRecord[], name: string, totalHours: stri
   const accentGold = [251, 191, 36];
   const textGray = [100, 116, 139];
   const lightGray = [241, 245, 249];
+  const lightBlue = [96, 165, 250]; // Light blue for watermark
   
-  // Header Section
+  // Load logo
+  const logoBase64 = await getLogoBase64();
+  
+  // Function to add watermark on each page
+  const addWatermark = () => {
+    // Use a very light color instead of opacity
+    doc.setTextColor(220, 235, 252); // Very light blue
+    doc.setFontSize(60);
+    doc.setFont("helvetica", "bold");
+    
+    // Rotate and center the watermark
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    doc.text("INFINITECH", pageWidth / 2, pageHeight / 2, {
+      align: "center",
+      angle: 45,
+    });
+  };
+  
+  // Function to add footer on each page
+  const addFooter = (pageNumber: number, totalPages: number) => {
+    const footerY = 285;
+    
+    // Company info
+    doc.setFontSize(7);
+    doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("INFINITECH Advertising Corporation", 105, footerY, { align: "center" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.text("311 Campos Rueda Building, Urban Avenue, Makati City", 105, footerY + 3, { align: "center" });
+    doc.text("Tel no.: (02)7001-6157 | Mobile no.: (+63) 919-587-4915 | Email: infinitechcorp.ph@gmail.com", 105, footerY + 6, { align: "center" });
+    
+    // Page number
+    doc.setFontSize(8);
+    doc.text(`Page ${pageNumber} of ${totalPages}`, 105, footerY + 11, { align: "center" });
+  };
+  
+  // Add watermark to first page
+  addWatermark();
+  
+  // Header Section with Logo
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(0, 0, 210, 40, 'F');
+  doc.rect(0, 0, 210, 50, 'F');
+  
+  // Add logo if loaded
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', 15, 10, 30, 30);
+    } catch (e) {
+      console.error('Failed to add logo to PDF:', e);
+      // Fallback text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("INFINITECH", 20, 28);
+    }
+  } else {
+    // Fallback if logo doesn't load
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("INFINITECH", 20, 28);
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("OJT Attendance Report", 105, 20, { align: "center" });
+  doc.text("OJT Attendance Report", 105, 25, { align: "center" });
   
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(name, 105, 30, { align: "center" });
+  doc.text(name, 105, 35, { align: "center" });
   
   // Summary Section
-  let yPos = 55;
+  let yPos = 60;
   doc.setTextColor(textGray[0], textGray[1], textGray[2]);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -193,10 +274,20 @@ function generatePDF(records: AttendanceRecord[], name: string, totalHours: stri
   doc.setTextColor(textGray[0], textGray[1], textGray[2]);
   
   let isAlternate = false;
+  let currentPage = 1;
+  
   records.forEach((record, index) => {
     // Check if we need a new page
-    if (yPos > 270) {
+    if (yPos > 265) {
+      // Add footer to current page before adding new page
+      addFooter(currentPage, Math.ceil(records.length / 20) + 1);
+      
       doc.addPage();
+      currentPage++;
+      
+      // Add watermark to new page
+      addWatermark();
+      
       yPos = 20;
       
       // Redraw header on new page
@@ -214,6 +305,7 @@ function generatePDF(records: AttendanceRecord[], name: string, totalHours: stri
       yPos += 10;
       doc.setFont("helvetica", "normal");
       doc.setTextColor(textGray[0], textGray[1], textGray[2]);
+      isAlternate = false;
     }
     
     // Alternating row colors
@@ -236,23 +328,11 @@ function generatePDF(records: AttendanceRecord[], name: string, totalHours: stri
     isAlternate = !isAlternate;
   });
   
-  // Footer
+  // Add footer to all pages
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(textGray[0], textGray[1], textGray[2]);
-    doc.text(
-      `Page ${i} of ${pageCount}`,
-      105,
-      290,
-      { align: "center" }
-    );
-    doc.text(
-      "OJT Attendance System",
-      20,
-      290
-    );
+    addFooter(i, pageCount);
   }
   
   // Save the PDF
@@ -334,7 +414,7 @@ export default function AttendanceForm() {
       }
       
       const totalData = totalHoursData || await fetchTotalHours(name.trim());
-      generatePDF(
+      await generatePDF(
         records, 
         name.trim(), 
         totalData?.total_hours || "0h 00m",
