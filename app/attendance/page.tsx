@@ -457,6 +457,31 @@ export default function AttendanceForm() {
         });
       }
       else { 
+        // When there's an error, always check if they already have a record
+        // This catches all "already timed in" scenarios regardless of message format
+        const record = await fetchRecord(name.trim());
+        if (record && !record.time_out) {
+          // They already have a Time In record, redirect to Time Out phase
+          setExistingTimeIn(record.time_in);
+          setPhase("timeOut");
+          setError("");
+          toast({
+            title: "Already Timed In",
+            description: `You already timed in at ${record.time_in}. You can now Time Out.`,
+          });
+          return;
+        } else if (record && record.time_out) {
+          // They already completed today
+          setError("You have already timed out for today.");
+          toast({
+            title: "Already Completed",
+            description: "You have already timed out for today. See you tomorrow!",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Some other error
         setError(res.message || "Failed to save."); 
         toast({
           title: "Failed to Save",
