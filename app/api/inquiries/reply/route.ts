@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       await transporter.sendMail({
         from: `"Infinitech Advertising Corporation" <${process.env.SMTP_USERNAME}>`,
         to: email,
-        subject: 'Re: Your Inquiry - Infinitech Advertising Corporation',
+        subject: 'Re:Inquiry Response - Infinitech Advertising Corporation',
         html: htmlContent,
         attachments: [
           {
