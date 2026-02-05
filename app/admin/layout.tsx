@@ -13,6 +13,7 @@ import {
   Video,
   IdCard,
   Clock,
+  FileCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -23,8 +24,10 @@ const navItems = [
   { path: "/admin/survey", label: "Survey", icon: ClipboardList },
   { path: "/admin/video-survey", label: "Video Survey", icon: Video },
   { path: "/admin/demo-requirements", label: "Demo Website Requirements", icon: IdCard },
+  { path: "/admin/client-assessment", label: "Client Assessment", icon: FileCheck },
   { path: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
   { path: "/admin/attendance", label: "OJT Attendance", icon: Clock },
+  
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
