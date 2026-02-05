@@ -380,6 +380,11 @@ const handleNestedInputChange = (section: string, field: string, value: string) 
     }
   }
 
+  const handleCloseSuccess = () => {
+    setSubmitted(false)
+    onClose?.()
+  }
+
   const steps = [
     { number: 1, title: "Business Info", icon: Building2 },
     { number: 2, title: "Website & SEO", icon: Globe2 },
@@ -389,8 +394,20 @@ const handleNestedInputChange = (section: string, field: string, value: string) 
 
   if (submitted) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-[#2B4C9F]/95 via-[#1E3A8A]/95 to-[#2B4C9F]/95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <Card className="w-full max-w-lg bg-white shadow-2xl border-0 rounded-3xl overflow-hidden">
+      <div 
+        className="fixed inset-0 bg-gradient-to-br from-[#2B4C9F]/95 via-[#1E3A8A]/95 to-[#2B4C9F]/95 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        onClick={handleCloseSuccess}
+      >
+        <Card 
+          className="w-full max-w-lg bg-white shadow-2xl border-0 rounded-3xl overflow-hidden relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button 
+            onClick={handleCloseSuccess}
+            className="absolute top-4 right-4 hover:bg-slate-100 rounded-full p-2 transition-all z-10"
+          >
+            <X className="h-5 w-5 text-slate-600" />
+          </button>
           <CardContent className="pt-16 pb-16 text-center px-8">
             <div className="mb-8 flex justify-center">
               <div className="relative">
@@ -407,6 +424,12 @@ const handleNestedInputChange = (section: string, field: string, value: string) 
               <div className="w-2 h-2 bg-[#FBBF24] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
               <div className="w-2 h-2 bg-[#FBBF24] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
+            <Button 
+              onClick={handleCloseSuccess}
+              className="mt-8 bg-gradient-to-r from-[#2B4C9F] to-[#3B5FAF] hover:opacity-90 text-white px-8"
+            >
+              Close
+            </Button>
           </CardContent>
         </Card>
       </div>
