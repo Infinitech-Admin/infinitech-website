@@ -125,6 +125,7 @@ export default function AdminAttendancePage() {
   const [message, setMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
+  const [filterDate, setFilterDate] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -156,7 +157,7 @@ export default function AdminAttendancePage() {
 
     fetchRecords(token)
     fetchTrainees()
-    fetchSuspiciousActivity() // NEW: Load suspicious activity
+    fetchSuspiciousActivity()
   }, [router])
 
   const fetchRecords = async (token: string) => {
@@ -211,7 +212,6 @@ export default function AdminAttendancePage() {
     }
   }
 
-  // NEW: Fetch suspicious activity
   const fetchSuspiciousActivity = async () => {
     setLoadingSuspicious(true)
     try {
@@ -225,7 +225,6 @@ export default function AdminAttendancePage() {
       setSuspiciousActivities(data.records || [])
     } catch (error) {
       console.error("Error fetching suspicious activity:", error)
-      // Silently fail - this is optional monitoring
     } finally {
       setLoadingSuspicious(false)
     }
@@ -385,6 +384,11 @@ export default function AdminAttendancePage() {
     return `${hours}h ${mins}m`;
   };
 
+  // Get unique dates from records
+  const uniqueDates = Array.from(new Set(records.map(r => r.date))).sort((a, b) => 
+    new Date(b).getTime() - new Date(a).getTime()
+  );
+
   const filteredRecords = Array.isArray(records)
     ? records.filter((record) => {
         const matchesSearch =
@@ -398,7 +402,9 @@ export default function AdminAttendancePage() {
 
         const matchesTrainee = selectedTraineeName === null || record.full_name === selectedTraineeName
 
-        return matchesSearch && matchesFilter && matchesTrainee
+        const matchesDate = filterDate === "all" || record.date === filterDate
+
+        return matchesSearch && matchesFilter && matchesTrainee && matchesDate
       })
     : []
 
@@ -407,7 +413,8 @@ export default function AdminAttendancePage() {
     : records
 
   const stats = {
-    total: Array.isArray(statsRecords) ? statsRecords.length : 0,
+    // Show total registered trainees (not attendance records)
+    total: selectedTraineeName ? 1 : trainees.length,
     completed: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out !== null).length : 0,
     pending: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out === null).length : 0,
     totalHours: Array.isArray(statsRecords)
@@ -455,7 +462,6 @@ export default function AdminAttendancePage() {
               <p className="text-blue-100">Manage and view all trainee attendance logs</p>
             </div>
             <div className="flex gap-2">
-              {/* NEW: Security Monitoring Button */}
               <Dialog open={securityDialogOpen} onOpenChange={(open) => {
                 setSecurityDialogOpen(open)
                 if (open) fetchSuspiciousActivity()
@@ -532,7 +538,6 @@ export default function AdminAttendancePage() {
                 </DialogContent>
               </Dialog>
 
-              {/* Manage Trainees Button */}
               <Dialog open={traineesDialogOpen} onOpenChange={(open) => {
                 setTraineesDialogOpen(open)
                 if (open) fetchTrainees()
@@ -765,7 +770,7 @@ export default function AdminAttendancePage() {
                       <span className="font-medium">All Trainees</span>
                     </span>
                     <Badge variant="secondary" className="ml-2">
-                      {records.length}
+                      {trainees.length}
                     </Badge>
                   </Button>
 
@@ -839,17 +844,19 @@ export default function AdminAttendancePage() {
               </Alert>
             )}
 
-            {/* Stats Cards - NOW WITH SUSPICIOUS ACTIVITY COUNT */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card className="border-2 border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Records</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+                        {selectedTraineeName ? "Selected Trainee" : "Registered Trainees"}
+                      </p>
                       <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
                     </div>
                     <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
-                      <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                      <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -883,7 +890,6 @@ export default function AdminAttendancePage() {
                 </CardContent>
               </Card>
 
-              {/* NEW: Suspicious Activity Card */}
               <Card className="border-2 border-orange-200 dark:border-orange-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur cursor-pointer"
                 onClick={() => setSecurityDialogOpen(true)}
               >
@@ -933,6 +939,27 @@ export default function AdminAttendancePage() {
                         className="pl-9 border-2"
                       />
                     </div>
+                    {/* NEW: Date Filter Dropdown */}
+                    <Select
+                      value={filterDate}
+                      onValueChange={(value) => {
+                        setFilterDate(value)
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <SelectTrigger className="w-full sm:w-[180px] border-2">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl max-h-[300px] overflow-y-auto">
+                        <SelectItem value="all">All Dates</SelectItem>
+                        {uniqueDates.map((date) => (
+                          <SelectItem key={date} value={date}>
+                            {formatDate(date)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Select
                       value={filterStatus}
                       onValueChange={(value) => {
@@ -963,7 +990,7 @@ export default function AdminAttendancePage() {
                         <TableHead className="font-semibold">Time In</TableHead>
                         <TableHead className="font-semibold">Time Out</TableHead>
                         <TableHead className="font-semibold hidden lg:table-cell">Total Hours</TableHead>
-                        <TableHead className="font-semibold hidden xl:table-cell">IP Address</TableHead> {/* NEW */}
+                        <TableHead className="font-semibold hidden xl:table-cell">IP Address</TableHead>
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold">Actions</TableHead>
                       </TableRow>
@@ -1024,7 +1051,6 @@ export default function AdminAttendancePage() {
                                   {formatHoursMinutes(record.total_minutes, record.time_in, record.time_out)}
                                 </Badge>
                               </TableCell>
-                              {/* NEW: IP Address Column */}
                               <TableCell className="hidden xl:table-cell">
                                 <div className="flex items-center gap-2">
                                   <Wifi className="h-3 w-3 text-muted-foreground" />
@@ -1112,7 +1138,6 @@ export default function AdminAttendancePage() {
                                             </p>
                                           </div>
 
-                                          {/* NEW: Security Info Section */}
                                           <div className="grid grid-cols-2 gap-4 border-b pb-4 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
                                             <div>
                                               <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1">
