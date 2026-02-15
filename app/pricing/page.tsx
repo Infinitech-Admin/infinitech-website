@@ -45,7 +45,7 @@ const PricingPage = () => {
             "Email Alerts for Form Inquiries",
             "Basic Mobile App (iOS/Android)",
             "Downloadable APK",
-            "App Appears on Google Play",
+            // "App Appears on Google Play",
             "1-Year Domain and Hosting",
           ],
           popular: false,
@@ -72,7 +72,7 @@ const PricingPage = () => {
           monthlyPrice: 14999,
           yearlyPrice: 379988,
           features: [
-            "Google Play Store Mobile App",
+            // "Google Play Store Mobile App",
             "SEO Pro Setup +",
             "Dashboard Reports",
             "eCommerce - Ready Products Catalog",
@@ -89,7 +89,7 @@ const PricingPage = () => {
           monthlyPrice: 21999,
           yearlyPrice: 463988,
           features: [
-            "Google Play + Apple App Release",
+            // "Google Play + Apple App Release",
             "Advanced Conversion Tracking",
             "Full eCommerce System",
             "Booking Calendar & Tools",
