@@ -37,7 +37,7 @@ const PricingPage = () => {
         {
           name: "Standard",
           monthlyPrice: 5999,
-          yearlyPrice: 265980,
+          yearlyPrice: 71988, // 5999 × 12
           features: [
             "Up to 5 pages",
             "Social Media Links integration",
@@ -54,7 +54,7 @@ const PricingPage = () => {
         {
           name: "Premium",
           monthlyPrice: 9999,
-          yearlyPrice: 319988,
+          yearlyPrice: 119988, // 9999 × 12
           features: [
             "Everything in Standard, plus:",
             "Up to 10 Website Pages",
@@ -70,7 +70,7 @@ const PricingPage = () => {
         {
           name: "Business",
           monthlyPrice: 14999,
-          yearlyPrice: 379988,
+          yearlyPrice: 179988, // 14999 × 12
           features: [
             // "Google Play Store Mobile App",
             "SEO Pro Setup +",
@@ -87,7 +87,7 @@ const PricingPage = () => {
         {
           name: "Commerce",
           monthlyPrice: 21999,
-          yearlyPrice: 463988,
+          yearlyPrice: 263988, // 21999 × 12
           features: [
             // "Google Play + Apple App Release",
             "Advanced Conversion Tracking",
@@ -172,7 +172,7 @@ const PricingPage = () => {
         {
           name: "Standard",
           monthlyPrice: 11993,
-          yearlyPrice: 74979,
+          yearlyPrice: 143916, // 11993 × 12
           features: [
             "Account Setup (FB+IG+TikTok)",
             "Branding (Profile & Cover)",
@@ -186,7 +186,7 @@ const PricingPage = () => {
         {
           name: "Growth",
           monthlyPrice: 18973,
-          yearlyPrice: 98919,
+          yearlyPrice: 227676, // 18973 × 12
           features: [
             "Everything in Standard, plus:",
             "Account Setup (FB+IG+TikTok)",
@@ -202,7 +202,7 @@ const PricingPage = () => {
         {
           name: "Premium",
           monthlyPrice: 32947,
-          yearlyPrice: 143841,
+          yearlyPrice: 395364, // 32947 × 12
           features: [
             "Account Setup (FB+IG+TikTok)",
             "Branding (Profile & Cover)",
@@ -217,7 +217,7 @@ const PricingPage = () => {
         {
           name: "Corporate",
           monthlyPrice: 47973,
-          yearlyPrice: 179919,
+          yearlyPrice: 575676, // 47973 × 12
           features: [
             "Account Setup (FB+IG+TikTok)",
             "Branding (Profile & Cover)",
@@ -240,7 +240,7 @@ const PricingPage = () => {
         {
           name: "Standard",
           monthlyPrice: 4950,
-          yearlyPrice: 14950,
+          yearlyPrice: 59400, // 4950 × 12
           features: [
             "Product or Corporate Photo Shoot (up to 10 items or 5 pax)",
             "1 Short Promo Video (30–60s)",
@@ -255,7 +255,7 @@ const PricingPage = () => {
         {
           name: "Business Growth",
           monthlyPrice: 14750,
-          yearlyPrice: 24750,
+          yearlyPrice: 177000, // 14750 × 12
           features: [
             "Product + Lifestyle + Corporate Photography (up to 30 items / 8 pax)",
             "1 Full Promo Video (1–3 mins) + 3 Social Media Shorts",
@@ -271,7 +271,7 @@ const PricingPage = () => {
         {
           name: "Business",
           monthlyPrice: 29500,
-          yearlyPrice: 39500,
+          yearlyPrice: 354000, // 29500 × 12
           features: [
             "Full Product + Corporate + Lifestyle Coverage (unlimited products/team)",
             "Full Event Coverage (up to 8 hrs)",
