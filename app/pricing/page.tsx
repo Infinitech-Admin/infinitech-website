@@ -221,7 +221,6 @@ const PricingPage = () => {
           features: [
             "Account Setup (FB+IG+TikTok)",
             "Branding (Profile & Cover)",
-            "8 Posts / Month",
             "2 Reels / Month",
             "Captions & Hashtags",
             "Monthly Insights Report",
