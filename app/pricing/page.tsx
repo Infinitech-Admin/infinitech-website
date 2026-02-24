@@ -620,8 +620,10 @@ const PricingPage = () => {
                               {getServiceTitle(item.service)}
                             </p>
                             <p className="text-cyan-400 text-xs font-semibold">
-                              ₱{item.price.toLocaleString()} /{" "}
-                              {item.billingPeriod === "yearly" ? "year" : "mo"}
+                              ₱{item.price.toLocaleString()}
+                              {item.billingPeriod === "piece"
+                                ? " / piece"
+                                : ` / ${item.billingPeriod === "yearly" ? "year" : "mo"}`}
                             </p>
                           </div>
                           <button
