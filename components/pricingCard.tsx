@@ -250,7 +250,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                   </span>
                 </div>
                 <span className="text-slate-400 font-medium text-xs">
-                  /{billingPeriod === "yearly" ? "year" : "month"}
+                  {getBillingText()}
                 </span>
               </div>
 
