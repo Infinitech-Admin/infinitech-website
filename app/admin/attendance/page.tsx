@@ -400,7 +400,9 @@ export default function AdminAttendancePage() {
           (filterStatus === "completed" && record.time_out !== null) ||
           (filterStatus === "pending" && record.time_out === null)
 
-        const matchesTrainee = selectedTraineeName === null || record.full_name === selectedTraineeName
+        // FIX 1: Case-insensitive trainee name matching
+        const matchesTrainee = selectedTraineeName === null || 
+          record.full_name?.toLowerCase() === selectedTraineeName?.toLowerCase()
 
         const matchesDate = filterDate === "all" || record.date === filterDate
 
@@ -408,12 +410,12 @@ export default function AdminAttendancePage() {
       })
     : []
 
+  // FIX 2: Case-insensitive stats filtering
   const statsRecords = selectedTraineeName 
-    ? records.filter(r => r.full_name === selectedTraineeName)
+    ? records.filter(r => r.full_name?.toLowerCase() === selectedTraineeName?.toLowerCase())
     : records
 
   const stats = {
-    // Show total registered trainees (not attendance records)
     total: selectedTraineeName ? 1 : trainees.length,
     completed: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out !== null).length : 0,
     pending: Array.isArray(statsRecords) ? statsRecords.filter((r) => r.time_out === null).length : 0,
@@ -775,16 +777,17 @@ export default function AdminAttendancePage() {
                   </Button>
 
                   {trainees.map((trainee) => {
+                    // FIX 3: Case-insensitive record count per trainee
                     const traineeRecordCount = records.filter(
-                      (r) => r.full_name === trainee.full_name
+                      (r) => r.full_name?.toLowerCase() === trainee.full_name?.toLowerCase()
                     ).length
 
                     return (
                       <Button
                         key={trainee.id}
-                        variant={selectedTraineeName === trainee.full_name ? "default" : "outline"}
+                        variant={selectedTraineeName?.toLowerCase() === trainee.full_name?.toLowerCase() ? "default" : "outline"}
                         className={`w-full justify-between text-left ${
-                          selectedTraineeName === trainee.full_name
+                          selectedTraineeName?.toLowerCase() === trainee.full_name?.toLowerCase()
                             ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                             : "hover:bg-slate-50"
                         }`}
@@ -802,7 +805,7 @@ export default function AdminAttendancePage() {
                         <Badge 
                           variant="secondary" 
                           className={`ml-2 flex-shrink-0 ${
-                            selectedTraineeName === trainee.full_name 
+                            selectedTraineeName?.toLowerCase() === trainee.full_name?.toLowerCase()
                               ? "bg-white/20 text-white" 
                               : ""
                           }`}
@@ -939,7 +942,6 @@ export default function AdminAttendancePage() {
                         className="pl-9 border-2"
                       />
                     </div>
-                    {/* NEW: Date Filter Dropdown */}
                     <Select
                       value={filterDate}
                       onValueChange={(value) => {
