@@ -7,33 +7,22 @@ import {
   X,
   LogOut,
   LayoutDashboard,
-  Ticket,
-  ClipboardList,
   Inbox,
+  ClipboardList,
   Video,
   IdCard,
-  Clock,
+  Ticket,
   FileCheck,
+  UserCheck,
+  SearchCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const navItems = [
-  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/inquiries", label: "Inquiries", icon: Inbox },
-  { path: "/admin/juantap-survey", label: "Juantap Survey", icon: ClipboardList },
-  { path: "/admin/survey", label: "Survey", icon: ClipboardList },
-  { path: "/admin/video-survey", label: "Video Survey", icon: Video },
-  { path: "/admin/demo-requirements", label: "Demo Website Requirements", icon: IdCard },
-  { path: "/admin/client-assessment", label: "Client Assessment", icon: FileCheck },
-  { path: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
-  { path: "/admin/attendance", label: "OJT Attendance", icon: Clock },
-  
-]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
+
   const router = useRouter()
   const pathname = usePathname()
 
@@ -44,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     const token = localStorage.getItem("adminToken")
+
     if (!token) {
       router.push("/admin/login")
       return
@@ -66,98 +56,188 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isChecking || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="text-white text-lg animate-pulse">Loading...</div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-slate-900">
-      {/* Mobile Overlay */}
+    <div className="h-screen bg-slate-50 dark:bg-slate-950 flex overflow-hidden">
+
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`
-          fixed inset-y-0 left-0 z-30 w-64 bg-cyan-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:relative lg:translate-x-0 lg:flex
-        `}
+        className={`${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } w-64 bg-gradient-to-b from-cyan-900 to-blue-900 dark:from-cyan-950 dark:to-blue-950 text-white transition-transform duration-300 flex flex-col fixed left-0 top-0 h-full shadow-lg z-50 lg:translate-x-0 lg:sticky`}
       >
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-cyan-700">
-          <h1 className="text-xl font-bold tracking-tight">Admin</h1>
+        <div className="p-6 border-b border-cyan-700/50 flex items-center justify-between">
+          <h1 className="text-lg font-bold text-cyan-300">Admin</h1>
+
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 hover:bg-cyan-800 rounded-lg transition-colors lg:hidden"
+            className="p-1 hover:bg-cyan-800 rounded-lg lg:hidden"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Nav Items */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(({ path, label, icon: Icon }) => (
-            <button
-              key={path}
-              onClick={() => {
-                router.push(path)
-                setSidebarOpen(false)
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left
-                ${
-                  isActive(path)
-                    ? "bg-cyan-600 text-white"
-                    : "hover:bg-cyan-800/50 text-cyan-100"
-                }
-              `}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-            </button>
-          ))}
+        <nav className="flex-1 px-4 py-6 space-y-2">
+
+          <a
+            href="/admin/dashboard"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/dashboard")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <LayoutDashboard size={20} />
+            Dashboard
+          </a>
+
+          <a
+            href="/admin/inquiries"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/inquiries")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Inbox size={20} />
+            Inquiries
+          </a>
+
+          <a
+            href="/admin/juantap-survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/juantap-survey")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <IdCard size={20} />
+            Juantap Survey
+          </a>
+
+          <a
+            href="/admin/survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/survey")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <ClipboardList size={20} />
+            Survey
+          </a>
+
+          <a
+            href="/admin/video-survey"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/video-survey")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Video size={20} />
+            Video Survey
+          </a>
+
+          <a
+            href="/admin/demo-requirements"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/demo-requirements")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <FileCheck size={20} />
+            Demo Website Requirements
+          </a>
+
+          <a
+            href="/admin/client-assessment"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/client-assessment")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <UserCheck size={20} />
+            Client Assessment
+          </a>
+
+          <a
+            href="/admin/support-tickets"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/support-tickets")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <Ticket size={20} />
+            Support Tickets
+          </a>
+
+          <a
+            href="/admin/seo-audits"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/seo-audits")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <SearchCheck size={20} />
+            SEO Audit
+          </a>
+
         </nav>
 
-        {/* Logout Button */}
-        <div className="px-3 py-4 border-t border-cyan-700">
-          <button
+        <div className="px-4 py-6 border-t border-cyan-700/50">
+          <Button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-cyan-100 hover:bg-cyan-800/50 transition-colors text-left"
+            className="w-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
           >
             <LogOut size={18} />
-            <span>Logout</span>
-          </button>
+            Logout
+          </Button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors lg:hidden"
-            >
-              <Menu size={20} className="text-slate-600 dark:text-slate-300" />
-            </button>
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              Admin Dashboard
-            </h2>
-          </div>
-        </header>
+      <main className="flex-1 flex flex-col overflow-auto">
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
-        </main>
-      </div>
+        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-4 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg lg:hidden"
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Admin Dashboard
+          </div>
+        </div>
+
+        <div className="flex-1 p-4 lg:p-6">{children}</div>
+
+      </main>
     </div>
   )
 }
