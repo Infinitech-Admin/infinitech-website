@@ -14,7 +14,8 @@ import {
   Ticket,
   FileCheck,
   UserCheck,
-  SearchCheck
+  SearchCheck,
+  CalendarCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -205,6 +206,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <SearchCheck size={20} />
             SEO Audit
+          </a>
+
+          <a
+            href="/admin/attendance"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+              isActive("/admin/attendance")
+                ? "bg-cyan-600 text-white"
+                : "hover:bg-cyan-800/50 text-cyan-100"
+            }`}
+          >
+            <CalendarCheck size={20} />
+            Attendance
           </a>
 
         </nav>
