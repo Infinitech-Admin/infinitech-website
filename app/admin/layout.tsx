@@ -218,7 +218,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }`}
           >
             <CalendarCheck size={20} />
-            Attendance
+            OJT Attendance
           </a>
 
         </nav>
