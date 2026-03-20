@@ -36,8 +36,8 @@ const PricingPage = () => {
       plans: [
         {
           name: "Standard",
-          monthlyPrice: 5999,
-          yearlyPrice: 71988, // 5999 × 12
+          monthlyPrice: 6583,
+          yearlyPrice: 78999, // 6583 × 12 ≈ 78,999
           features: [
             "Up to 5 pages",
             "Social Media Links integration",
