@@ -86,7 +86,7 @@ const OJT_DEFAULT_HOURS = 486
 
 // Per-trainee overrides — key must exactly match the trainee's full_name
 const OJT_HOURS_OVERRIDES: Record<string, number> = {
-  "Crissa May Canedo": 500,
+  "Chrissa May Canedo": 500,
 }
 
 /** Returns the required OJT hours for a specific trainee */
