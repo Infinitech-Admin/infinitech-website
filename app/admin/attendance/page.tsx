@@ -92,7 +92,16 @@ const OJT_HOURS_OVERRIDES: Record<string, number> = {
 /** Returns the required OJT hours for a specific trainee */
 const getRequiredHours = (fullName: string): number =>
   OJT_HOURS_OVERRIDES[fullName] ?? OJT_DEFAULT_HOURS
+
+// ─── PER-TRAINEE BONUS MINUTES ────────────────────────────────────────────────
+// Add extra minutes to a trainee's cumulative total (e.g. approved exceptions).
+const BONUS_MINUTES: Record<string, number> = {
+  "Chrissa May Canedo": 32 * 60, // +32 hours exception
+}
 // ──────────────────────────────────────────────────────────────────────────────
+
+// Maximum minutes that can be counted per attendance record (8 hours)
+const MAX_DAILY_MINUTES = 480
 
 const ITEMS_PER_PAGE = 10
 
@@ -212,25 +221,39 @@ export default function AdminAttendancePage() {
 
   // ─── HOURS COMPUTATION HELPERS ──────────────────────────────────────────────
 
-  /** Returns total logged minutes for a single record */
+  /**
+   * Returns logged minutes for a single record, capped at MAX_DAILY_MINUTES (8h).
+   * If the DB already has total_minutes, we trust it (but still cap it).
+   * Otherwise we compute from time_in / time_out.
+   */
   const getRecordMinutes = (record: AttendanceRecord): number => {
-    if (record.total_minutes && record.total_minutes > 0) return record.total_minutes
+    if (record.total_minutes && record.total_minutes > 0)
+      return Math.min(record.total_minutes, MAX_DAILY_MINUTES)
     if (!record.time_out) return 0
     const [inH, inM] = record.time_in.split(':').map(Number)
     const [outH, outM] = record.time_out.split(':').map(Number)
     const diff = (outH * 60 + outM) - (inH * 60 + inM)
-    return diff > 0 ? diff : 0
+    return diff > 0 ? Math.min(diff, MAX_DAILY_MINUTES) : 0
   }
 
   /** Returns total minutes across a list of records */
   const sumMinutes = (recs: AttendanceRecord[]) =>
     recs.reduce((sum, r) => sum + getRecordMinutes(r), 0)
 
-  /** Returns per-trainee hours map: { fullName → totalMinutes } */
+  /**
+   * Returns per-trainee hours map: { fullName → totalMinutes }
+   * Includes any BONUS_MINUTES configured above.
+   */
   const traineeHoursMap = React.useMemo(() => {
     const map: Record<string, number> = {}
     for (const r of records) {
       map[r.full_name] = (map[r.full_name] || 0) + getRecordMinutes(r)
+    }
+    // Apply per-trainee bonus minutes (approved exceptions)
+    for (const [name, bonus] of Object.entries(BONUS_MINUTES)) {
+      if (map[name] !== undefined) {
+        map[name] += bonus
+      }
     }
     return map
   }, [records])
@@ -341,7 +364,9 @@ export default function AdminAttendancePage() {
     ? records.filter(r => r.full_name === selectedTraineeName)
     : records
 
-  const totalMinutesInView = sumMinutes(statsRecords)
+  const totalMinutesInView = selectedTraineeName
+    ? (traineeHoursMap[selectedTraineeName] || 0)
+    : sumMinutes(statsRecords)
 
   const stats = {
     total: selectedTraineeName ? 1 : trainees.length,
@@ -667,6 +692,11 @@ export default function AdminAttendancePage() {
                     <Filter className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="font-medium text-blue-900">
                       Showing records for: <strong>{selectedTraineeName}</strong>
+                      {BONUS_MINUTES[selectedTraineeName] && (
+                        <span className="ml-2 text-xs text-purple-600 font-normal">
+                          (includes +{fmtMins(BONUS_MINUTES[selectedTraineeName])} approved exception)
+                        </span>
+                      )}
                     </AlertDescription>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => { setSelectedTraineeName(null); setCurrentPage(1) }} className="text-blue-600 hover:text-blue-700 hover:bg-blue-100">
@@ -688,6 +718,9 @@ export default function AdminAttendancePage() {
                       <div>
                         <p className="text-sm text-muted-foreground font-medium">OJT Hours Progress</p>
                         <p className="text-xs text-muted-foreground">Target: {selectedRequiredHours} hours required</p>
+                        {BONUS_MINUTES[selectedTraineeName] && (
+                          <p className="text-xs text-purple-600 font-medium">+{fmtMins(BONUS_MINUTES[selectedTraineeName])} approved exception included</p>
+                        )}
                       </div>
                     </div>
 
@@ -757,7 +790,7 @@ export default function AdminAttendancePage() {
                 </CardContent>
               </Card>
 
-              {/* ── TOTAL HOURS CARD (replaces old "Total Hours") ── */}
+              {/* ── TOTAL HOURS CARD ── */}
               <Card className="border-2 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
@@ -809,7 +842,7 @@ export default function AdminAttendancePage() {
                       {selectedTraineeName ? `${selectedTraineeName}'s Records` : "All Records"}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredRecords.length)} of {filteredRecords.length}
+                      Showing {filteredRecords.length === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredRecords.length)} of {filteredRecords.length}
                     </CardDescription>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -947,10 +980,16 @@ export default function AdminAttendancePage() {
                                           <div className="border-b pb-4">
                                             <p className="font-semibold text-slate-700 mb-1 flex items-center gap-1"><Clock className="h-4 w-4 text-purple-600" />This Session</p>
                                             <p className="text-2xl font-bold text-purple-600">{fmtMins(getRecordMinutes(selectedRecord))}</p>
+                                            {selectedRecord.total_minutes && selectedRecord.total_minutes > MAX_DAILY_MINUTES && (
+                                              <p className="text-xs text-orange-500 mt-1">Capped at 8h max per day (raw: {fmtMins(selectedRecord.total_minutes)})</p>
+                                            )}
                                           </div>
                                           {/* Cumulative total for this trainee */}
                                           <div className="border-b pb-4 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
                                             <p className="font-semibold text-slate-700 mb-2 flex items-center gap-1"><TrendingUp className="h-4 w-4 text-purple-600" />Cumulative OJT Hours ({selectedRecord.full_name})</p>
+                                            {BONUS_MINUTES[selectedRecord.full_name] && (
+                                              <p className="text-xs text-purple-600 mb-2">Includes +{fmtMins(BONUS_MINUTES[selectedRecord.full_name])} approved exception</p>
+                                            )}
                                             <div className="flex items-center gap-4">
                                               <div>
                                                 <p className={`text-xl font-bold ${progressColor(hoursProgress(traineeHoursMap[selectedRecord.full_name] || 0, selectedRecord.full_name))}`}>
