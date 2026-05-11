@@ -82,37 +82,37 @@ export const members = [
     href: "https://www.facebook.com/charizr1"
   },
   // Sales Director
-  {
-    name: "Baby Rose Hernandez",
-    position: "Sales Director",
-    image: "rose.png",
-    email: "infinitech.rose@gmail.com",
-    phone: "09651983796",
-    telegram: {
-      title: "09651983796",
-      href: "https://web.telegram.org/k/#3965198379"
-    },
-    facebookname: "Baby Rose Hernandez",
-    href: "https://www.facebook.com/share/1FFxbQz9Gc/"
-  },
+  // {
+  //   name: "Baby Rose Hernandez",
+  //   position: "Sales Director",
+  //   image: "rose.png",
+  //   email: "infinitech.rose@gmail.com",
+  //   phone: "09651983796",
+  //   telegram: {
+  //     title: "09651983796",
+  //     href: "https://web.telegram.org/k/#3965198379"
+  //   },
+  //   facebookname: "Baby Rose Hernandez",
+  //   href: "https://www.facebook.com/share/1FFxbQz9Gc/"
+  // },
   // Accounting Supervisor
-  {
-    name: "Darlene Angel Fajarito",
-    position: "Accounting Supervisor",
-    image: "darlene.png",
-    email: "infinitech.darlene@gmail.com",
-    phone: "09667515747",
-    telegram: {
-      title: "09667515747",
-      href: "https://web.telegram.org/a/#7307476341"
-    },
-    viber: {
-      title: "09667515747",
-      href: "https://msng.link/o?09667515747=vi"
-    },
-    facebookname: "Darlene Angel Fajarito",
-    href: "https://www.facebook.com/darlenefajarito"
-  },
+  // {
+  //   name: "Darlene Angel Fajarito",
+  //   position: "Accounting Supervisor",
+  //   image: "darlene.png",
+  //   email: "infinitech.darlene@gmail.com",
+  //   phone: "09667515747",
+  //   telegram: {
+  //     title: "09667515747",
+  //     href: "https://web.telegram.org/a/#7307476341"
+  //   },
+  //   viber: {
+  //     title: "09667515747",
+  //     href: "https://msng.link/o?09667515747=vi"
+  //   },
+  //   facebookname: "Darlene Angel Fajarito",
+  //   href: "https://www.facebook.com/darlenefajarito"
+  // },
   // Admin Assistant
   {
     name: "Aizle Marie Atienza",
@@ -200,19 +200,19 @@ export const members = [
     href: "https://www.facebook.com/share/1FJfpM3ig9/"
   },
   // Digital Marketing Staff
-  {
-    name: "Michael Tapec",
-    position: "Digital Marketing Staff",
-    image: "madriaga.png",
-    email: "infinitech.mike@gmail.com",
-    phone: "09566423715",
-    telegram: {
-      title: "09566423715",
-      href: "https://web.telegram.org/k/#@Mike_madriaga"
-    },
-    facebookname: "Michael Tapec",
-    href: "https://www.facebook.com/share/1Rg9NYHbRL/"
-  },
+  // {
+  //   name: "Michael Tapec",
+  //   position: "Digital Marketing Staff",
+  //   image: "madriaga.png",
+  //   email: "infinitech.mike@gmail.com",
+  //   phone: "09566423715",
+  //   telegram: {
+  //     title: "09566423715",
+  //     href: "https://web.telegram.org/k/#@Mike_madriaga"
+  //   },
+  //   facebookname: "Michael Tapec",
+  //   href: "https://www.facebook.com/share/1Rg9NYHbRL/"
+  // },
   {
     name: "Armand M. Cajucom",
     position: "Digital Marketing Staff",
@@ -239,19 +239,19 @@ export const members = [
   //   facebookname: "Jd Anyayahan",
   //   href: "https://www.facebook.com/share/17TegUqJzV/?mibextid=wwXIfr"
   // },
-  {
-    name: "Jayvee Valeriano",
-    position: "Digital Marketing Staff",
-    image: "jayvee.png",
-    email: "infinitech.jayvee@gmail.com",
-    phone: "09384715225",
-    telegram: {
-      title: "09384715225",
-      href: "https://web.telegram.org/k/#@Jayveevaleriano20"
-    },
-    facebookname: "Jayvee Valeriano",
-    href: "https://www.facebook.com/Abic.jayvee"
-  },
+  // {
+  //   name: "Jayvee Valeriano",
+  //   position: "Digital Marketing Staff",
+  //   image: "jayvee.png",
+  //   email: "infinitech.jayvee@gmail.com",
+  //   phone: "09384715225",
+  //   telegram: {
+  //     title: "09384715225",
+  //     href: "https://web.telegram.org/k/#@Jayveevaleriano20"
+  //   },
+  //   facebookname: "Jayvee Valeriano",
+  //   href: "https://www.facebook.com/Abic.jayvee"
+  // },
   {
     name: "Janina Jerusalem",
     position: "Digital Marketing Staff",
@@ -265,19 +265,19 @@ export const members = [
     facebookname: "Janina Jerusalem",
     href: "https://www.facebook.com/iamjaninajerusalem/"
   },
-  {
-    name: "Angely Victoriano",
-    position: "Digital Marketing Staff",
-    image: "angely.png",
-    email: "infinitech.angely@gmail.com",
-    phone: "09487191557",
-    telegram: {
-      title: "09487191557",
-      href: "https://web.telegram.org/k/#09487191557"
-    },
-    facebookname: "Angely Victoriano",
-    href: "https://www.facebook.com/angely.victoriano/"
-  },
+  // {
+  //   name: "Angely Victoriano",
+  //   position: "Digital Marketing Staff",
+  //   image: "angely.png",
+  //   email: "infinitech.angely@gmail.com",
+  //   phone: "09487191557",
+  //   telegram: {
+  //     title: "09487191557",
+  //     href: "https://web.telegram.org/k/#09487191557"
+  //   },
+  //   facebookname: "Angely Victoriano",
+  //   href: "https://www.facebook.com/angely.victoriano/"
+  // },
   {
     name: "Kaila Dapiaoen",
     position: "Digital Marketing Staff",
