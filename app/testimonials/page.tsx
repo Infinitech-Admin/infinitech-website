@@ -1,8 +1,6 @@
 "use client";
 
-// Add to your globals.css: @import "keen-slider/keen-slider.min.css";
-import React, { useEffect, useState } from "react";
-import { useKeenSlider } from "keen-slider/react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Divider, Chip, Skeleton } from "@heroui/react";
 import { poetsen_one } from "@/config/fonts";
 
@@ -28,112 +26,237 @@ interface TestimonialFormData {
   page: "home" | "solutions" | "both";
 }
 
-// ─── Slider ───────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  "bg-blue-100 text-blue-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-violet-100 text-violet-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-cyan-100 text-cyan-700",
+];
+
+function avatarColor(id: number) {
+  return AVATAR_COLORS[id % AVATAR_COLORS.length];
+}
+
+// ─── Testimonial Card ─────────────────────────────────────────────────────────
+
+function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+  return (
+    <div className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+      {/* Quote icon */}
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-gray-200 flex-shrink-0"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.127 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
+        />
+      </svg>
+
+      {/* Message */}
+      <p className="text-sm text-gray-700 leading-relaxed flex-1 line-clamp-4">
+        "{testimonial.message}"
+      </p>
+
+      {/* Divider + author */}
+      <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
+        <div
+          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${avatarColor(testimonial.id)}`}
+        >
+          {getInitials(testimonial.name)}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 uppercase tracking-wide truncate">
+            {testimonial.name}
+          </p>
+          {(testimonial.position || testimonial.company) && (
+            <p className="text-xs text-gray-400 truncate">
+              {[testimonial.position, testimonial.company]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Card Slider ──────────────────────────────────────────────────────────────
+
+const AUTO_DELAY = 3500;
 
 function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
-    slides: { perView: 1 },
-    slideChanged(slider) {
-      setCurrentSlide(slider.track.details.rel);
+  const [current, setCurrent] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollStart = useRef(0);
+
+  const total = testimonials.length;
+
+  const getCardWidth = () => {
+    const card = trackRef.current?.children[0] as HTMLElement | undefined;
+    if (!card) return 336; // default 320 + 16 gap
+    return card.offsetWidth + 16;
+  };
+
+  const scrollTo = useCallback(
+    (idx: number) => {
+      const clamped = Math.max(0, Math.min(idx, total - 1));
+      setCurrent(clamped);
+      if (trackRef.current) {
+        trackRef.current.scrollTo({
+          left: clamped * getCardWidth(),
+          behavior: "smooth",
+        });
+      }
     },
-  });
+    [total]
+  );
+
+  const startTimer = useCallback(() => {
+    timerRef.current = setInterval(() => {
+      setCurrent((prev) => {
+        const next = prev >= total - 1 ? 0 : prev + 1;
+        if (trackRef.current) {
+          trackRef.current.scrollTo({
+            left: next * getCardWidth(),
+            behavior: "smooth",
+          });
+        }
+        return next;
+      });
+    }, AUTO_DELAY);
+  }, [total]);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    startTimer();
+  }, [startTimer]);
+
+  useEffect(() => {
+    startTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [startTimer]);
+
+  // Sync dot on scroll
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const onScroll = () => {
+      const cw = getCardWidth();
+      const idx = Math.round(track.scrollLeft / cw);
+      setCurrent(Math.max(0, Math.min(idx, total - 1)));
+    };
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => track.removeEventListener("scroll", onScroll);
+  }, [total]);
+
+  // Drag / swipe
+  const onPointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    startX.current = e.clientX;
+    scrollStart.current = trackRef.current?.scrollLeft ?? 0;
+    resetTimer();
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current || !trackRef.current) return;
+    trackRef.current.scrollLeft =
+      scrollStart.current - (e.clientX - startX.current);
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const delta = e.clientX - startX.current;
+    if (Math.abs(delta) > 40) {
+      scrollTo(delta < 0 ? current + 1 : current - 1);
+    } else {
+      scrollTo(current);
+    }
+  };
 
   return (
-    <div className="mt-10">
-      <div ref={sliderRef} className="keen-slider">
+    <div className="mt-8">
+      {/* Scrollable track — hidden scrollbar */}
+      <div
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        className="flex gap-4 overflow-x-auto select-none cursor-grab active:cursor-grabbing pb-2"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <style>{`div::-webkit-scrollbar { display: none; }`}</style>
         {testimonials.map((t) => (
-          <div key={t.id} className="keen-slider__slide">
-            <div className="flex flex-col gap-6 px-2 py-4 md:px-8">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="text-primary opacity-20"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.127 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
-                />
-              </svg>
-              <p className="text-lg md:text-xl leading-relaxed text-gray-700 font-medium">
-                "{t.message}"
-              </p>
-              <div>
-                <Divider className="mb-4" />
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <div>
-                    <p className="text-2xl font-bold uppercase text-gray-900 tracking-wide">
-                      {t.name}
-                    </p>
-                    {(t.position || t.company) && (
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {[t.position, t.company].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TestimonialCard key={t.id} testimonial={t} />
         ))}
+        {/* Right padding sentinel */}
+        <div className="flex-shrink-0 w-4" aria-hidden />
       </div>
 
-      <div className="flex items-center gap-3 mt-6 px-2 md:px-8">
+      {/* Controls */}
+      <div className="flex items-center gap-3 mt-5">
         <button
-          onClick={() => instanceRef.current?.prev()}
-          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+          onClick={() => { scrollTo(current - 1); resetTimer(); }}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
           aria-label="Previous"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
         <button
-          onClick={() => instanceRef.current?.next()}
-          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+          onClick={() => { scrollTo(current + 1); resetTimer(); }}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
           aria-label="Next"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
-        <div className="flex gap-1.5 ml-2">
+
+        {/* Dots */}
+        <div className="flex gap-1.5 ml-1">
           {testimonials.map((_, i) => (
             <button
               key={i}
-              onClick={() => instanceRef.current?.moveToIdx(i)}
+              onClick={() => { scrollTo(i); resetTimer(); }}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === currentSlide ? "w-6 bg-primary" : "w-1.5 bg-gray-300"
+                i === current ? "w-5 bg-primary" : "w-1.5 bg-gray-200"
               }`}
               aria-label={`Go to slide ${i + 1}`}
             />
           ))}
         </div>
-        <span className="ml-auto text-sm text-gray-400">
-          {currentSlide + 1} / {testimonials.length}
+
+        <span className="ml-auto text-xs text-gray-400">
+          {current + 1} / {total}
         </span>
       </div>
     </div>
@@ -165,8 +288,8 @@ function ReviewPlatforms() {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 16 16"
           fill={
             star <= Math.floor(rating)
@@ -189,19 +312,19 @@ function ReviewPlatforms() {
   );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {platforms.map((p) => (
         <div
           key={p.name}
-          className="flex items-center gap-4 bg-gray-50 rounded-2xl px-6 py-5 border border-gray-100"
+          className="flex items-center gap-4 bg-gray-50 rounded-2xl px-5 py-4 border border-gray-100"
         >
-          <img src={p.logo} alt={p.name} className="w-8 h-8 object-contain" />
+          <img src={p.logo} alt={p.name} className="w-7 h-7 object-contain" />
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wider">
               Review on
             </p>
             <p className="font-semibold text-gray-800 text-sm">{p.name}</p>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-0.5">
               {renderStars(p.rating, p.color)}
               <span className="text-xs text-gray-400">{p.count} reviews</span>
             </div>
@@ -216,18 +339,27 @@ function ReviewPlatforms() {
 
 function LoadingSkeleton() {
   return (
-    <div className="flex flex-col gap-6 px-2 py-4 md:px-8">
-      <Skeleton className="w-12 h-12 rounded-lg" />
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-5 w-full rounded-lg" />
-        <Skeleton className="h-5 w-full rounded-lg" />
-        <Skeleton className="h-5 w-3/4 rounded-lg" />
-      </div>
-      <Divider />
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-6 w-48 rounded-lg" />
-        <Skeleton className="h-4 w-32 rounded-lg" />
-      </div>
+    <div className="flex gap-4 mt-8 overflow-hidden">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white border border-gray-100 rounded-2xl p-5 flex flex-col gap-4"
+        >
+          <Skeleton className="w-7 h-7 rounded-lg" />
+          <div className="flex flex-col gap-2 flex-1">
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-3/4 rounded" />
+          </div>
+          <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
+            <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
+            <div className="flex flex-col gap-1.5 flex-1">
+              <Skeleton className="h-3.5 w-32 rounded" />
+              <Skeleton className="h-3 w-24 rounded" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -244,7 +376,7 @@ function CategoryFilter({
   onChange: (cat: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 justify-center mt-6">
+    <div className="flex flex-wrap gap-2 justify-center mt-5">
       {["All", ...categories].map((cat) => (
         <Chip
           key={cat}
@@ -289,7 +421,7 @@ function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    >
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -317,7 +449,6 @@ function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
 
       setSuccess(true);
       setForm(EMPTY_FORM);
-      // Notify parent to refresh the list
       setTimeout(() => {
         setSuccess(false);
         onSubmitted();
@@ -478,39 +609,15 @@ function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
           >
             {submitting ? (
               <>
-                <svg
-                  className="animate-spin h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  />
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
                 Submitting...
               </>
             ) : (
               <>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 2 11 13" />
                   <path d="M22 2 15 22 11 13 2 9l20-7z" />
                 </svg>
@@ -535,8 +642,10 @@ const TestimonialsPage = () => {
 
   const categories = Array.from(
     new Set(
-      testimonials.map((t) => t.company).filter((c): c is string => c !== null),
-    ),
+      testimonials
+        .map((t) => t.company)
+        .filter((c): c is string => c !== null)
+    )
   );
 
   const fetchTestimonials = async () => {
@@ -589,24 +698,24 @@ const TestimonialsPage = () => {
           <CategoryFilter
             categories={categories}
             active={activeCategory}
-            onChange={setActiveCategory}
+            onChange={(cat) => {
+              setActiveCategory(cat);
+            }}
           />
         )}
 
         {/* Slider */}
-        <div className="mt-6">
-          {loading ? (
-            <LoadingSkeleton />
-          ) : error ? (
-            <p className="text-center text-red-500 py-12">{error}</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-gray-400 py-12">
-              No testimonials yet. Be the first to share your experience!
-            </p>
-          ) : (
-            <TestimonialSlider key={activeCategory} testimonials={filtered} />
-          )}
-        </div>
+        {loading ? (
+          <LoadingSkeleton />
+        ) : error ? (
+          <p className="text-center text-red-500 py-12">{error}</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-gray-400 py-12">
+            No testimonials yet. Be the first to share your experience!
+          </p>
+        ) : (
+          <TestimonialSlider key={activeCategory} testimonials={filtered} />
+        )}
 
         <Divider className="my-12" />
 
