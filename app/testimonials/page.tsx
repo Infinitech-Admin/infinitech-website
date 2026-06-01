@@ -108,28 +108,24 @@ const AUTO_DELAY = 3500;
 function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
   const [current, setCurrent] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollStart = useRef(0);
+
 
   const total = testimonials.length;
 
-  const getCardWidth = () => {
-    const card = trackRef.current?.children[0] as HTMLElement | undefined;
-    if (!card) return 336; // default 320 + 16 gap
-    return card.offsetWidth + 16;
-  };
-
-  const scrollTo = useCallback(
+  // Scroll a specific card into view — works on any screen size
+  const goTo = useCallback(
     (idx: number) => {
       const clamped = Math.max(0, Math.min(idx, total - 1));
       setCurrent(clamped);
-      if (trackRef.current) {
-        trackRef.current.scrollTo({
-          left: clamped * getCardWidth(),
-          behavior: "smooth",
-        });
+      const card = cardRefs.current[clamped];
+      if (card && trackRef.current) {
+        const trackLeft = trackRef.current.getBoundingClientRect().left;
+        const cardLeft = card.getBoundingClientRect().left;
+        const offset =
+          trackRef.current.scrollLeft + (cardLeft - trackLeft);
+        trackRef.current.scrollTo({ left: offset, behavior: "smooth" });
       }
     },
     [total]
@@ -139,11 +135,13 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
     timerRef.current = setInterval(() => {
       setCurrent((prev) => {
         const next = prev >= total - 1 ? 0 : prev + 1;
-        if (trackRef.current) {
-          trackRef.current.scrollTo({
-            left: next * getCardWidth(),
-            behavior: "smooth",
-          });
+        const card = cardRefs.current[next];
+        if (card && trackRef.current) {
+          const trackLeft = trackRef.current.getBoundingClientRect().left;
+          const cardLeft = card.getBoundingClientRect().left;
+          const offset =
+            trackRef.current.scrollLeft + (cardLeft - trackLeft);
+          trackRef.current.scrollTo({ left: offset, behavior: "smooth" });
         }
         return next;
       });
@@ -162,59 +160,55 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
     };
   }, [startTimer]);
 
-  // Sync dot on scroll
+  // Sync active dot while user scrolls freely
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    let scrollTimer: ReturnType<typeof setTimeout>;
     const onScroll = () => {
-      const cw = getCardWidth();
-      const idx = Math.round(track.scrollLeft / cw);
-      setCurrent(Math.max(0, Math.min(idx, total - 1)));
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        // Find which card's left edge is closest to the track's left edge
+        let closest = 0;
+        let minDist = Infinity;
+        cardRefs.current.forEach((card, i) => {
+          if (!card) return;
+          const dist = Math.abs(
+            card.getBoundingClientRect().left -
+              track.getBoundingClientRect().left
+          );
+          if (dist < minDist) {
+            minDist = dist;
+            closest = i;
+          }
+        });
+        setCurrent(closest);
+      }, 80);
     };
     track.addEventListener("scroll", onScroll, { passive: true });
-    return () => track.removeEventListener("scroll", onScroll);
+    return () => {
+      track.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimer);
+    };
   }, [total]);
-
-  // Drag / swipe
-  const onPointerDown = (e: React.PointerEvent) => {
-    isDragging.current = true;
-    startX.current = e.clientX;
-    scrollStart.current = trackRef.current?.scrollLeft ?? 0;
-    resetTimer();
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current || !trackRef.current) return;
-    trackRef.current.scrollLeft =
-      scrollStart.current - (e.clientX - startX.current);
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    const delta = e.clientX - startX.current;
-    if (Math.abs(delta) > 40) {
-      scrollTo(delta < 0 ? current + 1 : current - 1);
-    } else {
-      scrollTo(current);
-    }
-  };
 
   return (
     <div className="mt-8">
-      {/* Scrollable track — hidden scrollbar */}
+      {/* Scrollable track */}
       <div
         ref={trackRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-        className="flex gap-4 overflow-x-auto select-none cursor-grab active:cursor-grabbing pb-2"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="flex gap-4 overflow-x-auto pb-2 touch-pan-x"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
       >
-        <style>{`div::-webkit-scrollbar { display: none; }`}</style>
-        {testimonials.map((t) => (
-          <TestimonialCard key={t.id} testimonial={t} />
+        <style>{`.testimonial-track::-webkit-scrollbar{display:none}`}</style>
+        {testimonials.map((t, i) => (
+          <div
+            key={t.id}
+            ref={(el) => { cardRefs.current[i] = el; }}
+            className="flex-shrink-0"
+          >
+            <TestimonialCard testimonial={t} />
+          </div>
         ))}
         {/* Right padding sentinel */}
         <div className="flex-shrink-0 w-4" aria-hidden />
@@ -223,8 +217,8 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
       {/* Controls */}
       <div className="flex items-center gap-3 mt-5">
         <button
-          onClick={() => { scrollTo(current - 1); resetTimer(); }}
-          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+          onClick={() => { goTo(current - 1); resetTimer(); }}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors flex-shrink-0"
           aria-label="Previous"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -232,8 +226,8 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
           </svg>
         </button>
         <button
-          onClick={() => { scrollTo(current + 1); resetTimer(); }}
-          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+          onClick={() => { goTo(current + 1); resetTimer(); }}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors flex-shrink-0"
           aria-label="Next"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -242,11 +236,11 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
         </button>
 
         {/* Dots */}
-        <div className="flex gap-1.5 ml-1">
+        <div className="flex gap-1.5 ml-1 flex-wrap">
           {testimonials.map((_, i) => (
             <button
               key={i}
-              onClick={() => { scrollTo(i); resetTimer(); }}
+              onClick={() => { goTo(i); resetTimer(); }}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "w-5 bg-primary" : "w-1.5 bg-gray-200"
               }`}
@@ -255,7 +249,7 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
           ))}
         </div>
 
-        <span className="ml-auto text-xs text-gray-400">
+        <span className="ml-auto text-xs text-gray-400 flex-shrink-0">
           {current + 1} / {total}
         </span>
       </div>
