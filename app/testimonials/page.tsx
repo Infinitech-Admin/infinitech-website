@@ -50,11 +50,141 @@ function avatarColor(id: number) {
   return AVATAR_COLORS[id % AVATAR_COLORS.length];
 }
 
+// ─── Testimonial Modal ────────────────────────────────────────────────────────
+
+function TestimonialModal({
+  testimonial,
+  isOpen,
+  onClose,
+}: {
+  testimonial: Testimonial | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !testimonial) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with close button */}
+          <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">Full Testimonial</h2>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Close modal"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6l-12 12M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 md:p-8">
+            {/* Quote icon */}
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="text-gray-200 mb-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.127 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
+              />
+            </svg>
+
+            {/* Full message */}
+            <p className="text-base md:text-lg text-gray-700 leading-relaxed mb-8">
+              "{testimonial.message}"
+            </p>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100 pt-6 mb-6" />
+
+            {/* Author info */}
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(testimonial.id)}`}
+              >
+                {getInitials(testimonial.name)}
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-bold text-gray-900 uppercase tracking-wide">
+                  {testimonial.name}
+                </p>
+                {testimonial.position && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    {testimonial.position}
+                  </p>
+                )}
+                {testimonial.company && (
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {testimonial.company}
+                  </p>
+                )}
+                {testimonial.position && testimonial.company && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    {testimonial.position} at {testimonial.company}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Testimonial Card ─────────────────────────────────────────────────────────
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+function TestimonialCard({
+  testimonial,
+  onClick,
+}: {
+  testimonial: Testimonial;
+  onClick: (testimonial: Testimonial) => void;
+}) {
   return (
-    <div className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+    <button
+      onClick={() => onClick(testimonial)}
+      className="flex-shrink-0 w-[320px] sm:w-[360px] bg-white border border-gray-100 rounded-2xl p-5 flex flex-col gap-4 shadow-sm hover:shadow-md hover:border-gray-200 transition-all cursor-pointer text-left"
+    >
       {/* Quote icon */}
       <svg
         width="28"
@@ -97,7 +227,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -105,12 +235,17 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 
 const AUTO_DELAY = 3500;
 
-function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
+function TestimonialSlider({
+  testimonials,
+  onCardClick,
+}: {
+  testimonials: Testimonial[];
+  onCardClick: (testimonial: Testimonial) => void;
+}) {
   const [current, setCurrent] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
 
   const total = testimonials.length;
 
@@ -123,12 +258,11 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
       if (card && trackRef.current) {
         const trackLeft = trackRef.current.getBoundingClientRect().left;
         const cardLeft = card.getBoundingClientRect().left;
-        const offset =
-          trackRef.current.scrollLeft + (cardLeft - trackLeft);
+        const offset = trackRef.current.scrollLeft + (cardLeft - trackLeft);
         trackRef.current.scrollTo({ left: offset, behavior: "smooth" });
       }
     },
-    [total]
+    [total],
   );
 
   const startTimer = useCallback(() => {
@@ -139,8 +273,7 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
         if (card && trackRef.current) {
           const trackLeft = trackRef.current.getBoundingClientRect().left;
           const cardLeft = card.getBoundingClientRect().left;
-          const offset =
-            trackRef.current.scrollLeft + (cardLeft - trackLeft);
+          const offset = trackRef.current.scrollLeft + (cardLeft - trackLeft);
           trackRef.current.scrollTo({ left: offset, behavior: "smooth" });
         }
         return next;
@@ -175,7 +308,7 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
           if (!card) return;
           const dist = Math.abs(
             card.getBoundingClientRect().left -
-              track.getBoundingClientRect().left
+              track.getBoundingClientRect().left,
           );
           if (dist < minDist) {
             minDist = dist;
@@ -198,16 +331,24 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
       <div
         ref={trackRef}
         className="flex gap-4 overflow-x-auto pb-2 touch-pan-x"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+        style={
+          {
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties
+        }
       >
         <style>{`.testimonial-track::-webkit-scrollbar{display:none}`}</style>
         {testimonials.map((t, i) => (
           <div
             key={t.id}
-            ref={(el) => { cardRefs.current[i] = el; }}
+            ref={(el) => {
+              cardRefs.current[i] = el;
+            }}
             className="flex-shrink-0"
           >
-            <TestimonialCard testimonial={t} />
+            <TestimonialCard testimonial={t} onClick={onCardClick} />
           </div>
         ))}
         {/* Right padding sentinel */}
@@ -217,20 +358,44 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
       {/* Controls */}
       <div className="flex items-center gap-3 mt-5">
         <button
-          onClick={() => { goTo(current - 1); resetTimer(); }}
+          onClick={() => {
+            goTo(current - 1);
+            resetTimer();
+          }}
           className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors flex-shrink-0"
           aria-label="Previous"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
         <button
-          onClick={() => { goTo(current + 1); resetTimer(); }}
+          onClick={() => {
+            goTo(current + 1);
+            resetTimer();
+          }}
           className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition-colors flex-shrink-0"
           aria-label="Next"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
@@ -240,7 +405,10 @@ function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
           {testimonials.map((_, i) => (
             <button
               key={i}
-              onClick={() => { goTo(i); resetTimer(); }}
+              onClick={() => {
+                goTo(i);
+                resetTimer();
+              }}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "w-5 bg-primary" : "w-1.5 bg-gray-200"
               }`}
@@ -415,7 +583,7 @@ function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -603,15 +771,39 @@ function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
           >
             {submitting ? (
               <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  />
                 </svg>
                 Submitting...
               </>
             ) : (
               <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M22 2 11 13" />
                   <path d="M22 2 15 22 11 13 2 9l20-7z" />
                 </svg>
@@ -633,13 +825,13 @@ const TestimonialsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedTestimonial, setSelectedTestimonial] =
+    useState<Testimonial | null>(null);
 
   const categories = Array.from(
     new Set(
-      testimonials
-        .map((t) => t.company)
-        .filter((c): c is string => c !== null)
-    )
+      testimonials.map((t) => t.company).filter((c): c is string => c !== null),
+    ),
   );
 
   const fetchTestimonials = async () => {
@@ -675,53 +867,68 @@ const TestimonialsPage = () => {
   }, [activeCategory, testimonials]);
 
   return (
-    <section>
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="max-w-2xl mt-12 mx-auto text-center">
-          <h2 className="font-bold text-accent text-4xl tracking-wider uppercase">
-            Testimonials
-          </h2>
-          <h1 className={`text-4xl text-primary mt-2 ${poetsen_one.className}`}>
-            Our work brings to life the success stories of our partners
-          </h1>
+    <>
+      <section>
+        <div className="container mx-auto px-4 py-12">
+          {/* Header */}
+          <div className="max-w-2xl mt-12 mx-auto text-center">
+            <h2 className="font-bold text-accent text-4xl tracking-wider uppercase">
+              Testimonials
+            </h2>
+            <h1
+              className={`text-4xl text-primary mt-2 ${poetsen_one.className}`}
+            >
+              Our work brings to life the success stories of our partners
+            </h1>
+          </div>
+
+          {/* Category filter */}
+          {!loading && !error && categories.length > 1 && (
+            <CategoryFilter
+              categories={categories}
+              active={activeCategory}
+              onChange={(cat) => {
+                setActiveCategory(cat);
+              }}
+            />
+          )}
+
+          {/* Slider */}
+          {loading ? (
+            <LoadingSkeleton />
+          ) : error ? (
+            <p className="text-center text-red-500 py-12">{error}</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-gray-400 py-12">
+              No testimonials yet. Be the first to share your experience!
+            </p>
+          ) : (
+            <TestimonialSlider
+              key={activeCategory}
+              testimonials={filtered}
+              onCardClick={setSelectedTestimonial}
+            />
+          )}
+
+          <Divider className="my-12" />
+
+          {/* Review platforms */}
+          <ReviewPlatforms />
+
+          <Divider className="my-12" />
+
+          {/* Submission form */}
+          <TestimonialForm onSubmitted={fetchTestimonials} />
         </div>
+      </section>
 
-        {/* Category filter */}
-        {!loading && !error && categories.length > 1 && (
-          <CategoryFilter
-            categories={categories}
-            active={activeCategory}
-            onChange={(cat) => {
-              setActiveCategory(cat);
-            }}
-          />
-        )}
-
-        {/* Slider */}
-        {loading ? (
-          <LoadingSkeleton />
-        ) : error ? (
-          <p className="text-center text-red-500 py-12">{error}</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-center text-gray-400 py-12">
-            No testimonials yet. Be the first to share your experience!
-          </p>
-        ) : (
-          <TestimonialSlider key={activeCategory} testimonials={filtered} />
-        )}
-
-        <Divider className="my-12" />
-
-        {/* Review platforms */}
-        <ReviewPlatforms />
-
-        <Divider className="my-12" />
-
-        {/* Submission form */}
-        <TestimonialForm onSubmitted={fetchTestimonials} />
-      </div>
-    </section>
+      {/* Modal */}
+      <TestimonialModal
+        testimonial={selectedTestimonial}
+        isOpen={selectedTestimonial !== null}
+        onClose={() => setSelectedTestimonial(null)}
+      />
+    </>
   );
 };
 
