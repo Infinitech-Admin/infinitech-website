@@ -321,7 +321,7 @@ export const members = [
   },
   {
     name: "John Kevin De Leon",
-    position: "Digital Marketing Staff",
+    position: "Multimedia Editor",
     image: "kevin.jpg",
     email: "infinitech.kevin@gmail.com",
     phone: "+63 9052710632",
