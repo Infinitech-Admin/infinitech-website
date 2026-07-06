@@ -128,19 +128,19 @@ export const members = [
     href: "https://www.facebook.com/share/17XC8hgRZH/?mibextid=wwXIfr"
   },
   // Admin Assistant
-  {
-    name: "Jhoanna Mae Papio",
-    position: "Admin Assistant",
-    image: "JHO.png",
-    email: "infinitech.jhoanna@gmail.com",
-    phone: "09455837887",
-    telegram: {
-      title: "09455837887",
-      href: "https://web.telegram.org/a/#1852459873"
-    },
-    facebookname: "Jhoanna Mae Papio",
-    href: "https://www.facebook.com/share/1CvLXJM1S4/"
-  },
+  // {
+  //   name: "Jhoanna Mae Papio",
+  //   position: "Admin Assistant",
+  //   image: "JHO.png",
+  //   email: "infinitech.jhoanna@gmail.com",
+  //   phone: "09455837887",
+  //   telegram: {
+  //     title: "09455837887",
+  //     href: "https://web.telegram.org/a/#1852459873"
+  //   },
+  //   facebookname: "Jhoanna Mae Papio",
+  //   href: "https://www.facebook.com/share/1CvLXJM1S4/"
+  // },
   // Junior IT Manager
   {
     name: "Justin De Castro",
