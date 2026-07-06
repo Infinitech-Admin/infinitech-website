@@ -332,22 +332,26 @@ export const members = [
     viber: {
       title: "+63 9052710632",
       href: "https://msng.link/o?639052710632=vi"
-    }
+    },
+    facebookname: "John Kevin De Leon",
+    href: "https://www.facebook.com/profile.php?id=61577519657174"
   },
   {
     name: "Chrissa Canedo",
-    position: "Digital Marketing Staff",
+    position: "Multimedia Editor",
     image: "crissa.jpg",
     email: "infinitech.chrissacanedo@gmail.com",
     phone: "09916469509",
     telegram: {
       title: "Chrissa Canedo",
       href: "https://t.me/09916469509"
-    }
+    },
+    facebookname: "Chrissa Canedo",
+    href: "https://www.facebook.com/share/1BaHfJWYLt/?mibextid=wwXIfr"
   },
   {
     name: "Raphael Brizuela",
-    position: "Digital Marketing Staff",
+    position: "Photographer/Videographer",
     image: "raphael.jpg",
     email: "glimitstudio.brizuelaraphael@gmail.com",
     phone: "09560193167",
@@ -360,7 +364,7 @@ export const members = [
       href: "https://msng.link/o?09560193167=vi"
     },
     facebookname: "Raphael Brizuela",
-    href: "https://www.facebook.com/"
+    href: "https://www.facebook.com/share/17mYTUDCr9/?mibextid=wwXIfr"
   },
   {
     name: "Lourdes Ebuna",
