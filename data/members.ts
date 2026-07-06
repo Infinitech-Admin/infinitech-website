@@ -341,8 +341,8 @@ export const members = [
     email: "infinitech.chrissacanedo@gmail.com",
     phone: "09916469509",
     telegram: {
-      title: "glimit_chrissa",
-      href: "https://t.me/glimit_chrissa"
+      title: "Chrissa Canedo",
+      href: "https://t.me/09916469509"
     }
   },
   {
