@@ -306,7 +306,7 @@ export const members = [
   // },
   {
     name: "Margel Elodovice",
-    position: "Digital Marketing Staff",
+    position: "Multimedia Supervisor",
     image: "margel.jpg",
     email: "infinitechmargellelodovice@gmail.com",
     phone: "09068551357",
@@ -368,7 +368,7 @@ export const members = [
   },
   {
     name: "Lourdes Ebuna",
-    position: "Digital Marketing Staff",
+    position: "Multimedia Editor",
     image: "lourdes.jpg",
     email: "glimit.lourdes@gmail.com",
     phone: "+63 9150616934",
@@ -381,6 +381,6 @@ export const members = [
       href: "https://msng.link/o?639150616934=vi"
     },
     facebookname: "Lourdes Ebuna",
-    href: "https://www.facebook.com/"
+    href: "https://www.facebook.com/share/1AntyX8zES/?mibextid=wwXIfr"
   }
 ];
