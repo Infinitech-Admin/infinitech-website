@@ -349,23 +349,7 @@ export const members = [
     facebookname: "Chrissa Canedo",
     href: "https://www.facebook.com/share/1BaHfJWYLt/?mibextid=wwXIfr"
   },
-  {
-    name: "Raphael Brizuela",
-    position: "Photographer/Videographer",
-    image: "raphael.jpg",
-    email: "glimitstudio.brizuelaraphael@gmail.com",
-    phone: "09560193167",
-    telegram: {
-      title: "09560193167",
-      href: "https://t.me/09560193167"
-    },
-    viber: {
-      title: "09560193167",
-      href: "https://msng.link/o?09560193167=vi"
-    },
-    facebookname: "Raphael Brizuela",
-    href: "https://www.facebook.com/share/17mYTUDCr9/?mibextid=wwXIfr"
-  },
+  
   {
     name: "Lourdes Ebuna",
     position: "Multimedia Editor",
@@ -383,4 +367,21 @@ export const members = [
     facebookname: "Lourdes Ebuna",
     href: "https://www.facebook.com/share/1AntyX8zES/?mibextid=wwXIfr"
   }
+  {
+    name: "Raphael Brizuela",
+    position: "Photographer/Videographer",
+    image: "raphael.jpg",
+    email: "glimitstudio.brizuelaraphael@gmail.com",
+    phone: "09560193167",
+    telegram: {
+      title: "09560193167",
+      href: "https://t.me/09560193167"
+    },
+    viber: {
+      title: "09560193167",
+      href: "https://msng.link/o?09560193167=vi"
+    },
+    facebookname: "Raphael Brizuela",
+    href: "https://www.facebook.com/share/17mYTUDCr9/?mibextid=wwXIfr"
+  },
 ];
