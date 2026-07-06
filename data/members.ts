@@ -366,7 +366,7 @@ export const members = [
     },
     facebookname: "Lourdes Ebuna",
     href: "https://www.facebook.com/share/1AntyX8zES/?mibextid=wwXIfr"
-  }
+  },
   {
     name: "Raphael Brizuela",
     position: "Photographer/Videographer",
