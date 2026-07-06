@@ -278,30 +278,106 @@ export const members = [
   //   facebookname: "Angely Victoriano",
   //   href: "https://www.facebook.com/angely.victoriano/"
   // },
-  {
-    name: "Kaila Dapiaoen",
-    position: "Digital Marketing Staff",
-    image: "kaila.png",
-    email: "infinitech.kaila@gmail.com",
-    phone: "09919875397",
-    telegram: {
-      title: "09919875397",
-      href: "https://web.telegram.org/k/#09919875397"
-    },
-    facebookname: "Kaila Dapiaoen",
-    href: "https://www.facebook.com/krdapiaoen"
+//   {
+//     name: "Kaila Dapiaoen",
+//     position: "Digital Marketing Staff",
+//     image: "kaila.png",
+//     email: "infinitech.kaila@gmail.com",
+//     phone: "09919875397",
+//     telegram: {
+//       title: "09919875397",
+//       href: "https://web.telegram.org/k/#09919875397"
+//     },
+//     facebookname: "Kaila Dapiaoen",
+//     href: "https://www.facebook.com/krdapiaoen"
+//   },
+//   {
+//     name: "Joe Rendon",
+//     position: "Digital Marketing Staff",
+//     image: "joe.png",
+//     email: "infinitech.joe@gmail.com",
+//     phone: "09470445574",
+//     telegram: {
+//       title: "09470445574",
+//       href: "https://t.me/09470445574"
+//     },
+//     facebookname: "Joe Rendon",
+//     href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO"
+//   }
+// ];
+
+{
+  name: "Margel Elodovice",
+  position: "Digital Marketing Staff",
+  image: "margel.jpg",
+  email: "infinitechmargellelodovice@gmail.com",
+  phone: "09068551357",
+  telegram: {
+    title: "09068551357",
+    href: "https://t.me/09068551357"
   },
-  {
-    name: "Joe Rendon",
-    position: "Digital Marketing Staff",
-    image: "joe.png",
-    email: "infinitech.joe@gmail.com",
-    phone: "09470445574",
-    telegram: {
-      title: "09470445574",
-      href: "https://t.me/09470445574"
-    },
-    facebookname: "Joe Rendon",
-    href: "https://www.facebook.com/joe.rendon.372752/?rdid=f5RMtHfIeSZVoMGO"
+  viber: {
+    title: "09068551357",
+    href: "https://msng.link/o?09068551357=vi"
   }
-];
+},
+{
+  name: "John Kevin De Leon",
+  position: "Digital Marketing Staff",
+  image: "kevin.jpg",
+  email: "infinitech.kevin@gmail.com",
+  phone: "+63 9052710632",
+  telegram: {
+    title: "+63 9052710632",
+    href: "https://t.me/+639052710632"
+  },
+  viber: {
+    title: "+63 9052710632",
+    href: "https://msng.link/o?639052710632=vi"
+  }
+},
+{
+  name: "Chrissa Canedo",
+  position: "Digital Marketing Staff",
+  image: "crissa.jpg",
+  email: "infinitech.chrissacanedo@gmail.com",
+  phone: "09916469509",
+  telegram: {
+    title: "glimit_chrissa",
+    href: "https://t.me/glimit_chrissa"
+  }
+},
+{
+  name: "Raphael Brizuela",
+  position: "Digital Marketing Staff",
+  image: "raphael.jpg",
+  email: "glimitstudio.brizuelaraphael@gmail.com",
+  phone: "09560193167",
+  telegram: {
+    title: "09560193167",
+    href: "https://t.me/09560193167"
+  },
+  viber: {
+    title: "09560193167",
+    href: "https://msng.link/o?09560193167=vi"
+  },
+  facebookname: "Raphael Brizuela",
+  href: "https://www.facebook.com/"
+},
+{
+  name: "Lourdes Ebuna",
+  position: "Digital Marketing Staff",
+  image: "lourdes.jpg",
+  email: "glimit.lourdes@gmail.com",
+  phone: "+63 9150616934",
+  telegram: {
+    title: "@glimit_Lourdes",
+    href: "https://t.me/glimit_Lourdes"
+  },
+  viber: {
+    title: "+63 9150616934",
+    href: "https://msng.link/o?639150616934=vi"
+  },
+  facebookname: "Lourdes Ebuna",
+  href: "https://www.facebook.com/"
+},
