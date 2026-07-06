@@ -215,7 +215,7 @@ export const members = [
   // },
   {
     name: "Armand M. Cajucom",
-    position: "Digital Marketing Staff",
+    position: "Multimedia Manager",
     image: "armans.png",
     email: "infinitech.armandcajucom@gmail.com",
     phone: "09940244223",
@@ -252,19 +252,7 @@ export const members = [
   //   facebookname: "Jayvee Valeriano",
   //   href: "https://www.facebook.com/Abic.jayvee"
   // },
-  {
-    name: "Janina Jerusalem",
-    position: "Digital Marketing Staff",
-    image: "janina.png",
-    email: "infinitech.janina@gmail.com",
-    phone: "09489294296",
-    telegram: {
-      title: "09489294296",
-      href: "https://web.telegram.org/k/#63948929429"
-    },
-    facebookname: "Janina Jerusalem",
-    href: "https://www.facebook.com/iamjaninajerusalem/"
-  },
+ 
   // {
   //   name: "Angely Victoriano",
   //   position: "Digital Marketing Staff",
@@ -383,5 +371,18 @@ export const members = [
     },
     facebookname: "Raphael Brizuela",
     href: "https://www.facebook.com/share/17mYTUDCr9/?mibextid=wwXIfr"
+  },
+   {
+    name: "Janina Jerusalem",
+    position: "Digital Marketing Staff",
+    image: "janina.png",
+    email: "infinitech.janina@gmail.com",
+    phone: "09489294296",
+    telegram: {
+      title: "09489294296",
+      href: "https://web.telegram.org/k/#63948929429"
+    },
+    facebookname: "Janina Jerusalem",
+    href: "https://www.facebook.com/iamjaninajerusalem/"
   },
 ];
