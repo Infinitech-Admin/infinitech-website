@@ -1,6 +1,6 @@
 import React from "react";
 import Hero from "@/components/user/home/hero/hero";
-import PortfolioShowcase from "@/components/user/home/portfolio/portfolio-showcase";
+// import PortfolioShowcase from "@/components/user/home/portfolio/portfolio-showcase";
 import About from "@/components/user/home/about";
 import Services from "@/components/user/home/services/services";
 
@@ -11,14 +11,15 @@ const Page = () => {
   return (
     <>
       <Hero />
-      <PortfolioShowcase />
-      <About />
+      {/* <PortfolioShowcase /> */}
+
       <Services />
-   
+
       <Testimonials />
-      <section className="bg-gray-100">
+      <About />
+      {/* <section className="bg-gray-100">
         <Contact />
-      </section>
+      </section> */}
     </>
   );
 };

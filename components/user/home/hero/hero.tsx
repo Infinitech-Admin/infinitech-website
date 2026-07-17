@@ -1,4 +1,3 @@
-import Cards from "./cards";
 import Left from "./left";
 import Right from "./right";
 
@@ -17,7 +16,6 @@ const Hero = () => {
             <Right />
           </div>
         </div>
-        <Cards />
       </div>
     </section>
   );

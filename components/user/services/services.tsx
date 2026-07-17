@@ -1,10 +1,110 @@
-"use client"
-import { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Loader2, Search } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import VideoSurveyForm from "@/components/video-survey-form"
+"use client";
+import { useState, useRef } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button, useDisclosure } from "@heroui/react";
+import { Button as ShadButton } from "@/components/ui/button";
+import { Loader2, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import VideoSurveyForm from "@/components/video-survey-form";
+import RequestReportModal from "@/components/RequestReportModal";
+import RequestWebsiteAuditModal from "@/components/RequestWebsiteAuditModal";
+import RequestSocialMediaModal from "@/components/Requestsocialmediamodal ";
+import RequestTikTokShopModal from "@/components/Requesttiktokshopmodal";
+import RequestJuanTapModal from "@/components/RequestJuanTapModal";
+import RequestGraphicDesignModal from "@/components/Requestgraphicdesignmodal";
+import RequestPaidAdsModal from "@/components/RequestPaidAdsModal";
+import {
+  LuArrowRight,
+  LuChevronLeft,
+  LuChevronRight,
+  LuX,
+} from "react-icons/lu";
+import {
+  FaShieldAlt,
+  FaBullseye,
+  FaChartLine,
+  FaLightbulb,
+  FaMoneyBillWave,
+  FaClock,
+  FaHashtag,
+  FaCalendarAlt,
+  FaChartBar,
+  FaBullhorn,
+  FaStore,
+  FaBoxOpen,
+  FaVideo,
+  FaEye,
+  FaCrosshairs,
+  FaSlidersH,
+  FaSearchDollar,
+  FaAddressCard,
+  FaUsers,
+  FaPalette,
+  FaBolt,
+} from "react-icons/fa";
+
+/* ============================================================================
+ * TYPES
+ * ========================================================================== */
+
+interface IconProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
+interface BenefitItem {
+  icon: React.ComponentType<IconProps>;
+  title: string;
+  description: string;
+}
+interface ServiceCategory {
+  id: number;
+  name: string;
+  description: string;
+}
+interface BenefitsService {
+  name: string;
+  type: "benefits";
+  icon: React.ComponentType<IconProps>;
+  color: string;
+  tagline: string;
+  benefits: BenefitItem[];
+  // Optional: use a real photo/graphic as the carousel thumbnail AND as
+  // the large image shown when the card expands (mirrors how "detail"
+  // cards use `image`).
+  thumbnailImage?: string;
+  // Optional: show the Free SEO Audit lead-gen form when this card expands.
+  showSEOAuditForm?: boolean;
+  // Optional: show a lead-gen "Request ..." CTA button when this card
+  // expands. Key selects which modal/label to use (see
+  // benefitsRequestButtonConfig below).
+  requestButtonKey?: BenefitsRequestButtonKey;
+}
+interface DetailService {
+  name: string;
+  type: "detail";
+  // Filename under /images/services/, used both as thumbnail and as the
+  // large image shown when the card expands.
+  image: string;
+  subtitle: string;
+  description: string;
+  categories: ServiceCategory[];
+  // Optional CTA button(s) shown under the description when expanded.
+  ctas?: readonly ServiceCtaKey[];
+  // Optional: show the Free SEO Audit lead-gen form when this card expands.
+  showSEOAuditForm?: boolean;
+  // Optional: show a lead-gen "Request ..." CTA button when this card
+  // expands. Key selects which modal/label to use (see
+  // benefitsRequestButtonConfig below).
+  requestButtonKey?: BenefitsRequestButtonKey;
+}
+type BrandingService = BenefitsService | DetailService;
+
+/* ============================================================================
+ * DATA — main service blocks (Website Dev / Design / Social Media)
+ * NOTE: SEO, Photography & Videography, and JuanTap live only in the
+ * Branding & Marketing carousel below — they don't get their own full
+ * block here, to avoid duplicates.
+ * ========================================================================== */
 
 const services = [
   {
@@ -12,143 +112,561 @@ const services = [
     subtitle: "Crafting Custom Websites Tailored to Your Needs",
     description: `We create visually stunning and highly functional websites that capture attention, convey your brand's message, and give you a competitive edge. Share your vision with us, and we'll take care of the rest.`,
     image: "web-dev.svg",
+    // CTA relevant to THIS section only — "do you already have a site?"
+    ctas: ["websiteAudit"] as const,
     categories: [
-      { id: 1, name: "Hotel Management", description: "Websites designed for hotels, resorts, and hospitality businesses with booking and management features." },
-      { id: 2, name: "Corporate Website", description: "Professional websites for companies to showcase services, portfolios, and corporate identity." },
-      { id: 3, name: "Manpower Platform", description: "Platforms for recruitment, staffing, and workforce management with user-friendly interfaces." },
-      { id: 4, name: "Real Estate", description: "Property listing and management websites tailored for real estate agencies and brokers." },
-      { id: 5, name: "E-Commerce", description: "Online stores with secure payment gateways, product catalogs, and shopping cart functionality." },
-      { id: 6, name: "Booking System", description: "Websites with integrated booking and scheduling systems for services and events." },
+      {
+        id: 1,
+        name: "Hotel Management",
+        description:
+          "Websites designed for hotels, resorts, and hospitality businesses with booking and management features.",
+      },
+      {
+        id: 2,
+        name: "Corporate Website",
+        description:
+          "Professional websites for companies to showcase services, portfolios, and corporate identity.",
+      },
+      {
+        id: 3,
+        name: "Manpower Platform",
+        description:
+          "Platforms for recruitment, staffing, and workforce management with user-friendly interfaces.",
+      },
+      {
+        id: 4,
+        name: "Real Estate",
+        description:
+          "Property listing and management websites tailored for real estate agencies and brokers.",
+      },
+      {
+        id: 5,
+        name: "E-Commerce",
+        description:
+          "Online stores with secure payment gateways, product catalogs, and shopping cart functionality.",
+      },
+      {
+        id: 6,
+        name: "Booking System",
+        description:
+          "Websites with integrated booking and scheduling systems for services and events.",
+      },
+    ],
+  },
+];
+
+/* ============================================================================
+ * CONFIG — CTA buttons referenced by services[].ctas above.
+ * Add a new service here + reference its key in a service's `ctas` array
+ * to attach a button to that section — no more guessing by index.
+ * ========================================================================== */
+
+type ServiceCtaKey = "websiteAudit" | "videoSurvey";
+
+interface ServiceCtaConfigEntry {
+  label: string;
+  kind: "primary" | "secondary";
+}
+
+const serviceCtaConfig: Record<ServiceCtaKey, ServiceCtaConfigEntry> = {
+  videoSurvey: { label: "Take Video Survey", kind: "primary" },
+  websiteAudit: {
+    label: "Already have a site? Get a Website Audit",
+    kind: "secondary",
+  },
+};
+
+// Keys for the lead-gen "Request ..." buttons shown on benefits-type and
+// detail-type branding cards (Social Media Management, TikTok Shop
+// Opening, JuanTap, Graphic Design, Paid Ads, etc). Add a new key here +
+// reference it in a card's `requestButtonKey` to attach a button — the
+// actual click handler is passed in from the page.
+type BenefitsRequestButtonKey =
+  | "socialMedia"
+  | "tiktokShop"
+  | "juantap"
+  | "graphicDesign"
+  | "paidAds";
+
+const benefitsRequestButtonConfig: Record<
+  BenefitsRequestButtonKey,
+  { label: string; className: string }
+> = {
+  socialMedia: {
+    label: "Request Social Media Management",
+    className:
+      "bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg w-fit",
+  },
+  tiktokShop: {
+    label: "Request TikTok Shop Opening",
+    className:
+      "bg-[#f5a623] hover:bg-[#e0951a] text-white px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-md hover:shadow-lg w-fit",
+  },
+  juantap: {
+    label: "Apply for JuanTap",
+    className:
+      "bg-[#f5a623] hover:bg-[#e0951a] text-white px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-md hover:shadow-lg w-fit",
+  },
+  graphicDesign: {
+    label: "Request Graphic Design",
+    className:
+      "bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg w-fit",
+  },
+  paidAds: {
+    label: "Request Paid Ads",
+    className:
+      "bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg w-fit",
+  },
+};
+
+// Renders a service's CTA buttons (if it has any). Shared by the main
+// services loop and the Branding & Marketing detail panel so both stay
+// visually consistent and there's only one place to update the styling.
+function ServiceCtaButtons({
+  ctas,
+  onVideoSurvey,
+  onWebsiteAudit,
+  className = "mt-6 flex flex-wrap gap-3",
+}: {
+  ctas: readonly ServiceCtaKey[] | undefined;
+  onVideoSurvey: () => void;
+  onWebsiteAudit: () => void;
+  className?: string;
+}) {
+  if (!ctas || ctas.length === 0) return null;
+
+  return (
+    <div className={className}>
+      {ctas.map((ctaKey) => {
+        const cta = serviceCtaConfig[ctaKey];
+        if (ctaKey === "videoSurvey") {
+          return (
+            <ShadButton
+              key={ctaKey}
+              onClick={onVideoSurvey}
+              className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              {cta.label}
+            </ShadButton>
+          );
+        }
+        if (ctaKey === "websiteAudit") {
+          return (
+            <button
+              key={ctaKey}
+              onClick={onWebsiteAudit}
+              className="flex items-center gap-2 rounded-full bg-[#0d1b3e] border-2 border-[#f5a623] px-5 py-2.5 text-sm font-bold text-[#f5a623] transition-all duration-300 hover:bg-[#f5a623] hover:text-[#0d1b3e] hover:shadow-lg"
+            >
+              {cta.label}
+            </button>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
+/* ============================================================================
+ * DATA — Market research benefits
+ * ========================================================================== */
+
+const researchBenefits = [
+  {
+    title: "Avoid Costly Mistakes",
+    description: "Know your market before you spend on it.",
+    icon: FaShieldAlt,
+    color: "#ef4444",
+  },
+  {
+    title: "Know Your Audience",
+    description: "Understand who's buying and why.",
+    icon: FaBullseye,
+    color: "#0ea5e9",
+  },
+  {
+    title: "Outsmart Competitors",
+    description: "See what's working for others in your space.",
+    icon: FaChartLine,
+    color: "#f59e0b",
+  },
+  {
+    title: "Make Confident Decisions",
+    description: "Back your next move with real data.",
+    icon: FaLightbulb,
+    color: "#8b5cf6",
+  },
+  {
+    title: "Save Money Long-Term",
+    description: "Invest only where the data says it pays off.",
+    icon: FaMoneyBillWave,
+    color: "#10b981",
+  },
+  {
+    title: "Move Faster",
+    description: "Skip guesswork and launch with clarity.",
+    icon: FaClock,
+    color: "#f43f5e",
+  },
+];
+
+/* ============================================================================
+ * DATA — Branding & marketing carousel
+ * ========================================================================== */
+
+const brandingServices: BrandingService[] = [
+  {
+    name: "Social Media Management",
+    type: "benefits",
+    icon: FaHashtag,
+    color: "#0ea5e9",
+    tagline: "Consistent content, real engagement.",
+    // Reuses the illustration from the main "Social Media Marketing"
+    // block above — shown as the carousel thumbnail and as the large
+    // image when this card is expanded.
+    thumbnailImage: "/images/services/marketing.svg",
+    // Shows the "Request Social Media Management" CTA button when this
+    // card expands.
+    requestButtonKey: "socialMedia",
+    benefits: [
+      {
+        icon: FaCalendarAlt,
+        title: "Content Calendar",
+        description: "Planned posts so your pages never go quiet.",
+      },
+      {
+        icon: FaChartBar,
+        title: "Analytics & Reporting",
+        description: "See what's working with monthly performance reports.",
+      },
+      {
+        icon: FaBullseye,
+        title: "Better Engagement",
+        description: "Content built to get likes, shares, and comments.",
+      },
+      {
+        icon: FaClock,
+        title: "Save Your Time",
+        description: "We handle posting so you can focus on the business.",
+      },
     ],
   },
   {
-    title: "SEARCH ENGINE OPTIMIZATION",
-    subtitle: "Boost Your Online Visibility with SEO",
-    description: `Our SEO strategies help improve your website's search engine rankings, driving more organic traffic and increasing your online presence. Let us optimize your site and ensure it reaches the right audience.`,
-    image: "seo.svg",
-    hasSEOForm: true,
-    categories: [
-      { id: 1, name: "On-Page SEO", description: "Optimizing content, meta tags, and site structure for better rankings." },
-      { id: 2, name: "Off-Page SEO", description: "Building backlinks and authority through external strategies." },
-      { id: 3, name: "Local SEO", description: "Improving visibility for businesses in local search results." },
+    name: "TikTok Shop Opening",
+    type: "benefits",
+    icon: FaStore,
+    color: "#f43f5e",
+    tagline: "Get your shop live and selling fast.",
+    thumbnailImage: "/tiktokshop.png",
+    requestButtonKey: "tiktokShop",
+    benefits: [
+      {
+        icon: FaStore,
+        title: "Fast Store Setup",
+        description: "We register and configure your shop end-to-end.",
+      },
+      {
+        icon: FaBoxOpen,
+        title: "Product Listing Optimization",
+        description: "Titles, photos, and pricing built to convert.",
+      },
+      {
+        icon: FaVideo,
+        title: "Live Selling Guidance",
+        description: "Learn how to run live selling sessions that sell.",
+      },
+      {
+        icon: FaChartBar,
+        title: "Sales Tracking",
+        description: "Monitor orders and performance from day one.",
+      },
     ],
   },
   {
-    title: "GRAPHIC DESIGN",
-    subtitle: "Bringing Your Brand to Life with Stunning Designs",
-    description: `Our creative team designs visually appealing graphics that reflect your brand identity, making a lasting impression on your audience. From logos to promotional materials, we've got you covered.`,
-    image: "design.svg",
-    categories: [
-      { id: 1, name: "Logo Design", description: "Unique logos that capture your brand identity." },
-      { id: 2, name: "Marketing Collateral", description: "Brochures, flyers, and promotional materials." },
-      { id: 3, name: "Digital Assets", description: "Social media graphics, banners, and ads." },
-    ],
-  },
-  {
-    title: "SOCIAL MEDIA MARKETING",
-    subtitle: "Maximize Engagement Through Social Media",
-    description: `We develop and manage engaging social media campaigns that build brand awareness, increase customer engagement, and drive business growth. Let us help you connect with your audience effectively.`,
-    image: "marketing.svg",
-    categories: [
-      { id: 1, name: "Campaign Strategy", description: "Tailored strategies to maximize reach and engagement." },
-      { id: 2, name: "Content Creation", description: "Engaging posts, videos, and graphics for social platforms." },
-      { id: 3, name: "Analytics & Reporting", description: "Tracking performance and optimizing campaigns." },
-    ],
-  },
-  {
-    title: "PHOTOGRAPHY & VIDEOGRAPHY",
+    name: "Photography & Videography",
+    type: "detail",
+    image: "photo_video.png",
     subtitle: "Capturing Moments That Tell Your Story",
     description: `Our professional photography and videography services bring your brand to life through compelling visual content. From product shoots to promotional videos, we create stunning media that resonates with your audience and elevates your brand presence.`,
-    image: "photo_video.png",
+    // CTA relevant to THIS card only — video content lives here
+    ctas: ["videoSurvey"] as const,
     categories: [
-      { id: 1, name: "Wedding", description: "Capturing the beauty and emotions of weddings with timeless, cinematic imagery." },
-      { id: 2, name: "Portrait", description: "Professional portraits that highlight personality, style, and character." },
-      { id: 3, name: "Event", description: "Coverage of corporate, social, and private events with storytelling visuals." },
-      { id: 4, name: "Product", description: "High-quality product photography for e-commerce, catalogs, and marketing campaigns." },
-      { id: 5, name: "Commercial & Branding", description: "Visuals that strengthen brand identity and support marketing strategies." },
-      { id: 6, name: "Headshots", description: "Clean, professional headshots for business, LinkedIn, and personal branding." },
+      {
+        id: 1,
+        name: "Wedding",
+        description:
+          "Capturing the beauty and emotions of weddings with timeless, cinematic imagery.",
+      },
+      {
+        id: 2,
+        name: "Portrait",
+        description:
+          "Professional portraits that highlight personality, style, and character.",
+      },
+      {
+        id: 3,
+        name: "Event",
+        description:
+          "Coverage of corporate, social, and private events with storytelling visuals.",
+      },
+      {
+        id: 4,
+        name: "Product",
+        description:
+          "High-quality product photography for e-commerce, catalogs, and marketing campaigns.",
+      },
+      {
+        id: 5,
+        name: "Commercial & Branding",
+        description:
+          "Visuals that strengthen brand identity and support marketing strategies.",
+      },
+      {
+        id: 6,
+        name: "Headshots",
+        description:
+          "Clean, professional headshots for business, LinkedIn, and personal branding.",
+      },
     ],
   },
   {
-    title: "JUANTAP DIGITAL BUSINESS CARD",
-    subtitle: "Modern Networking Made Simple",
-    description: `Transform the way you network with JuanTap, our innovative digital business card solution. Share your contact information instantly with a single tap, making connections effortless and eco-friendly. Stand out in the digital age while keeping all your professional details accessible anytime, anywhere.`,
-    image: "juantap.png",
+    // now a full "detail" card (image + subtitle + description + On-Page/
+    // Off-Page/Local SEO categories), same shape as Photography & JuanTap,
+    // instead of the generic 4-benefit tile. Still shows the
+    // SEOAuditBanner lead-gen form when expanded.
+    name: "SEO",
+    type: "detail",
+    image: "seo.svg",
+    subtitle: "Boost Your Online Visibility with SEO",
+    description: `Our SEO strategies help improve your website's search engine rankings, driving more organic traffic and increasing your online presence. Let us optimize your site and ensure it reaches the right audience.`,
+    showSEOAuditForm: true,
     categories: [
-      { id: 1, name: "Personal Profiles", description: "Digital cards for individuals to share contact info instantly." },
-      { id: 2, name: "Corporate Teams", description: "Centralized business card solutions for organizations." },
-      { id: 3, name: "Custom Branding", description: "Tailored designs to match your brand identity." },
+      {
+        id: 1,
+        name: "On-Page SEO",
+        description:
+          "Optimizing content, meta tags, and site structure for better rankings.",
+      },
+      {
+        id: 2,
+        name: "Off-Page SEO",
+        description:
+          "Building backlinks and authority through external strategies.",
+      },
+      {
+        id: 3,
+        name: "Local SEO",
+        description:
+          "Improving visibility for businesses in local search results.",
+      },
     ],
   },
-]
+  {
+    // Converted from a plain "detail" card to a "benefits" card so it can
+    // show the "Apply for JuanTap" lead-gen button (same treatment as
+    // Social Media Management / TikTok Shop Opening) when expanded.
+    name: "JuanTap",
+    type: "benefits",
+    icon: FaAddressCard,
+    color: "#6366f1",
+    tagline: "Share your info with a single tap.",
+    thumbnailImage: "/images/services/juantap.png",
+    requestButtonKey: "juantap",
+    benefits: [
+      {
+        icon: FaAddressCard,
+        title: "Personal Profiles",
+        description:
+          "Digital cards for individuals to share contact info instantly.",
+      },
+      {
+        icon: FaUsers,
+        title: "Corporate Teams",
+        description: "Centralized business card solutions for organizations.",
+      },
+      {
+        icon: FaPalette,
+        title: "Custom Branding",
+        description: "Tailored designs to match your brand identity.",
+      },
+      {
+        icon: FaBolt,
+        title: "Instant Tap Sharing",
+        description: "Share your details in a single tap — no app required.",
+      },
+    ],
+  },
+  {
+    name: "Paid Ads",
+    type: "benefits",
+    icon: FaBullhorn,
+    color: "#f59e0b",
+    tagline: "Put your brand in front of the right people, fast.",
+    thumbnailImage: "/paidads.png",
+    // Shows the "Request Paid Ads" CTA button when this card expands,
+    // same treatment as the other lead-gen cards.
+    requestButtonKey: "paidAds",
+    benefits: [
+      {
+        icon: FaEye,
+        title: "Immediate Visibility",
+        description: "Get seen the moment your campaign goes live.",
+      },
+      {
+        icon: FaCrosshairs,
+        title: "Targeted Reach",
+        description: "Ads shown to the audience most likely to buy.",
+      },
+      {
+        icon: FaChartBar,
+        title: "Measurable ROI",
+        description: "Track every peso spent against real results.",
+      },
+      {
+        icon: FaSlidersH,
+        title: "Scalable Budget Control",
+        description: "Start small and scale up what performs.",
+      },
+    ],
+  },
+  {
+    name: "Graphic Design",
+    type: "detail",
+    image: "design.svg",
+    subtitle: "Bringing Your Brand to Life with Stunning Designs",
+    description: `Our creative team designs visually appealing graphics that reflect your brand identity, making a lasting impression on your audience. From logos to promotional materials, we've got you covered.`,
+    // Shows the "Request Graphic Design" CTA button when this card
+    // expands, same treatment as the other lead-gen cards.
+    requestButtonKey: "graphicDesign",
+    categories: [
+      {
+        id: 1,
+        name: "Logo Design",
+        description: "Unique logos that capture your brand identity.",
+      },
+      {
+        id: 2,
+        name: "Marketing Collateral",
+        description: "Brochures, flyers, and promotional materials.",
+      },
+      {
+        id: 3,
+        name: "Digital Assets",
+        description: "Social media graphics, banners, and ads.",
+      },
+    ],
+  },
+];
 
-// ─── Inline SEO Audit Banner ───────────────────────────────────────────────
+/* ============================================================================
+ * SECTION: SEO Audit Banner (inline lead-gen form, only shown under SEO service)
+ * ========================================================================== */
+
 function SEOAuditBanner() {
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [form, setForm] = useState({ full_name: "", email: "", mobile: "", website_url: "" })
-  const [errors, setErrors] = useState({ email: "", mobile: "", website_url: "" })
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    mobile: "",
+    website_url: "",
+  });
+  const [errors, setErrors] = useState({
+    email: "",
+    mobile: "",
+    website_url: "",
+  });
 
-  const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+  const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const validateUrl = (v: string) => {
-    try { new URL(v.startsWith("http") ? v : `https://${v}`); return true } catch { return false }
-  }
+    try {
+      new URL(v.startsWith("http") ? v : `https://${v}`);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const handleSubmit = async () => {
-    const newErrors = { email: "", mobile: "", website_url: "" }
-    let hasErr = false
+    const newErrors = { email: "", mobile: "", website_url: "" };
+    let hasErr = false;
     if (!form.full_name.trim()) {
-      toast({ title: "Full name is required", variant: "destructive" })
-      return
+      toast({ title: "Full name is required", variant: "destructive" });
+      return;
     }
-    if (!form.email || !validateEmail(form.email)) { newErrors.email = "Valid email required"; hasErr = true }
-    if (!form.mobile.trim()) { newErrors.mobile = "Mobile required"; hasErr = true }
-    if (!form.website_url.trim() || !validateUrl(form.website_url)) { newErrors.website_url = "Valid URL required"; hasErr = true }
-    setErrors(newErrors)
-    if (hasErr) return
+    if (!form.email || !validateEmail(form.email)) {
+      newErrors.email = "Valid email required";
+      hasErr = true;
+    }
+    if (!form.mobile.trim()) {
+      newErrors.mobile = "Mobile required";
+      hasErr = true;
+    }
+    if (!form.website_url.trim() || !validateUrl(form.website_url)) {
+      newErrors.website_url = "Valid URL required";
+      hasErr = true;
+    }
+    setErrors(newErrors);
+    if (hasErr) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const payload = {
         ...form,
-        website_url: form.website_url.startsWith("http") ? form.website_url : `https://${form.website_url}`,
-      }
+        website_url: form.website_url.startsWith("http")
+          ? form.website_url
+          : `https://${form.website_url}`,
+      };
       const res = await fetch("/api/seo-audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (data.success) {
-        setSubmitted(true)
+        setSubmitted(true);
       } else {
-        toast({ title: "Error", description: data.message || "Submission failed.", variant: "destructive" })
+        toast({
+          title: "Error",
+          description: data.message || "Submission failed.",
+          variant: "destructive",
+        });
       }
     } catch {
-      toast({ title: "Error", description: "Something went wrong.", variant: "destructive" })
+      toast({
+        title: "Error",
+        description: "Something went wrong.",
+        variant: "destructive",
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div
       className="w-full rounded-2xl overflow-hidden my-8"
       style={{
-        background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 50%, #0d1b3e 100%)",
-        boxShadow: "0 8px 40px rgba(13,27,62,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+        background:
+          "linear-gradient(135deg, #0d1b3e 0%, #1a306e 50%, #0d1b3e 100%)",
+        boxShadow:
+          "0 8px 40px rgba(13,27,62,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
     >
-      {/* Top orange accent bar */}
       <div
         className="h-1 w-full"
-        style={{ background: "linear-gradient(90deg, transparent 0%, #f5a623 30%, #f5a623 70%, transparent 100%)" }}
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, #f5a623 30%, #f5a623 70%, transparent 100%)",
+        }}
       />
 
-      {/* Heading */}
       <div className="px-6 pt-5 pb-3 text-center">
-        <p className="text-xs font-extrabold tracking-[0.3em] uppercase mb-1" style={{ color: "#f5a623" }}>
+        <p
+          className="text-xs font-extrabold tracking-[0.3em] uppercase mb-1"
+          style={{ color: "#f5a623" }}
+        >
           ✦ Free Service ✦
         </p>
         <h2 className="text-white font-bold text-lg md:text-xl leading-snug">
@@ -162,77 +680,109 @@ function SEOAuditBanner() {
           <div className="text-5xl mb-3">🎉</div>
           <p className="text-white font-bold text-lg">Request Received!</p>
           <p className="text-slate-300 text-sm mt-2">
-            Our SEO specialists will analyze your site and reach out within 24–48 business hours.
+            Our SEO specialists will analyze your site and reach out within
+            24–48 business hours.
           </p>
         </div>
       ) : (
         <div className="px-4 md:px-8 pb-5">
-          {/* Horizontal form */}
           <div className="flex flex-col md:flex-row gap-3 items-start">
-            {/* Full Name */}
             <div className="flex-1 min-w-0">
               <input
                 type="text"
                 placeholder="Full Name"
                 value={form.full_name}
-                onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, full_name: e.target.value }))
+                }
                 className="w-full bg-white/5 border border-white/20 rounded-full px-5 py-[11px] text-white text-sm placeholder:text-slate-400 outline-none focus:border-yellow-400 focus:bg-white/10 transition-all"
               />
             </div>
 
-            {/* Email */}
             <div className="flex-1 min-w-0">
               <input
                 type="email"
                 placeholder="Email Address"
                 value={form.email}
-                onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setErrors((p) => ({ ...p, email: "" })) }}
+                onChange={(e) => {
+                  setForm((p) => ({ ...p, email: e.target.value }));
+                  setErrors((p) => ({ ...p, email: "" }));
+                }}
                 className={`w-full bg-white/5 border rounded-full px-5 py-[11px] text-white text-sm placeholder:text-slate-400 outline-none transition-all focus:bg-white/10 ${errors.email ? "border-red-400" : "border-white/20 focus:border-yellow-400"}`}
               />
-              {errors.email && <p className="text-red-400 text-xs mt-1 pl-4">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-400 text-xs mt-1 pl-4">{errors.email}</p>
+              )}
             </div>
 
-            {/* Mobile */}
             <div className="flex-1 min-w-0">
               <input
                 type="tel"
                 placeholder="Mobile Number"
                 value={form.mobile}
-                onChange={(e) => { setForm((p) => ({ ...p, mobile: e.target.value.replace(/[a-zA-Z]/g, "") })); setErrors((p) => ({ ...p, mobile: "" })) }}
+                onChange={(e) => {
+                  setForm((p) => ({
+                    ...p,
+                    mobile: e.target.value.replace(/[a-zA-Z]/g, ""),
+                  }));
+                  setErrors((p) => ({ ...p, mobile: "" }));
+                }}
                 className={`w-full bg-white/5 border rounded-full px-5 py-[11px] text-white text-sm placeholder:text-slate-400 outline-none transition-all focus:bg-white/10 ${errors.mobile ? "border-red-400" : "border-white/20 focus:border-yellow-400"}`}
               />
-              {errors.mobile && <p className="text-red-400 text-xs mt-1 pl-4">{errors.mobile}</p>}
+              {errors.mobile && (
+                <p className="text-red-400 text-xs mt-1 pl-4">
+                  {errors.mobile}
+                </p>
+              )}
             </div>
 
-            {/* Website URL */}
             <div className="flex-1 min-w-0">
               <input
                 type="url"
                 placeholder="Website URL"
                 value={form.website_url}
-                onChange={(e) => { setForm((p) => ({ ...p, website_url: e.target.value })); setErrors((p) => ({ ...p, website_url: "" })) }}
+                onChange={(e) => {
+                  setForm((p) => ({ ...p, website_url: e.target.value }));
+                  setErrors((p) => ({ ...p, website_url: "" }));
+                }}
                 className={`w-full bg-white/5 border rounded-full px-5 py-[11px] text-white text-sm placeholder:text-slate-400 outline-none transition-all focus:bg-white/10 ${errors.website_url ? "border-red-400" : "border-white/20 focus:border-yellow-400"}`}
               />
-              {errors.website_url && <p className="text-red-400 text-xs mt-1 pl-4">{errors.website_url}</p>}
+              {errors.website_url && (
+                <p className="text-red-400 text-xs mt-1 pl-4">
+                  {errors.website_url}
+                </p>
+              )}
             </div>
 
-            {/* Submit Button */}
             <div className="w-full md:w-auto flex-shrink-0 md:self-start">
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="w-full md:w-auto whitespace-nowrap flex items-center justify-center gap-2 font-bold text-sm text-white rounded-full px-6 py-[11px] transition-all duration-200 active:scale-95 disabled:opacity-70"
                 style={{
-                  background: "linear-gradient(135deg, #e8220a 0%, #b91c0c 100%)",
+                  background:
+                    "linear-gradient(135deg, #e8220a 0%, #b91c0c 100%)",
                   boxShadow: "0 4px 20px rgba(232,34,10,0.5)",
                 }}
-                onMouseEnter={(e) => { if (!isSubmitting) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 28px rgba(232,34,10,0.7)" }}
-                onMouseLeave={(e) => { if (!isSubmitting) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(232,34,10,0.5)" }}
+                onMouseEnter={(e) => {
+                  if (!isSubmitting)
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      "0 6px 28px rgba(232,34,10,0.7)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSubmitting)
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      "0 4px 20px rgba(232,34,10,0.5)";
+                }}
               >
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                  </>
                 ) : (
-                  <><Search className="w-4 h-4" /> Get My Free Quote Now!</>
+                  <>
+                    <Search className="w-4 h-4" /> Get My Free Quote Now!
+                  </>
                 )}
               </button>
             </div>
@@ -244,30 +794,752 @@ function SEOAuditBanner() {
         </div>
       )}
 
-      {/* Bottom fade line */}
       <div
         className="h-px w-full opacity-30"
-        style={{ background: "linear-gradient(90deg, transparent, #f5a623, transparent)" }}
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, #f5a623, transparent)",
+        }}
       />
     </div>
-  )
+  );
 }
 
-// ─── Main Services Page ────────────────────────────────────────────────────
-export default function Services() {
-  const [openSurveyModal, setOpenSurveyModal] = useState(false)
+/* ============================================================================
+ * SECTION: Market Research
+ * ========================================================================== */
+/* ============================================================================
+ * Market research hero illustration — dashboard + magnifier + stat panels
+ * ========================================================================== */
+const MarketResearchIllustration = () => (
+  <div className="w-full aspect-video rounded-xl overflow-hidden">
+    <svg viewBox="0 0 640 360" className="w-full h-full block">
+      <rect width="640" height="360" fill="#0d1b3e" />
+
+      {/* dashboard card */}
+      <rect
+        x="40"
+        y="45"
+        width="370"
+        height="270"
+        rx="14"
+        fill="#ffffff"
+        opacity="0.06"
+      />
+      <rect
+        x="40"
+        y="45"
+        width="370"
+        height="270"
+        rx="14"
+        fill="none"
+        stroke="#f5a623"
+        strokeWidth="1.5"
+        opacity="0.4"
+      />
+
+      {/* bars */}
+      <rect x="70" y="195" width="30" height="95" rx="5" fill="#38bdf8" />
+      <rect
+        x="115"
+        y="165"
+        width="30"
+        height="125"
+        rx="5"
+        fill="#38bdf8"
+        opacity="0.8"
+      />
+      <rect x="160" y="120" width="30" height="170" rx="5" fill="#f5a623" />
+      <rect
+        x="205"
+        y="150"
+        width="30"
+        height="140"
+        rx="5"
+        fill="#38bdf8"
+        opacity="0.8"
+      />
+      <rect x="250" y="95" width="30" height="195" rx="5" fill="#f5a623" />
+      <rect
+        x="295"
+        y="115"
+        width="30"
+        height="175"
+        rx="5"
+        fill="#38bdf8"
+        opacity="0.8"
+      />
+
+      {/* trend line */}
+      <polyline
+        points="85,185 130,155 175,110 220,135 265,85 310,100"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.85"
+      />
+      <circle cx="310" cy="100" r="5" fill="#ffffff" />
+
+      {/* magnifying glass */}
+      <circle
+        cx="345"
+        cy="240"
+        r="38"
+        fill="#0d1b3e"
+        stroke="#f5a623"
+        strokeWidth="6"
+      />
+      <circle
+        cx="345"
+        cy="240"
+        r="27"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="2"
+        opacity="0.5"
+      />
+      <line
+        x1="371"
+        y1="266"
+        x2="400"
+        y2="295"
+        stroke="#f5a623"
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+      <text x="333" y="247" fontSize="22" fill="#ffffff" fontWeight="bold">
+        $
+      </text>
+
+      {/* right-side stat panels */}
+      <rect
+        x="430"
+        y="45"
+        width="170"
+        height="110"
+        rx="12"
+        fill="#ffffff"
+        opacity="0.06"
+      />
+      <text x="452" y="95" fontSize="30" fontWeight="bold" fill="#f5a623">
+        +142%
+      </text>
+      <text x="452" y="120" fontSize="14" fill="#ffffff" opacity="0.7">
+        Market Growth
+      </text>
+
+      <rect
+        x="430"
+        y="170"
+        width="170"
+        height="110"
+        rx="12"
+        fill="#ffffff"
+        opacity="0.06"
+      />
+      <text x="452" y="220" fontSize="30" fontWeight="bold" fill="#38bdf8">
+        3.2x
+      </text>
+      <text x="452" y="245" fontSize="14" fill="#ffffff" opacity="0.7">
+        Audience Insight
+      </text>
+    </svg>
+  </div>
+);
+function MarketResearchSection({
+  onRequestReport,
+}: {
+  onRequestReport: () => void;
+}) {
+  return (
+    <div className="w-full mb-16">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-gray-100 mb-10">
+        <div className="h-1.5 w-full bg-accent" />
+        <div className="p-5 sm:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <MarketResearchIllustration />
+            <div>
+              <span className="inline-flex items-center gap-2 text-xs font-extrabold tracking-widest uppercase text-accent mb-2">
+                <FaSearchDollar className="h-4 w-4" />
+                Market Research
+              </span>
+              <h3 className="text-primary font-bold text-2xl mb-3">
+                Market Research Report
+              </h3>
+              <p className="text-gray-500 text-sm">
+                Data-backed insights on your market, competitors, and audience —
+                so every decision you make is backed by real numbers, not
+                guesswork.
+              </p>
+              <div className="mt-6">
+                <Button
+                  className="bg-accent text-white font-medium"
+                  endContent={<LuArrowRight size={18} />}
+                  onPress={onRequestReport}
+                >
+                  Request a Report
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center mb-6">
+        <h4 className="text-primary font-bold text-lg">
+          As Our Client, Here's What You Gain
+        </h4>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 rounded-2xl bg-slate-50 p-4 sm:p-6">
+        {researchBenefits.map((benefit) => (
+          <div
+            key={benefit.title}
+            className="rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all"
+          >
+            <div
+              className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${benefit.color}1a` }}
+            >
+              <benefit.icon
+                className="h-6 w-6"
+                style={{ color: benefit.color }}
+              />
+            </div>
+            <h3 className="text-primary font-semibold text-sm mb-1">
+              {benefit.title}
+            </h3>
+            <p className="text-gray-500 text-xs">{benefit.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * SECTION: Branding & Marketing carousel
+ * ========================================================================== */
+
+function BrandingSection({
+  onVideoSurvey,
+  onWebsiteAudit,
+  onRequestButtonClick,
+}: {
+  onVideoSurvey: () => void;
+  onWebsiteAudit: () => void;
+  onRequestButtonClick: (key: BenefitsRequestButtonKey) => void;
+}) {
+  const [selectedService, setSelectedService] = useState<string | null>(
+    brandingServices[0]?.name ?? null,
+  );
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: "left" | "right") => {
+    scrollRef.current?.scrollBy({
+      left: dir === "left" ? -280 : 280,
+      behavior: "smooth",
+    });
+  };
+
+  const activeService = brandingServices.find(
+    (s) => s.name === selectedService,
+  );
 
   return (
-    <div className="mx-4 flex flex-col justify-center items-center">
-      <section className="container mx-auto px-4 lg:px-8 mb-12 bg-white">
+    <div className="w-full mb-16">
+      <div className="max-w-xl mx-auto text-center mb-8">
+        <span className="text-xl text-accent font-bold">
+          BRANDING & MARKETING
+        </span>
+        <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
+          Grow Your Brand Across Every Channel
+        </h1>
+        <p className="text-lg text-gray-600 mt-4">
+          From social media to paid ads, we build the presence that gets you
+          noticed.
+        </p>
+      </div>
+
+      <div className="relative overflow-hidden">
+        <button
+          onClick={() => scroll("left")}
+          className="hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50"
+          aria-label="Scroll left"
+        >
+          <LuChevronLeft className="text-primary" size={20} />
+        </button>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 px-2 sm:px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
+          {brandingServices.map((service) => {
+            const isSelected = selectedService === service.name;
+            return (
+              <div
+                key={service.name}
+                className={`group relative shrink-0 w-[220px] h-32 snap-start overflow-hidden rounded-xl cursor-pointer shadow-md transition-all
+                  ${isSelected ? "ring-2 ring-accent ring-offset-2" : "ring-1 ring-gray-200 hover:shadow-lg"}`}
+                onClick={() =>
+                  setSelectedService(isSelected ? null : service.name)
+                }
+              >
+                {service.type === "benefits" && service.thumbnailImage ? (
+                  <img
+                    src={service.thumbnailImage}
+                    alt={service.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : service.type === "benefits" ? (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${service.color}, ${service.color}cc)`,
+                    }}
+                  >
+                    <service.icon className="h-10 w-10 text-white/90" />
+                  </div>
+                ) : (
+                  <img
+                    src={`/images/services/${service.image}`}
+                    alt={service.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
+                <span className="absolute bottom-3 left-3 text-white font-semibold text-sm drop-shadow">
+                  {service.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scroll("right")}
+          className="hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50"
+          aria-label="Scroll right"
+        >
+          <LuChevronRight className="text-primary" size={20} />
+        </button>
+      </div>
+
+      {activeService && (
+        <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div
+            className="h-1.5 w-full"
+            style={{
+              background:
+                activeService.type === "benefits"
+                  ? activeService.color
+                  : "#f59e0b",
+            }}
+          />
+          <div className="p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {activeService.type === "benefits" && (
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-full shrink-0"
+                    style={{ backgroundColor: `${activeService.color}1a` }}
+                  >
+                    <activeService.icon
+                      className="h-5 w-5"
+                      style={{ color: activeService.color }}
+                    />
+                  </div>
+                )}
+                <h3 className="text-primary font-bold text-lg">
+                  {activeService.type === "benefits"
+                    ? `${activeService.name} — What You Get`
+                    : activeService.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedService(null)}
+                className="text-gray-400 hover:text-gray-600 shrink-0"
+                aria-label="Close"
+              >
+                <LuX size={20} />
+              </button>
+            </div>
+
+            {activeService.type === "benefits" ? (
+              <div>
+                {activeService.tagline && (
+                  <p className="text-gray-500 text-sm mb-4">
+                    {activeService.tagline}
+                  </p>
+                )}
+
+                {activeService.thumbnailImage ? (
+                  // Image + benefits side-by-side (used by Social Media
+                  // Management, TikTok Shop Opening, JuanTap, Paid Ads,
+                  // and any other benefits-card that sets thumbnailImage).
+                  // Mirrors the "detail" card layout below.
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
+                    <img
+                      src={activeService.thumbnailImage}
+                      alt={activeService.name}
+                      className="w-full h-56 object-contain"
+                    />
+                    <div className="grid grid-cols-1 gap-4">
+                      {activeService.benefits.map((benefit) => (
+                        <div
+                          key={benefit.title}
+                          className="flex items-start gap-3 rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100 hover:ring-gray-200 transition-all"
+                        >
+                          <div
+                            className="flex h-9 w-9 items-center justify-center rounded-full shrink-0"
+                            style={{
+                              backgroundColor: `${activeService.color}1a`,
+                            }}
+                          >
+                            <benefit.icon
+                              className="h-4.5 w-4.5"
+                              style={{ color: activeService.color }}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-primary font-semibold text-sm">
+                              {benefit.title}
+                            </h4>
+                            <p className="text-gray-500 text-xs mt-0.5">
+                              {benefit.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {activeService.requestButtonKey && (
+                        <ShadButton
+                          onClick={() =>
+                            onRequestButtonClick(
+                              activeService.requestButtonKey!,
+                            )
+                          }
+                          className={
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].className
+                          }
+                        >
+                          {
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].label
+                          }
+                        </ShadButton>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Default layout — plain grid of benefit tiles, no image
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {activeService.benefits.map((benefit) => (
+                      <div
+                        key={benefit.title}
+                        className="flex items-start gap-3 rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100 hover:ring-gray-200 transition-all"
+                      >
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-full shrink-0"
+                          style={{
+                            backgroundColor: `${activeService.color}1a`,
+                          }}
+                        >
+                          <benefit.icon
+                            className="h-4.5 w-4.5"
+                            style={{ color: activeService.color }}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="text-primary font-semibold text-sm">
+                            {benefit.title}
+                          </h4>
+                          <p className="text-gray-500 text-xs mt-0.5">
+                            {benefit.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {activeService.requestButtonKey && (
+                      <div className="sm:col-span-2">
+                        <ShadButton
+                          onClick={() =>
+                            onRequestButtonClick(
+                              activeService.requestButtonKey!,
+                            )
+                          }
+                          className={
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].className
+                          }
+                        >
+                          {
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].label
+                          }
+                        </ShadButton>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeService.showSEOAuditForm && <SEOAuditBanner />}
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
+                  <img
+                    src={`/images/services/${activeService.image}`}
+                    alt={activeService.name}
+                    className="w-full h-56 object-contain"
+                  />
+                  <div>
+                    <h4 className="text-primary font-bold text-base mb-2">
+                      {activeService.subtitle}
+                    </h4>
+                    <p className="text-gray-500 text-sm">
+                      {activeService.description}
+                    </p>
+                    <ServiceCtaButtons
+                      ctas={activeService.ctas}
+                      onVideoSurvey={onVideoSurvey}
+                      onWebsiteAudit={onWebsiteAudit}
+                      className="mt-4 flex flex-wrap gap-3"
+                    />
+                    {/* lead-gen "Request ..." button for detail-type cards
+                        that set requestButtonKey (Graphic Design) — mirrors
+                        the benefits-card treatment above */}
+                    {activeService.requestButtonKey && (
+                      <div className="mt-4">
+                        <ShadButton
+                          onClick={() =>
+                            onRequestButtonClick(
+                              activeService.requestButtonKey!,
+                            )
+                          }
+                          className={
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].className
+                          }
+                        >
+                          {
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].label
+                          }
+                        </ShadButton>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {activeService.categories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100 hover:ring-gray-200 transition-all"
+                    >
+                      <h4 className="text-primary font-semibold text-sm">
+                        {category.name}
+                      </h4>
+                      <p className="text-gray-500 text-xs mt-0.5">
+                        {category.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {/* shows the SEO audit lead-gen form under this detail
+                    card's categories when the card requests it (SEO only) */}
+                {activeService.showSEOAuditForm && <SEOAuditBanner />}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
+ * SECTION: All page modals, in one place
+ * ------------------------------------------------------------------------
+ * Dati kalat sa file: 1 Dialog inline sa gitna ng JSX, 2 pang modal sa
+ * dulo. Dito sila lahat sama-sama, at malinaw agad kung ilan at ano sila.
+ * ========================================================================== */
+
+interface ServiceModalsProps {
+  videoSurveyOpen: boolean;
+  onVideoSurveyOpenChange: (open: boolean) => void;
+  reportOpen: boolean;
+  onReportOpenChange: (open: boolean) => void;
+  auditOpen: boolean;
+  onAuditOpenChange: (open: boolean) => void;
+  socialMediaOpen: boolean;
+  onSocialMediaOpenChange: (open: boolean) => void;
+  tiktokShopOpen: boolean;
+  onTiktokShopOpenChange: (open: boolean) => void;
+  juantapOpen: boolean;
+  onJuantapOpenChange: (open: boolean) => void;
+  graphicDesignOpen: boolean;
+  onGraphicDesignOpenChange: (open: boolean) => void;
+  paidAdsOpen: boolean;
+  onPaidAdsOpenChange: (open: boolean) => void;
+}
+
+function ServiceModals({
+  videoSurveyOpen,
+  onVideoSurveyOpenChange,
+  reportOpen,
+  onReportOpenChange,
+  auditOpen,
+  onAuditOpenChange,
+  socialMediaOpen,
+  onSocialMediaOpenChange,
+  tiktokShopOpen,
+  onTiktokShopOpenChange,
+  juantapOpen,
+  onJuantapOpenChange,
+  graphicDesignOpen,
+  onGraphicDesignOpenChange,
+  paidAdsOpen,
+  onPaidAdsOpenChange,
+}: ServiceModalsProps) {
+  return (
+    <>
+      {/* 1. Video survey */}
+      <Dialog open={videoSurveyOpen} onOpenChange={onVideoSurveyOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
+          <VideoSurveyForm
+            onClose={() => onVideoSurveyOpenChange(false)}
+            onSubmitSuccess={() => onVideoSurveyOpenChange(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* 2. Request a market research report */}
+      <RequestReportModal
+        isOpen={reportOpen}
+        onOpenChange={onReportOpenChange}
+      />
+
+      {/* 3. Request a website audit */}
+      <RequestWebsiteAuditModal
+        isOpen={auditOpen}
+        onOpenChange={onAuditOpenChange}
+      />
+
+      {/* 4. Request social media management */}
+      <RequestSocialMediaModal
+        isOpen={socialMediaOpen}
+        onOpenChange={onSocialMediaOpenChange}
+      />
+
+      {/* 5. Request TikTok Shop opening */}
+      <RequestTikTokShopModal
+        isOpen={tiktokShopOpen}
+        onOpenChange={onTiktokShopOpenChange}
+      />
+
+      {/* 6. Apply for JuanTap */}
+      <RequestJuanTapModal
+        isOpen={juantapOpen}
+        onOpenChange={onJuantapOpenChange}
+      />
+
+      {/* 7. Request graphic design */}
+      <RequestGraphicDesignModal
+        isOpen={graphicDesignOpen}
+        onOpenChange={onGraphicDesignOpenChange}
+      />
+
+      {/* 8. Request paid ads */}
+      <RequestPaidAdsModal
+        isOpen={paidAdsOpen}
+        onOpenChange={onPaidAdsOpenChange}
+      />
+    </>
+  );
+}
+
+/* ============================================================================
+ * MAIN PAGE
+ * ========================================================================== */
+
+export default function Services() {
+  // All modal state lives together here — one glance tells you every
+  // modal this page can open.
+  const [videoSurveyOpen, setVideoSurveyOpen] = useState(false);
+  const {
+    isOpen: reportOpen,
+    onOpen: openReport,
+    onOpenChange: onReportOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: auditOpen,
+    onOpen: openAudit,
+    onOpenChange: onAuditOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: socialMediaOpen,
+    onOpen: openSocialMedia,
+    onOpenChange: onSocialMediaOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: tiktokShopOpen,
+    onOpen: openTiktokShop,
+    onOpenChange: onTiktokShopOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: juantapOpen,
+    onOpen: openJuantap,
+    onOpenChange: onJuantapOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: graphicDesignOpen,
+    onOpen: openGraphicDesign,
+    onOpenChange: onGraphicDesignOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: paidAdsOpen,
+    onOpen: openPaidAds,
+    onOpenChange: onPaidAdsOpenChange,
+  } = useDisclosure();
+
+  // Routes a benefits/detail-card lead-gen button click to the right modal.
+  const handleRequestButtonClick = (key: BenefitsRequestButtonKey) => {
+    if (key === "socialMedia") openSocialMedia();
+    if (key === "tiktokShop") openTiktokShop();
+    if (key === "juantap") openJuantap();
+    if (key === "graphicDesign") openGraphicDesign();
+    if (key === "paidAds") openPaidAds();
+  };
+
+  return (
+    <div className="w-full bg-white flex flex-col justify-center items-center">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 bg-white">
         <div className="flex flex-col justify-center items-center">
-          <div className="xl:py-8">
+          <div className="w-full xl:py-8">
             <div className="flex flex-col justify-center items-center">
               {services.map((service, serviceIndex) => (
-                <div key={`${service.title}-${serviceIndex}`} className="w-full">
+                <div
+                  key={`${service.title}-${serviceIndex}`}
+                  className="w-full"
+                >
                   {/* Image + Text row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 mb-8">
-                    <div className={serviceIndex % 2 === 0 ? "md:order-2" : "md:order-1"}>
+                    <div
+                      className={
+                        serviceIndex % 2 === 0 ? "md:order-2" : "md:order-1"
+                      }
+                    >
                       <img
                         className="w-full h-[28rem] object-contain"
                         alt={service.title}
@@ -275,30 +1547,30 @@ export default function Services() {
                       />
                     </div>
 
-                    <div className={serviceIndex % 2 === 0 ? "md:order-1" : "md:order-2"}>
+                    <div
+                      className={
+                        serviceIndex % 2 === 0 ? "md:order-1" : "md:order-2"
+                      }
+                    >
                       <div className="max-w-lg">
-                        <span className="text-xl text-accent font-bold">{service.title}</span>
+                        <span className="text-xl text-accent font-bold">
+                          {service.title}
+                        </span>
                         <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
                           {service.subtitle}
                         </h1>
-                        <p className="text-lg text-gray-600 mt-4">{service.description}</p>
+                        <p className="text-lg text-gray-600 mt-4">
+                          {service.description}
+                        </p>
 
-                        {serviceIndex === 0 && (
-                          <div className="mt-6">
-                            <Button
-                              onClick={() => setOpenSurveyModal(true)}
-                              className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
-                            >
-                              Take Video Survey
-                            </Button>
-                          </div>
-                        )}
+                        <ServiceCtaButtons
+                          ctas={service.ctas}
+                          onVideoSurvey={() => setVideoSurveyOpen(true)}
+                          onWebsiteAudit={openAudit}
+                        />
                       </div>
                     </div>
                   </div>
-
-                  {/* SEO Audit Banner — only for SEO service */}
-                  {"hasSEOForm" in service && service.hasSEOForm && <SEOAuditBanner />}
 
                   {/* Category cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
@@ -306,32 +1578,54 @@ export default function Services() {
                       <div
                         key={`service-${serviceIndex}-category-${category.id ?? catIndex}`}
                         className={`rounded-lg p-4 transition-all duration-300 cursor-pointer group hover:shadow-lg hover:shadow-blue-400/50
-                          ${catIndex % 2 === 0
-                            ? "bg-gradient-to-r from-slate-50 via-primary/20 to-accent/10 hover:to-primary/50"
-                            : "bg-gradient-to-r from-accent/10 via-accent/30 to-primary/10 hover:to-primary/50"
+                          ${
+                            catIndex % 2 === 0
+                              ? "bg-gradient-to-r from-slate-50 via-primary/20 to-accent/10 hover:to-primary/50"
+                              : "bg-gradient-to-r from-accent/10 via-accent/30 to-primary/10 hover:to-primary/50"
                           }`}
                       >
-                        <h3 className="text-primary font-bold text-lg">{category.name}</h3>
-                        <p className="text-gray-600 text-base mt-2">{category.description}</p>
+                        <h3 className="text-primary font-bold text-lg">
+                          {category.name}
+                        </h3>
+                        <p className="text-gray-600 text-base mt-2">
+                          {category.description}
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
+
+              <MarketResearchSection onRequestReport={openReport} />
+              <BrandingSection
+                onVideoSurvey={() => setVideoSurveyOpen(true)}
+                onWebsiteAudit={openAudit}
+                onRequestButtonClick={handleRequestButtonClick}
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Video Survey Modal */}
-      <Dialog open={openSurveyModal} onOpenChange={setOpenSurveyModal}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
-          <VideoSurveyForm
-            onClose={() => setOpenSurveyModal(false)}
-            onSubmitSuccess={() => setOpenSurveyModal(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* All modals for this page, rendered together */}
+      <ServiceModals
+        videoSurveyOpen={videoSurveyOpen}
+        onVideoSurveyOpenChange={setVideoSurveyOpen}
+        reportOpen={reportOpen}
+        onReportOpenChange={onReportOpenChange}
+        auditOpen={auditOpen}
+        onAuditOpenChange={onAuditOpenChange}
+        socialMediaOpen={socialMediaOpen}
+        onSocialMediaOpenChange={onSocialMediaOpenChange}
+        tiktokShopOpen={tiktokShopOpen}
+        onTiktokShopOpenChange={onTiktokShopOpenChange}
+        juantapOpen={juantapOpen}
+        onJuantapOpenChange={onJuantapOpenChange}
+        graphicDesignOpen={graphicDesignOpen}
+        onGraphicDesignOpenChange={onGraphicDesignOpenChange}
+        paidAdsOpen={paidAdsOpen}
+        onPaidAdsOpenChange={onPaidAdsOpenChange}
+      />
     </div>
-  )
+  );
 }

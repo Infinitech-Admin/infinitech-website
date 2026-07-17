@@ -1,83 +1,88 @@
 "use client";
 
-import React from "react";
-import { BsStarFill, BsStarHalf } from "react-icons/bs";
-import { Card, CardBody, Image } from "@heroui/react";
-import Cards from "./cards";
+import React, { useEffect, useState } from "react";
+import { Testimonial } from "@/components/testimonials/types";
+import TestimonialSlider from "@/components/testimonials/TestimonialSlider";
+import TestimonialModal from "@/components/testimonials/TestimonialModal";
+import TestimonialForm from "@/components/testimonials/TestimonialForm";
 
 const Testimonials = () => {
-  const reviews = [
-    {
-      platform: "Trustpilot",
-      logo: "/images/trust-pilot.png",
-      rating: 4.5,
-      reviews: 7584,
-      stars: 5,
-      color: "text-green-500",
-    },
-    {
-      platform: "Clutch",
-      logo: "/images/clutch.png",
-      rating: 5,
-      reviews: 1500,
-      stars: 5,
-      color: "text-red-500",
-    },
-  ];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTestimonial, setSelectedTestimonial] =
+    useState<Testimonial | null>(null);
 
-  const renderStars = (stars: number, color: string) => {
-    return (
-      <div className="flex items-center space-x-1">
-        {[...Array(Math.floor(stars))].map((_, i) => (
-          <BsStarFill key={i} className={`${color}`} />
-        ))}
-        {stars % 1 !== 0 && <BsStarHalf className={`${color}`} />}
-      </div>
-    );
+  const fetchTestimonials = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/testimonials?page=home", {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to load testimonials");
+      const json = await res.json();
+      setTestimonials(json.data ?? []);
+    } catch (err) {
+      setError("Could not load testimonials.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
   return (
-    <section className="container mx-auto py-12 lg:py-24 px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12">
-        <div>
-          <Cards />
+    <section className="bg-slate-50">
+      <div className="container mx-auto py-16 lg:py-24 px-4">
+        {/* Header */}
+        <div className="max-w-2xl mx-auto text-center mb-12">
+          <span className="text-sm font-bold text-accent tracking-widest uppercase">
+            Testimonials
+          </span>
+          <h2 className="text-3xl md:text-4xl text-primary font-bold mt-2">
+            What Our Clients Say
+          </h2>
+          <p className="text-gray-500 mt-3">
+            Real feedback from businesses we've helped grow.
+          </p>
         </div>
 
-        <div className="flex justify-center items-center">
-          <Card className="bg-gray-100 shadow-none w-full max-w-xl">
-            <CardBody>
-              <div className="py-32">
-                {reviews.map((review) => (
-                  <div
-                    key={review.platform}
-                    className="flex items-center justify-around mb-12 last:mb-0"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Image
-                        src={review.logo}
-                        alt={review.platform}
-                        className="w-[1.5rem] h-[1.5rem]"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-600">Review On</span>
-                        <span className="text-lg font-semibold">
-                          {review.platform}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      {renderStars(review.stars, review.color)}
-                      <span className="text-sm text-gray-500">
-                        {review.reviews}+ Reviews
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardBody>
-          </Card>
+        {/* Slider (left) + submission form (right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          <div>
+            {loading ? (
+              <p className="text-center text-gray-400 py-12">
+                Loading testimonials...
+              </p>
+            ) : error ? (
+              <p className="text-center text-red-500 py-12">{error}</p>
+            ) : testimonials.length === 0 ? (
+              <p className="text-center text-gray-400 py-12">
+                No testimonials yet.
+              </p>
+            ) : (
+              <TestimonialSlider
+                testimonials={testimonials}
+                onCardClick={setSelectedTestimonial}
+              />
+            )}
+          </div>
+
+          <div>
+            <TestimonialForm onSubmitted={fetchTestimonials} />
+          </div>
         </div>
       </div>
+
+      <TestimonialModal
+        testimonial={selectedTestimonial}
+        isOpen={selectedTestimonial !== null}
+        onClose={() => setSelectedTestimonial(null)}
+      />
     </section>
   );
 };

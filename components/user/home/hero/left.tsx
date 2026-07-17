@@ -3,41 +3,44 @@
 import React from "react";
 import { LuArrowRight } from "react-icons/lu";
 import { Chip, Button } from "@heroui/react";
-import { GoDotFill } from "react-icons/go";
+import { GoDotFill, GoCheck } from "react-icons/go";
 import { poetsen_one } from "@/config/fonts";
 import { useRouter } from "next/navigation";
+
+const trustPoints = [
+  "20+ Projects",
+  "All Services, One Team",
+  "Fast Turnaround",
+  "Affordable Pricing",
+];
 
 const Left = () => {
   const router = useRouter();
 
   return (
     <div className="space-y-6">
-      <div className="md:space-y-6">
-        <Chip
+      <div className="space-y-4">
+        {/* <Chip
           className="hidden md:flex"
           startContent={<GoDotFill />}
           variant="bordered"
           color="warning"
         >
-          More than 100 active projects, driving innovation and delivering
-          excellence!
-        </Chip>
+          Your One-Stop Digital Partner
+        </Chip> */}
 
         <h1
           className={`text-accent text-5xl sm:text-7xl font-bold leading-tight ${poetsen_one.className}`}
         >
-          HIGH QUALITY, <br /> LOWER PRICE
+          One-Stop Solutions <br /> To Grow Your Business
         </h1>
+
+        <p className="md:text-lg text-gray-400">
+          Website • Marketing Research • Branding
+        </p>
       </div>
 
-      <p className="md:text-lg text-gray-400 leading-relaxed">
-        At <strong>Infinitech Advertising Corporation</strong>, we deliver
-        high-quality, innovative solutions that enhance your brand while staying
-        within your budget. From web development to system solutions, we help
-        your business stand out.
-      </p>
-
-      <div className="flex flex-wrap gap-4 pt-4">
+      <div className="flex flex-wrap gap-4 pt-2">
         <Button
           size="lg"
           variant="solid"
@@ -45,8 +48,29 @@ const Left = () => {
           endContent={<LuArrowRight size={18} />}
           onPress={() => router.push("/contact")}
         >
-          Inquire Now
+          Get Free Consultation
         </Button>
+
+        <Button
+          size="lg"
+          variant="bordered"
+          className="border-accent text-accent-light font-medium hover:bg-white/10 transition"
+          onPress={() => router.push("/solutions")}
+        >
+          View Our Work
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
+        {trustPoints.map((point) => (
+          <span
+            key={point}
+            className="flex items-center gap-1.5 text-sm text-gray-400"
+          >
+            <GoCheck className="text-accent-light" />
+            {point}
+          </span>
+        ))}
       </div>
     </div>
   );

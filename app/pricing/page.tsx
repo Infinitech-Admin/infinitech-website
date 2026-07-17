@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import PricingCard from "@/components/pricingCard";
-import { X, ShoppingCart, Mail, Loader2 } from "lucide-react";
+import { X, ShoppingCart, Mail, Loader2, Phone } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
 
 interface CartItem {
@@ -25,7 +25,7 @@ const PricingPage = () => {
     message: string;
   } | null>(null);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
-    null
+    null,
   );
 
   const services = {
@@ -36,8 +36,8 @@ const PricingPage = () => {
       plans: [
         {
           name: "Standard",
-          monthlyPrice: 6583,
-          yearlyPrice: 78999, // 6583 × 12 ≈ 78,999
+          monthlyPrice: 6888,
+          yearlyPrice: 82656, // 6888 × 12 ≈ 82,656
           features: [
             "Up to 5 pages",
             "Social Media Links integration",
@@ -164,73 +164,6 @@ const PricingPage = () => {
         },
       ],
     },
-    socialmedia: {
-      title: "Social Media Management",
-      description:
-        "Complete social media management and content creation services",
-      plans: [
-        {
-          name: "Standard",
-          monthlyPrice: 11993,
-          yearlyPrice: 143916, // 11993 × 12
-          features: [
-            "Account Setup (FB+IG+TikTok)",
-            "Branding (Profile & Cover)",
-            "8 Posts / Month",
-            "2 Reels / Month",
-            "Monthly Insights Report",
-          ],
-          popular: false,
-          cta: "Get Started",
-        },
-        {
-          name: "Growth",
-          monthlyPrice: 18973,
-          yearlyPrice: 227676, // 18973 × 12
-          features: [
-            "Everything in Standard, plus:",
-            "Account Setup (FB+IG+TikTok)",
-            "Branding (Profile & Cover)",
-            "12-15 Posts / Month",
-            "4 Reels / Month",
-            "Content Calendar",
-            "Monthly Insights Report",
-          ],
-          popular: true,
-          cta: "Choose Plan",
-        },
-        {
-          name: "Premium",
-          monthlyPrice: 32947,
-          yearlyPrice: 395364, // 32947 × 12
-          features: [
-            "Account Setup (FB+IG+TikTok)",
-            "Branding (Profile & Cover)",
-            "20-25 Posts / Month",
-            "2 Reels / Month",
-            "Captions & Hashtags",
-            "Monthly Insights Report",
-          ],
-          popular: false,
-          cta: "Contact Sales",
-        },
-        {
-          name: "Corporate",
-          monthlyPrice: 47973,
-          yearlyPrice: 575676, // 47973 × 12
-          features: [
-            "Account Setup (FB+IG+TikTok)",
-            "Branding (Profile & Cover)",
-            "2 Reels / Month",
-            "Captions & Hashtags",
-            "Monthly Insights Report",
-            "30+ Posts / Month",
-          ],
-          popular: false,
-          cta: "Contact Sales",
-        },
-      ],
-    },
     multimedia: {
       title: "Multimedia Advertising",
       description:
@@ -285,6 +218,61 @@ const PricingPage = () => {
         },
       ],
     },
+    socialmedia: {
+      title: "Social Media Management",
+      description:
+        "Complete social media management and content creation packages",
+      plans: [
+        {
+          name: "Starter",
+          monthlyPrice: 5999,
+          yearlyPrice: 71988, // 5999 × 12
+          features: [
+            "1-2 Social Media Platforms",
+            "4 Posts per Month",
+            "Basic Content Calendar",
+            "Hashtag Research",
+            "Community Engagement",
+            "Monthly Performance Report",
+          ],
+          popular: false,
+          cta: "Get Started",
+        },
+        {
+          name: "Growth",
+          monthlyPrice: 12999,
+          yearlyPrice: 155988, // 12999 × 12
+          features: [
+            "2-3 Social Media Platforms",
+            "8 Posts per Month",
+            "Advanced Content Calendar",
+            "Hashtag & Keyword Optimization",
+            "Daily Community Engagement",
+            "Monthly Analytics Report",
+            "Content Strategy Consultation",
+          ],
+          popular: true,
+          cta: "Choose Plan",
+        },
+        {
+          name: "Premium",
+          monthlyPrice: 24999,
+          yearlyPrice: 299988, // 24999 × 12
+          features: [
+            "4+ Social Media Platforms",
+            "20 Posts per Month",
+            "Professional Content Creation",
+            "Influencer Coordination",
+            "Paid Ads Management",
+            "Weekly Engagement Reports",
+            "Brand Strategy & Consulting",
+            "Crisis Management Support",
+          ],
+          popular: false,
+          cta: "Contact Sales",
+        },
+      ],
+    },
   };
 
   const currentService = services[activeService as keyof typeof services];
@@ -293,8 +281,8 @@ const PricingPage = () => {
   const removeFromCart = (planName: string, service: string) => {
     setCart(
       cart.filter(
-        (item) => !(item.planName === planName && item.service === service)
-      )
+        (item) => !(item.planName === planName && item.service === service),
+      ),
     );
   };
 
@@ -302,8 +290,8 @@ const PricingPage = () => {
     const titles: Record<string, string> = {
       website: "Website",
       juantap: "JuanTap",
-      socialmedia: "Social Media",
       multimedia: "Multimedia",
+      socialmedia: "Social Media",
     };
     return titles[serviceKey] || serviceKey;
   };
@@ -337,7 +325,7 @@ const PricingPage = () => {
       {/* Header Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
         <div className="text-center max-w-4xl mx-auto">
-           <h1 className="text-4xl md:text-5xl text-accent font-bold tracking-tight mb-4 uppercase">
+          <h1 className="text-4xl md:text-5xl text-accent font-bold tracking-tight mb-4 uppercase">
             Our Pricing Plans
           </h1>
           <p className="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
@@ -346,7 +334,7 @@ const PricingPage = () => {
           </p>
 
           {/* Service Selector */}
-          <div className="grid grid-cols-2 md:grid-cols-4 justify-center gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2 flex-wrap md:flex-nowrap">
             {Object.entries(services).map(([key, service]) => (
               <button
                 key={key}
@@ -368,8 +356,8 @@ const PricingPage = () => {
               >
                 {key === "website" && "Website"}
                 {key === "juantap" && "JuanTap"}
-                {key === "socialmedia" && "Social Media"}
                 {key === "multimedia" && "Multimedia"}
+                {key === "socialmedia" && "Social Media"}
               </button>
             ))}
           </div>
@@ -404,7 +392,29 @@ const PricingPage = () => {
         </div>
       </section>
 
-      {isTabletOrMobile && (
+      {/* Consultation CTA Section */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-8 max-w-3xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Phone className="w-6 h-6 text-cyan-400" />
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Custom Solutions?
+            </h2>
+          </div>
+          <p className="text-slate-300 mb-6 text-lg">
+            Need a tailored package? Schedule a consultation with our team to
+            discuss your specific needs and requirements.
+          </p>
+          <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all">
+            Schedule Consultation
+          </button>
+          <p className="text-slate-400 text-sm mt-4">
+            <strong>Price Range:</strong> ₱10,000 - ₱150,000+
+          </p>
+        </div>
+      </section>
+
+      {isTabletOrMobile && activeService !== "socialmedia" && (
         <section className="mx-auto px-6 flex flex-col pb-10 items-center">
           {/* Pricing Cards Container */}
           <div className="flex-1">
@@ -542,12 +552,13 @@ const PricingPage = () => {
                           </>
                         )}
                       </button>
+
                       {emailStatus && (
                         <div
-                          className={`text-xs p-2 rounded-lg ${
+                          className={`p-3 rounded-lg text-sm ${
                             emailStatus.type === "success"
-                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/50"
+                              : "bg-red-500/20 text-red-300 border border-red-500/50"
                           }`}
                         >
                           {emailStatus.message}
@@ -562,135 +573,20 @@ const PricingPage = () => {
         </section>
       )}
 
-      {isDesktopOrLaptop && (
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
-            {/* Pricing Cards - Left Side (Landscape 2x2 grid) */}
-            <div className="flex-1">
-              <div className="grid grid-cols-2 gap-4">
-                {currentService.plans.map((plan, index) => (
-                  <PricingCard
-                    plan={plan}
-                    billingPeriod={
-                      activeService === "juantap" ? "piece" : billingPeriod
-                    }
-                    onAddToCart={() => handleAddToCart(plan)}
-                    isHovered={index === selectedCardIndex}
-                    isSmall={
-                      selectedCardIndex !== null && index !== selectedCardIndex
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="lg:w-80 shrink-0">
-              <div
-                id="order-summary"
-                className="bg-slate-800/70 border border-slate-700 rounded-2xl p-5"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <ShoppingCart className="w-5 h-5 text-cyan-400" />
-                  <h3 className="text-lg font-bold text-white">
-                    Order Summary
-                  </h3>
-                </div>
-
-                {cart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ShoppingCart className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400 text-sm">Your cart is empty</p>
-                    <p className="text-slate-500 text-xs mt-1">
-                      Add plans to get started
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      {cart.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start justify-between gap-2 bg-slate-700/50 rounded-lg p-3"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-white font-medium text-sm truncate">
-                              {item.planName}
-                            </p>
-                            <p className="text-slate-400 text-xs">
-                              {getServiceTitle(item.service)}
-                            </p>
-                            <p className="text-cyan-400 text-xs font-semibold">
-                              ₱{item.price.toLocaleString()}
-                              {item.billingPeriod === "piece"
-                                ? " / piece"
-                                : ` / ${item.billingPeriod === "yearly" ? "year" : "mo"}`}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              removeFromCart(item.planName, item.service)
-                            }
-                            className="text-slate-400 hover:text-red-400 transition-colors p-1"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-slate-600 pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-slate-300 font-semibold">
-                          Total:
-                        </span>
-                        <span className="text-2xl font-bold text-cyan-400">
-                          ₱{cartTotal.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="space-y-3">
-                        <input
-                          type="email"
-                          placeholder="Client email"
-                          value={clientEmail}
-                          onChange={(e) => setClientEmail(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 text-sm"
-                        />
-                        <button
-                          onClick={() => {}}
-                          disabled={isSending}
-                          className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
-                        >
-                          {isSending ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="w-4 h-4" />
-                              Send Summary
-                            </>
-                          )}
-                        </button>
-                        {emailStatus && (
-                          <div
-                            className={`text-xs p-2 rounded-lg ${
-                              emailStatus.type === "success"
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : "bg-red-500/20 text-red-400 border border-red-500/30"
-                            }`}
-                          >
-                            {emailStatus.message}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+      {isDesktopOrLaptop && activeService !== "socialmedia" && (
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-4 gap-6">
+          {currentPlans.map((plan, index) => (
+            <PricingCard
+              key={index}
+              plan={plan}
+              billingPeriod={
+                activeService === "juantap" ? "piece" : billingPeriod
+              }
+              onAddToCart={() => handleAddToCart(plan)}
+              isHovered={false}
+              isSmall={false}
+            />
+          ))}
         </section>
       )}
     </div>

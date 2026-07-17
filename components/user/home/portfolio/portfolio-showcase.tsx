@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { ExternalLink, Eye, ChevronRight } from "lucide-react";
+import { ExternalLink, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Project {
@@ -95,60 +95,60 @@ const projects: Project[] = [
     url: "https://dmci-agent-website-main.vercel.app/",
     category: "Real Estate",
   },
-  {
-    id: 10,
-    title: "Joe Property Specialist",
-    description:
-      "Personal real estate portfolio showcasing luxury properties and professional real estate services",
-    image: "/websites/joe.png",
-    url: "https://abicrealtyphjoe.com/",
-    category: "Property Specialist",
-  },
-  {
-    id: 11,
-    title: "Kaila Property Specialist",
-    description:
-      "Professional property consultant website with property listings and client management tools",
-    image: "/websites/kaila.png",
-    url: "https://abicrealtyphkaila.com/",
-    category: "Property Specialist",
-  },
-  {
-    id: 12,
-    title: "Angely Property Specialist",
-    description:
-      "Real estate specialist platform featuring premium properties and personalized client services",
-    image: "/websites/angely.png",
-    url: "https://abicrealtyphangely.com/",
-    category: "Property Specialist",
-  },
-  {
-    id: 13,
-    title: "Jayvee Property Specialist",
-    description:
-      "Commercial and residential property specialist with advanced search and inquiry management",
-    image: "/websites/jayvee.png",
-    url: "https://abicrealtyphjayvee.com/",
-    category: "Property Specialist",
-  },
-  {
-    id: 14,
-    title: "Lloyd Property Specialist",
-    description:
-      "Professional real estate consultant website with property showcase and lead generation tools",
-    image: "/websites/lloyd.png",
-    url: "https://abicrealtyphlloyd.com/",
-    category: "Property Specialist",
-  },
-  {
-    id: 15,
-    title: "Janina Property Specialist",
-    description:
-      "Luxury property specialist platform with virtual tours and comprehensive property management",
-    image: "/websites/janina.png",
-    url: "https://abicrealtyphjanina.com/",
-    category: "Property Specialist",
-  },
+  // {
+  //   id: 10,
+  //   title: "Joe Property Specialist",
+  //   description:
+  //     "Personal real estate portfolio showcasing luxury properties and professional real estate services",
+  //   image: "/websites/joe.png",
+  //   url: "https://abicrealtyphjoe.com/",
+  //   category: "Property Specialist",
+  // },
+  // {
+  //   id: 11,
+  //   title: "Kaila Property Specialist",
+  //   description:
+  //     "Professional property consultant website with property listings and client management tools",
+  //   image: "/websites/kaila.png",
+  //   url: "https://abicrealtyphkaila.com/",
+  //   category: "Property Specialist",
+  // },
+  // {
+  //   id: 12,
+  //   title: "Angely Property Specialist",
+  //   description:
+  //     "Real estate specialist platform featuring premium properties and personalized client services",
+  //   image: "/websites/angely.png",
+  //   url: "https://abicrealtyphangely.com/",
+  //   category: "Property Specialist",
+  // },
+  // {
+  //   id: 13,
+  //   title: "Jayvee Property Specialist",
+  //   description:
+  //     "Commercial and residential property specialist with advanced search and inquiry management",
+  //   image: "/websites/jayvee.png",
+  //   url: "https://abicrealtyphjayvee.com/",
+  //   category: "Property Specialist",
+  // },
+  // {
+  //   id: 14,
+  //   title: "Lloyd Property Specialist",
+  //   description:
+  //     "Professional real estate consultant website with property showcase and lead generation tools",
+  //   image: "/websites/lloyd.png",
+  //   url: "https://abicrealtyphlloyd.com/",
+  //   category: "Property Specialist",
+  // },
+  // {
+  //   id: 15,
+  //   title: "Janina Property Specialist",
+  //   description:
+  //     "Luxury property specialist platform with virtual tours and comprehensive property management",
+  //   image: "/websites/janina.png",
+  //   url: "https://abicrealtyphjanina.com/",
+  //   category: "Property Specialist",
+  // },
 ];
 
 const PortfolioShowcase: React.FC = () => {
@@ -164,7 +164,7 @@ const PortfolioShowcase: React.FC = () => {
           setIsVisible(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {
@@ -178,33 +178,30 @@ const PortfolioShowcase: React.FC = () => {
     };
   }, []);
 
-  // Function to handle project click
   const handleProjectClick = (project: Project) => {
     if (project.url) {
       window.open(project.url, "_blank", "noopener,noreferrer");
     }
   };
 
-  // Function to handle solutions navigation
   const handleViewAllSolutions = () => {
     router.push("/solutions");
   };
 
-  // Create 3 completely different rows with unique projects
   const row1Projects = [
     projects[0],
     projects[1],
     projects[4],
     projects[5],
     projects[6],
-  ]; // Hotel, Consultancy, Oppane, Unakichi, Anilao
+  ];
   const row2Projects = [
     projects[2],
     projects[3],
     projects[7],
     projects[8],
     projects[9],
-  ]; // Manpower, ABIC Realty, Yamaaraw, DMCI, Joe
+  ];
 
   const ProjectCard = ({
     project,
@@ -219,7 +216,7 @@ const PortfolioShowcase: React.FC = () => {
       onMouseLeave={() => setHoveredProject(null)}
       onClick={() => handleProjectClick(project)}
     >
-      <div className="relative h-[320px] md:h-[380px] rounded-3xl overflow-hidden bg-white backdrop-blur-sm border border-slate-200 shadow-2xl group-hover:shadow-cyan-500/25 transition-all duration-500 group-hover:scale-105">
+      <div className="relative h-[320px] md:h-[380px] rounded-3xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl group-hover:shadow-accent-light/25 transition-all duration-500 group-hover:scale-105">
         {/* Project Image */}
         <div className="relative w-full h-[55%] overflow-hidden">
           <img
@@ -228,66 +225,52 @@ const PortfolioShowcase: React.FC = () => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
 
-          {/* Light Overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+          {/* Vignette behind badge so it's readable over any screenshot */}
+          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-black/70 to-transparent pointer-events-none"></div>
 
           {/* Category Badge */}
-          <div className="absolute top-3 md:top-4 left-3 md:left-4 px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-600 to-cyan-500 backdrop-blur-sm rounded-full text-white text-xs md:text-sm font-bold border border-white/20 shadow-lg">
+          <div className="absolute top-3 md:top-4 left-3 md:left-4 px-3 md:px-4 py-1.5 md:py-2 bg-accent rounded-full text-gray-100 text-xs md:text-sm font-bold shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
             {project.category}
           </div>
 
-          {/* View Button */}
+          {/* External link icon - visual only, card itself is the click target */}
           <div
-            className={`absolute top-3 md:top-4 right-3 md:right-4 transition-all duration-300 ${
+            className={`absolute top-3 md:top-4 right-3 md:right-4 p-2 md:p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg transition-all duration-300 ${
               hoveredProject === project.id
                 ? "opacity-100 scale-100"
                 : "opacity-70 scale-90"
             }`}
           >
-            <button
-              className="p-2 md:p-3 bg-white/90 backdrop-blur-md rounded-full border border-white/40 hover:bg-white transition-colors duration-200 shadow-lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleProjectClick(project);
-              }}
-            >
-              <ExternalLink className="w-4 md:w-5 h-4 md:h-5 text-slate-700" />
-            </button>
+            <ExternalLink className="w-4 md:w-5 h-4 md:h-5 text-gray-100" />
           </div>
         </div>
 
-        {/* Content Section with White Background - OPTIMIZED FOOTER */}
-        <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-white p-4 md:p-6">
+        {/* Content Section - dark glass footer */}
+        <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-white/10 backdrop-blur-md p-4 md:p-6 border-t border-white/10">
           <h3
-            className={`text-slate-900 font-bold text-lg md:text-xl mb-2 md:mb-3 transition-all duration-300 leading-tight ${
-              hoveredProject === project.id ? "text-blue-600 scale-105" : ""
+            className={`text-gray-100 font-bold text-lg md:text-xl mb-2 md:mb-3 transition-all duration-300 leading-tight ${
+              hoveredProject === project.id ? "text-accent-light scale-105" : ""
             }`}
           >
             {project.title}
           </h3>
 
-          <p className="text-slate-700 text-sm md:text-base mb-3 md:mb-4 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-gray-400 text-sm md:text-base leading-relaxed font-medium line-clamp-2">
             {project.description}
           </p>
 
-          {/* Action Button - Compact but readable */}
+          {/* Subtle click hint - no button, card itself is clickable */}
           <div
-            className={`transition-all duration-300 ${
+            className={`flex items-center gap-1 mt-3 text-accent-light text-xs md:text-sm font-bold transition-all duration-300 ${
               hoveredProject === project.id
-                ? "opacity-100 translate-y-0"
-                : "opacity-100 translate-y-0"
+                ? "opacity-100 translate-x-1"
+                : "opacity-60"
             }`}
           >
-            <button
-              className="inline-flex items-center px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs md:text-sm font-bold rounded-lg hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-xl"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleProjectClick(project);
-              }}
-            >
-              <span>View Project</span>
-              <ChevronRight className="w-3 md:w-4 h-3 md:h-4 ml-1.5" />
-            </button>
+            <span>Visit site</span>
+            <ChevronRight className="w-3 md:w-4 h-3 md:h-4" />
           </div>
         </div>
 
@@ -295,7 +278,7 @@ const PortfolioShowcase: React.FC = () => {
         <div
           className={`absolute inset-0 rounded-3xl border-2 transition-all duration-300 pointer-events-none ${
             hoveredProject === project.id
-              ? "border-cyan-400/60 shadow-2xl shadow-cyan-400/30"
+              ? "border-accent-light/60 shadow-2xl shadow-accent-light/30"
               : "border-transparent"
           }`}
         ></div>
@@ -335,65 +318,34 @@ const PortfolioShowcase: React.FC = () => {
           }
         }
 
-        @keyframes glow-pulse {
-          0%,
-          100% {
-            box-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 60px rgba(6, 182, 212, 0.5);
-          }
-        }
-
-        /* Desktop Animations - Slower for better viewing */
         @media (min-width: 768px) {
           .marquee-left {
             animation: marquee-left 35s linear infinite;
           }
-
           .marquee-right {
             animation: marquee-right 40s linear infinite;
           }
-
-          .marquee-left-slow {
-            animation: marquee-left 45s linear infinite;
-          }
-
           .marquee-container:hover .marquee-left,
-          .marquee-container:hover .marquee-right,
-          .marquee-container:hover .marquee-left-slow {
+          .marquee-container:hover .marquee-right {
             animation-play-state: paused;
           }
         }
 
-        /* Mobile Animations - Faster for engagement */
         @media (max-width: 767px) {
           .marquee-left {
             animation: marquee-left 15s linear infinite;
           }
-
           .marquee-right {
             animation: marquee-right 18s linear infinite;
           }
-
-          .marquee-left-slow {
-            animation: marquee-left 20s linear infinite;
-          }
-
-          /* No hover pause on mobile - touch devices */
           .marquee-container:hover .marquee-left,
-          .marquee-container:hover .marquee-right,
-          .marquee-container:hover .marquee-left-slow {
+          .marquee-container:hover .marquee-right {
             animation-play-state: running;
           }
         }
 
         .animate-fade-in-up {
           animation: fade-in-up 1s ease-out forwards;
-        }
-
-        .animate-glow-pulse {
-          animation: glow-pulse 3s ease-in-out infinite;
         }
 
         .marquee-container {
@@ -416,20 +368,20 @@ const PortfolioShowcase: React.FC = () => {
 
       <section
         ref={sectionRef}
-        className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 py-12 px-4 m-5 overflow-hidden relative"
+        className="min-h-screen bg-primary py-12 px-4 overflow-hidden relative"
       >
-        {/* Light Animated Background matching logo colors */}
-        <div className="absolute inset-0 opacity-40">
+        {/* Ambient glow blobs matching hero palette */}
+        <div className="absolute inset-0 opacity-30">
           <div
-            className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-400/20 rounded-full blur-3xl animate-pulse"
+            className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-accent/20 rounded-full blur-3xl animate-pulse"
             style={{ animationDelay: "0s", animationDuration: "8s" }}
           ></div>
           <div
-            className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-400/15 rounded-full blur-3xl animate-pulse"
+            className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent-light/15 rounded-full blur-3xl animate-pulse"
             style={{ animationDelay: "3s", animationDuration: "10s" }}
           ></div>
           <div
-            className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-blue-300/20 rounded-full blur-3xl animate-pulse"
+            className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-primary-light/20 rounded-full blur-3xl animate-pulse"
             style={{ animationDelay: "6s", animationDuration: "12s" }}
           ></div>
         </div>
@@ -441,27 +393,24 @@ const PortfolioShowcase: React.FC = () => {
           }`}
         >
           <h1
-            className="text-4xl md:text-6xl lg:text-8xl font-black text-slate-800 mb-6 animate-fade-in-up"
+            className="text-4xl md:text-6xl lg:text-8xl font-black text-accent mb-6 animate-fade-in-up"
             style={{ animationDelay: "0.2s" }}
           >
             Our Work
           </h1>
 
           <p
-            className="text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed animate-fade-in-up"
+            className="text-lg md:text-xl text-gray-400 max-w-4xl mx-auto leading-relaxed animate-fade-in-up"
             style={{ animationDelay: "0.4s" }}
           >
-            Explore our collection of custom-built websites and powerful web
-            systems crafted from scratch or redesigned to perfection. Click any
-            project to visit the live site!
+            Real projects, live and running. Click any card to visit the site.
           </p>
         </div>
 
-        {/* 2 Organized Rows with Unique Content */}
+        {/* 2 Rows */}
         <div className="space-y-12 relative z-10">
-          {/* Row 1 - Mixed Business & E-commerce */}
-          <div className="marquee-container m-5">
-            <div className="flex marquee-left m-5">
+          <div className="marquee-container">
+            <div className="flex marquee-left">
               {Array.from({ length: 3 }, (_, i) =>
                 row1Projects.map((project, index) => (
                   <ProjectCard
@@ -469,13 +418,12 @@ const PortfolioShowcase: React.FC = () => {
                     project={project}
                     index={index}
                   />
-                ))
+                )),
               ).flat()}
             </div>
           </div>
 
-          {/* Row 2 - Business & Real Estate Platforms */}
-          <div className="marquee-container m-5">
+          <div className="marquee-container">
             <div className="flex marquee-right">
               {Array.from({ length: 3 }, (_, i) =>
                 row2Projects.map((project, index) => (
@@ -484,13 +432,13 @@ const PortfolioShowcase: React.FC = () => {
                     project={project}
                     index={index}
                   />
-                ))
+                )),
               ).flat()}
             </div>
           </div>
         </div>
 
-        {/* Call to Action with logo-matching colors - SMALLER BUTTON */}
+        {/* CTA */}
         <div
           className={`text-center mt-20 relative z-10 transition-all duration-1000 delay-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -498,27 +446,19 @@ const PortfolioShowcase: React.FC = () => {
         >
           <button
             onClick={handleViewAllSolutions}
-            className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-base rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="group inline-flex items-center px-6 py-3 bg-accent text-gray-100 font-bold text-base rounded-xl hover:bg-primary-dark transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
             <span>View All Solutions</span>
             <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
           </button>
 
-          <div className="mt-10 flex flex-wrap justify-center items-center gap-24 text-slate-600">
-            <div className="flex items-center">
-              <span className="text-lg font-semibold">
-                {projects.length} Live Systems
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-lg font-semibold">
-                Conversion Optimized
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-lg font-semibold">High Performance</span>
-            </div>
-          </div>
+          {/* <div className="mt-10 flex flex-wrap justify-center items-center gap-x-16 gap-y-4 text-gray-400">
+            <span className="text-lg font-semibold">
+              {projects.length} Live Systems
+            </span>
+            <span className="text-lg font-semibold">Conversion Optimized</span>
+            <span className="text-lg font-semibold">High Performance</span>
+          </div> */}
         </div>
       </section>
     </>
