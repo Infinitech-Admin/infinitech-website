@@ -57,8 +57,8 @@ import { MdOutlineSpeed } from "react-icons/md";
 
 const mainCategories = [
   { key: "website", title: "Website Solutions" },
-  { key: "research", title: "Market Research" },
-  { key: "branding", title: "Branding & Marketing" },
+  { key: "research", title: "Marketing Research" },
+  { key: "branding", title: "Branding" },
 ] as const;
 
 type MainCategoryKey = (typeof mainCategories)[number]["key"];
