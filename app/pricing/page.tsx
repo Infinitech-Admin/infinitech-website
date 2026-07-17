@@ -392,27 +392,29 @@ const PricingPage = () => {
         </div>
       </section>
 
-      {/* Consultation CTA Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-8 max-w-3xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Phone className="w-6 h-6 text-cyan-400" />
-            <h2 className="text-2xl md:text-3xl font-bold text-white">
-              Custom Solutions?
-            </h2>
+      {/* Consultation CTA Section - only for Social Media */}
+      {activeService === "socialmedia" && (
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-8 max-w-3xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Phone className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-2xl md:text-3xl font-bold text-white">
+                Custom Solutions?
+              </h2>
+            </div>
+            <p className="text-slate-300 mb-6 text-lg">
+              Need a tailored package? Schedule a consultation with our team to
+              discuss your specific needs and requirements.
+            </p>
+            <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all">
+              Schedule Consultation
+            </button>
+            <p className="text-slate-400 text-sm mt-4">
+              <strong>Price Range:</strong> ₱10,000 - ₱150,000+
+            </p>
           </div>
-          <p className="text-slate-300 mb-6 text-lg">
-            Need a tailored package? Schedule a consultation with our team to
-            discuss your specific needs and requirements.
-          </p>
-          <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all">
-            Schedule Consultation
-          </button>
-          <p className="text-slate-400 text-sm mt-4">
-            <strong>Price Range:</strong> ₱10,000 - ₱150,000+
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
       {isTabletOrMobile && activeService !== "socialmedia" && (
         <section className="mx-auto px-6 flex flex-col pb-10 items-center">
