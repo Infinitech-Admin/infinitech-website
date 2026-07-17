@@ -12,15 +12,9 @@ const Hero = () => {
         <span className="font-bold text-accent text-4xl">ABOUT US</span>
         <div className="space-y-6">
           <p className="text-lg text-gray-700">
-            We deliver innovative digital solutions that help businesses grow,
-            strengthen their brand, and achieve measurable results. At
-            Infinitech Advertising Corporation, we deliver high-quality,
-            innovative solutions that enhance your brand while staying within
-            your budget. From web and mobile app development to business system
-            solutions, we help your business stand out. Our responsibility is to
-            build the right growth system through web and mobile app
-            development, strategic content planning, high-quality content
-            creation, data-driven analytical reports, and continuous
+            We are aiming to build the right growth system through web
+            and mobile app development, strategic content planning, high-quality
+            content creation, data-driven analytical reports, and continuous
             optimization—helping your business achieve sustainable growth and
             long-term success.
           </p>

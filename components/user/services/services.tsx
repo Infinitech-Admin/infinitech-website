@@ -122,8 +122,8 @@ type BrandingService = BenefitsService | DetailService;
 const services = [
   {
     title: "WEBSITE DEVELOPMENT",
-    subtitle: "Why Is Your Website Costing You Sales?",
-    description: `Most lost sales don't happen because people don't want your product — they happen because your website loses them first. We fix the issues that quietly drive visitors away, and build fast, mobile-ready websites that turn traffic into paying customers.`,
+    subtitle: "Why is your website losing you money instead of making it?",
+    // description: `Most lost sales don't happen because people don't want your product — they happen because your website loses them first. We fix the issues that quietly drive visitors away, and build fast, mobile-ready websites that turn traffic into paying customers.`,
     image: "web-dev.svg",
     ctas: ["websiteAudit"] as const,
     problems: [
@@ -256,9 +256,9 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
 
   return (
     <div className="mt-5">
-      <p className="text-xs font-extrabold tracking-widest uppercase text-red-500 mb-2">
+      {/* <p className="text-xs font-extrabold tracking-widest uppercase text-red-500 mb-2">
         Common Reasons Sales Are Slipping Away
-      </p>
+      </p> */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
         {problems.map((problem) => (
           <div
@@ -1729,9 +1729,9 @@ export default function Services() {
                         <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
                           {service.subtitle}
                         </h1>
-                        <p className="text-lg text-gray-600 mt-4">
+                        {/* <p className="text-lg text-gray-600 mt-4">
                           {service.description}
-                        </p>
+                        </p> */}
 
                         <ServiceProblemList problems={service.problems} />
 

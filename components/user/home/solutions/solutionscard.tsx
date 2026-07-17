@@ -127,16 +127,16 @@ const solutionsdata: Solution[] = [
     category: "E-Commerce",
     technologies: ["Next.js", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"],
   },
-  {
-    id: 20,
-    project: "Ipponyari Japanese Restaurant",
-    description:
-      "Multi-branch Japanese restaurant website with menu showcase, table reservations, and location details for authentic yakitori, sushi, and ramen dining.",
-    link: "https://ipponyari-japanese-restaurant.vercel.app/",
-    image: "/websites/ipponyari.png",
-    category: "Restaurant",
-    technologies: ["Next.js", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"],
-  },
+  // {
+  //   id: 20,
+  //   project: "Ipponyari Japanese Restaurant",
+  //   description:
+  //     "Multi-branch Japanese restaurant website with menu showcase, table reservations, and location details for authentic yakitori, sushi, and ramen dining.",
+  //   link: "https://ipponyari-japanese-restaurant.vercel.app/",
+  //   image: "/websites/ipponyari.png",
+  //   category: "Restaurant",
+  //   technologies: ["Next.js", "Laravel", "MySQL", "Tailwind CSS", "TypeScript"],
+  // },
   {
     id: 21,
     project: "Vencio's Garden Hotel & Restaurant",
