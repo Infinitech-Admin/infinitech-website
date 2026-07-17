@@ -18,8 +18,13 @@ const Hero = () => {
           <p className="text-lg text-gray-700">
             At Infinitech Advertising Corporation, we deliver high-quality,
             innovative solutions that enhance your brand while staying within
-            your budget. From web development to system solutions, we help your
-            business stand out.
+            your budget. From web and mobile app development to business system
+            solutions, we help your business stand out. Our responsibility is to
+            build the right growth system through web and mobile app
+            development, strategic content planning, high-quality content
+            creation, data-driven analytical reports, and continuous
+            optimization—helping your business achieve sustainable growth and
+            long-term success.
           </p>
         </div>
         <div className="flex justify-evenly items-center mt-8">
