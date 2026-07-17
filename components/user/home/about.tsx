@@ -48,17 +48,20 @@ const AboutHero = () => {
             </h1>
             <div className="space-y-4">
               <p className="text-base md:text-lg">
-                At <strong>Infinitech Advertising Company</strong>, our mission
-                is to help businesses thrive by providing top-notch digital
-                solutions that boost growth, streamline operations, and enhance
-                user satisfaction.
+                At <strong>Infinitech Advertising Corporation</strong>, our
+                mission is to help businesses thrive by creating innovative
+                technologies and marketing strategies that drive growth,
+                streamline operations, and enhance customer experiences.
               </p>
+
               <p className="text-base md:text-lg">
-                We are committed to customer satisfaction, offering a guarantee
-                of unique web design and high-quality work. Our responsibility
-                is to build the right growth system through web & mob app
-                development ,content strategy, high-quality content, analytical
-                report and continuous optimization.
+                We provide web and mobile app development, business systems,
+                digital marketing, and creative services tailored to your goals.
+                Our responsibility is to build the right growth system through
+                strategic content planning, high-quality content creation,
+                data-driven analytics, and continuous optimization—helping your
+                business strengthen its brand, improve performance, and achieve
+                sustainable long-term success.
               </p>
               <p className="text-base md:text-lg">
                 Through our innovative solutions, we ensure our clients achieve
