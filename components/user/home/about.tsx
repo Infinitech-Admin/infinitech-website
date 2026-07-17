@@ -55,8 +55,6 @@ const AboutHero = () => {
               </p>
 
               <p className="text-base md:text-lg">
-                We provide web and mobile app development, business systems,
-                digital marketing, and creative services tailored to your goals.
                 Our responsibility is to build the right growth system through
                 strategic content planning, high-quality content creation,
                 data-driven analytics, and continuous optimization—helping your
