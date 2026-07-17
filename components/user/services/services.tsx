@@ -1187,9 +1187,7 @@ function BrandingSection({
   return (
     <div className="w-full mb-16">
       <div className="max-w-xl mx-auto text-center mb-8">
-        <span className="text-xl text-accent font-bold">
-          BRANDING & MARKETING
-        </span>
+        <span className="text-xl text-accent font-bold">BRANDING</span>
         <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
           Grow Your Brand Across Every Channel
         </h1>
