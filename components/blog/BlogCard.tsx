@@ -73,4 +73,3 @@ export default function BlogCard({ post, onClick }: BlogCardProps) {
   );
 }
 
-//redeploy
