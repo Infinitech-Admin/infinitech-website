@@ -1,59 +1,23 @@
-"use client";
-
-import React from "react";
-import { poetsen_one } from "@/config/fonts";
-import { Divider, Image } from "@heroui/react";
-import { LuBriefcaseBusiness } from "react-icons/lu";
+import Left from "./left";
+import Right from "./right";
 
 const Hero = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 items-center py-12 gap-8">
-      <div className="max-w-3xl">
-        <span className="font-bold text-accent text-4xl">ABOUT US</span>
-        <div className="space-y-6">
-          <p className="text-lg text-gray-700">
-            We deliver innovative digital solutions that help businesses grow,
-            strengthen their brand, and achieve measurable results. At
-            Infinitech Advertising Corporation, we deliver high-quality,
-            innovative solutions that enhance your brand while staying within
-            your budget. From web and mobile app development to business system
-            solutions, we help your business stand out. Our responsibility is to
-            build the right growth system through web and mobile app
-            development, strategic content planning, high-quality content
-            creation, data-driven analytical reports, and continuous
-            optimization—helping your business achieve sustainable growth and
-            long-term success.
-          </p>
-        </div>
-        <div className="flex justify-evenly items-center mt-8">
-          <div className="flex flex-col items-start space-y-2">
-            <div className="inline-flex items-center justify-center bg-blue-200 text-blue-900 p-4 rounded-full">
-              <LuBriefcaseBusiness size={32} />
-            </div>
-
-            <h1 className="text-3xl font-bold text-blue-900">2 years</h1>
-            <p className="text-gray-700 text-lg">Driving growth</p>
-          </div>
-
-          <Divider orientation="vertical" className="h-48" />
-
-          <div className="flex flex-col items-start space-y-2">
-            <div className="inline-flex items-center justify-center bg-blue-200 text-blue-900 p-4 rounded-full">
-              <LuBriefcaseBusiness size={32} />
-            </div>
-
-            <h1 className="text-3xl font-bold text-blue-900">20+</h1>
-            <p className="text-gray-700 text-lg">Projects completed</p>
+    <section
+      className="bg-right bg-cover"
+      style={{
+        backgroundImage: "url('/images/rainbow.svg')",
+      }}
+    >
+      <div className="container mx-auto w-full pt-5 flex-grow px-4">
+        <div className="flex flex-col py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center justify-between gap-8">
+            <Left />
+            <Right />
           </div>
         </div>
       </div>
-      <div>
-        <Image
-          src="/about.jpg"
-          className="w-full max-w-[45rem] h-auto object-contain overflow-hidden rounded-tr-[150px] rounded-bl-[150px] border-b-8 border-b-primary border-l-8 border-l-accent border-t-8 border-t-primary border-r-8 border-r-accent"
-        />
-      </div>
-    </div>
+    </section>
   );
 };
 
