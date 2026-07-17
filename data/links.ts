@@ -8,7 +8,7 @@ export const links = [
     href: "/about",
   },
   {
-    name: "Solutions",
+    name: "Services",
     href: "/solutions",
   },
   {

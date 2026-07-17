@@ -459,7 +459,7 @@ const SolutionsPage: React.FC = () => {
           </div>
 
           {/* Testimonials */}
-          <div className="w-full mt-12">
+          {/* <div className="w-full mt-12">
             <div className="flex flex-col justify-center text-center">
               <h2 className="text-3xl text-primary uppercase font-bold">
                 Every project tells a story
@@ -470,7 +470,7 @@ const SolutionsPage: React.FC = () => {
             </div>
 
             <TestimonialsSlider testimonials={solutionsTestimonials} />
-          </div>
+          </div> */}
         </div>
       </div>
     </>
