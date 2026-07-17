@@ -17,6 +17,7 @@ function mapToBlogPost(record: BlogPostRecord): BlogPost {
     title: record.title,
     description: record.description,
     content: record.content ?? "",
+    thumbnailUrl: record.thumbnail_url ?? null,
     imageUrl: record.image_urls?.[0] ?? null,
     imageUrls: record.image_urls ?? [],
     videoUrl: record.video_url,

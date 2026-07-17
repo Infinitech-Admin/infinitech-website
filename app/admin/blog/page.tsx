@@ -43,6 +43,7 @@ import {
   ImagePlus,
   Video,
   X,
+  ImageIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +69,8 @@ type FormState = {
   category: string;
   author: string;
   is_published: boolean;
+  thumbnail: string | null;
+  thumbnail_url: string | null;
   images: string[];
   image_urls: string[];
   video_path: string | null;
@@ -82,6 +85,8 @@ const emptyForm: FormState = {
   category: "",
   author: "",
   is_published: true,
+  thumbnail: null,
+  thumbnail_url: null,
   images: [],
   image_urls: [],
   video_path: null,
@@ -104,6 +109,8 @@ export default function BlogAdminPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [thumbnailProgress, setThumbnailProgress] = useState(0);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [videoUploading, setVideoUploading] = useState(false);
@@ -169,12 +176,45 @@ export default function BlogAdminPage() {
       category: post.category || "",
       author: post.author || "",
       is_published: post.is_published,
+      thumbnail: post.thumbnail || null,
+      thumbnail_url: post.thumbnail_url || null,
       images: post.images || [],
       image_urls: post.image_urls || [],
       video_path: post.video_path,
       video_url: post.video_url,
     });
     setFormOpen(true);
+  };
+
+  // Single-file thumbnail upload -- reuses the same direct-upload endpoint
+  // as the gallery images, just takes the first (only) result.
+  const handleThumbnailSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setThumbnailUploading(true);
+    setThumbnailProgress(0);
+    try {
+      const [result] = await uploadMultipleImages([file], setThumbnailProgress);
+      setForm((f) => ({
+        ...f,
+        thumbnail: result.path,
+        thumbnail_url: result.url,
+      }));
+    } catch (error) {
+      console.error(error);
+      setMessage("Thumbnail upload failed.");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      setThumbnailUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeThumbnail = () => {
+    setForm((f) => ({ ...f, thumbnail: null, thumbnail_url: null }));
   };
 
   // Handles one or many files selected at once -- each is uploaded as its
@@ -251,6 +291,7 @@ export default function BlogAdminPage() {
         category: form.category || null,
         author: form.author || null,
         is_published: form.is_published,
+        thumbnail: form.thumbnail,
         images: form.images,
         video_path: form.video_path,
       };
@@ -372,6 +413,7 @@ export default function BlogAdminPage() {
                 <TableHeader>
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead className="font-bold">ID</TableHead>
+                    <TableHead className="font-bold">Thumbnail</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Title</TableHead>
                     <TableHead className="font-bold">Category</TableHead>
@@ -391,6 +433,20 @@ export default function BlogAdminPage() {
                     >
                       <TableCell className="font-bold text-cyan-600">
                         {post.id}
+                      </TableCell>
+                      <TableCell>
+                        {post.thumbnail_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={post.thumbnail_url}
+                            alt={post.title}
+                            className="h-10 w-14 rounded object-cover border"
+                          />
+                        ) : (
+                          <div className="h-10 w-14 rounded border border-dashed flex items-center justify-center text-slate-300">
+                            <ImageIcon className="h-4 w-4" />
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {post.is_published ? (
@@ -453,6 +509,14 @@ export default function BlogAdminPage() {
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
+                                  {post.thumbnail_url && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={post.thumbnail_url}
+                                      alt={post.title}
+                                      className="w-full h-40 rounded-lg object-cover"
+                                    />
+                                  )}
                                   {post.image_urls?.length > 0 && (
                                     <div className="grid grid-cols-3 gap-2">
                                       {post.image_urls.map((url, i) => (
@@ -510,7 +574,7 @@ export default function BlogAdminPage() {
                   {posts.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className="text-center py-10 text-muted-foreground"
                       >
                         No blog posts found.
@@ -629,9 +693,49 @@ export default function BlogAdminPage() {
                 />
               </div>
 
+              {/* Thumbnail upload -- single image used for the blog card/listing */}
+              <div className="space-y-2">
+                <Label>Thumbnail</Label>
+                <p className="text-xs text-muted-foreground">
+                  Shown on the blog listing card. Separate from the gallery
+                  images below.
+                </p>
+
+                {form.thumbnail_url ? (
+                  <div className="relative w-fit">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.thumbnail_url}
+                      alt="Thumbnail"
+                      className="h-28 w-44 rounded-lg object-cover border"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeThumbnail}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailSelect}
+                    disabled={thumbnailUploading}
+                  />
+                )}
+                {thumbnailUploading && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    <Loader className="h-3 w-3 animate-spin" />
+                    Uploading... {thumbnailProgress}%
+                  </div>
+                )}
+              </div>
+
               {/* Image upload -- multiple images supported */}
               <div className="space-y-2">
-                <Label>Images</Label>
+                <Label>Gallery Images</Label>
 
                 {form.image_urls.length > 0 && (
                   <div className="grid grid-cols-4 gap-2">
@@ -733,7 +837,12 @@ export default function BlogAdminPage() {
               </Button>
               <Button
                 onClick={saveForm}
-                disabled={saving || imageUploading || videoUploading}
+                disabled={
+                  saving ||
+                  imageUploading ||
+                  videoUploading ||
+                  thumbnailUploading
+                }
                 className="bg-cyan-600 hover:bg-cyan-700"
               >
                 {saving ? (

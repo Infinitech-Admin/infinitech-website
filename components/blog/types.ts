@@ -3,7 +3,8 @@ export interface BlogPost {
   title: string;
   description: string;
   content: string;
-  imageUrl: string | null; // first image — used for card/hero thumbnails
+  thumbnailUrl: string | null; // dedicated thumbnail — used for card/hero thumbnails
+  imageUrl: string | null; // first gallery image — fallback if no thumbnail
   imageUrls: string[]; // full gallery — used in the modal
   videoUrl: string | null;
   category: string | null;

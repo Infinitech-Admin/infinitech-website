@@ -11,14 +11,22 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post, onClick }: BlogCardProps) {
-  const hasVideo = Boolean(post.videoUrl);
+  const hasThumbnail = Boolean(post.thumbnailUrl);
   const hasImage = Boolean(post.imageUrl);
+  const hasVideo = Boolean(post.videoUrl);
 
-  const { thumbnail, loading: thumbLoading } = useVideoThumbnail(
-    !hasImage && hasVideo ? post.videoUrl : null,
-  );
+  // Generated video-frame thumbnail is only a last resort, when there's
+  // neither a dedicated thumbnail nor a gallery image to fall back on.
+  const { thumbnail: generatedThumbnail, loading: thumbLoading } =
+    useVideoThumbnail(
+      !hasThumbnail && !hasImage && hasVideo ? post.videoUrl : null,
+    );
 
-  const coverSrc = hasImage ? post.imageUrl! : thumbnail;
+  const coverSrc = hasThumbnail
+    ? post.thumbnailUrl!
+    : hasImage
+      ? post.imageUrl!
+      : generatedThumbnail;
   const title = post.title?.trim() || "Untitled post";
   const description = post.description?.trim();
 
@@ -32,7 +40,7 @@ export default function BlogCard({ post, onClick }: BlogCardProps) {
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-        ) : hasVideo && thumbLoading ? (
+        ) : !hasThumbnail && !hasImage && hasVideo && thumbLoading ? (
           <div className="w-full h-full animate-pulse bg-primary/10" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-primary/30 text-xs uppercase tracking-widest">
@@ -72,7 +80,3 @@ export default function BlogCard({ post, onClick }: BlogCardProps) {
     </button>
   );
 }
-<<<<<<< HEAD
-=======
-//redeploy
->>>>>>> 81556b0e5fe0cda6fa96b6d248b22b70035c9b9b

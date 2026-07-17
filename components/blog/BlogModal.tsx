@@ -42,12 +42,18 @@ export default function BlogModal({ post, isOpen, onClose }: BlogModalProps) {
     setActiveImage(0);
   }, [post?.id]);
 
-  const needsPoster = Boolean(post?.videoUrl) && !post?.imageUrl;
-  const { thumbnail } = useVideoThumbnail(needsPoster ? post?.videoUrl : null);
+  // Only bother generating a video-frame poster if there's neither a
+  // dedicated thumbnail nor a gallery image to use instead.
+  const needsPoster =
+    Boolean(post?.videoUrl) && !post?.imageUrl && !post?.thumbnailUrl;
+  const { thumbnail: generatedThumbnail } = useVideoThumbnail(
+    needsPoster ? post?.videoUrl : null,
+  );
 
   if (!isOpen || !post) return null;
 
-  const poster = post.imageUrl ?? thumbnail ?? undefined;
+  const poster =
+    post.imageUrl ?? post.thumbnailUrl ?? generatedThumbnail ?? undefined;
   const gallery = post.imageUrls?.length
     ? post.imageUrls
     : post.imageUrl

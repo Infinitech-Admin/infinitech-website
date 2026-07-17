@@ -12,8 +12,10 @@ export interface BlogPostRecord {
   slug: string;
   description: string;
   content: string | null;
-  images: string[]; // relative paths stored on the server
-  image_urls: string[]; // full public URLs, ready to render
+  thumbnail: string | null;
+  thumbnail_url: string | null;
+  images: string[];
+  image_urls: string[];
   video_path: string | null;
   video_url: string | null;
   category: string | null;
