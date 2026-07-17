@@ -4,7 +4,7 @@ import { useState } from "react";
 import PricingCard from "@/components/pricingCard";
 import { X, ShoppingCart, Mail, Loader2, Phone } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
-
+import Link from "next/link";
 interface CartItem {
   planName: string;
   service: string;
@@ -406,9 +406,12 @@ const PricingPage = () => {
               Need a tailored package? Schedule a consultation with our team to
               discuss your specific needs and requirements.
             </p>
-            <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all">
+            <Link
+              href="/contact"
+              className="inline-block px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-all"
+            >
               Schedule Consultation
-            </button>
+            </Link>
             <p className="text-slate-400 text-sm mt-4">
               <strong>Price Range:</strong> ₱10,000 - ₱150,000+
             </p>
