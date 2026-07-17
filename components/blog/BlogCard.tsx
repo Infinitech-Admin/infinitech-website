@@ -72,3 +72,7 @@ export default function BlogCard({ post, onClick }: BlogCardProps) {
     </button>
   );
 }
+<<<<<<< HEAD
+=======
+//redeploy
+>>>>>>> 81556b0e5fe0cda6fa96b6d248b22b70035c9b9b
