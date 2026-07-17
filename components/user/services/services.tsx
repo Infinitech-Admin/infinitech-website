@@ -2,6 +2,8 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button, useDisclosure } from "@heroui/react";
+import { MdOutlineSpeed } from "react-icons/md";
+import { FaMobileAlt } from "react-icons/fa";
 import { Button as ShadButton } from "@/components/ui/button";
 import { Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -46,10 +48,13 @@ import {
 /* ============================================================================
  * TYPES
  * ========================================================================== */
-
 interface IconProps {
   className?: string;
   style?: React.CSSProperties;
+}
+interface ProblemItem {
+  icon: React.ComponentType<IconProps>;
+  label: string;
 }
 interface BenefitItem {
   icon: React.ComponentType<IconProps>;
@@ -85,7 +90,7 @@ interface BenefitsService {
   // expands. Key selects which modal/label to use (see
   // benefitsRequestButtonConfig below).
   requestButtonKey?: BenefitsRequestButtonKey;
-  processSteps?: ProcessStep[]; // ADD THIS
+  processSteps?: ProcessStep[];
 }
 interface DetailService {
   name: string;
@@ -117,49 +122,16 @@ type BrandingService = BenefitsService | DetailService;
 const services = [
   {
     title: "WEBSITE DEVELOPMENT",
-    subtitle: "Crafting Custom Websites Tailored to Your Needs",
-    description: `We create visually stunning and highly functional websites that capture attention, convey your brand's message, and give you a competitive edge. Share your vision with us, and we'll take care of the rest.`,
+    subtitle: "Why Is Your Website Costing You Sales?",
+    description: `Most lost sales don't happen because people don't want your product — they happen because your website loses them first. We fix the issues that quietly drive visitors away, and build fast, mobile-ready websites that turn traffic into paying customers.`,
     image: "web-dev.svg",
-    // CTA relevant to THIS section only — "do you already have a site?"
     ctas: ["websiteAudit"] as const,
-    categories: [
-      {
-        id: 1,
-        name: "Hotel Management",
-        description:
-          "Websites designed for hotels, resorts, and hospitality businesses with booking and management features.",
-      },
-      {
-        id: 2,
-        name: "Corporate Website",
-        description:
-          "Professional websites for companies to showcase services, portfolios, and corporate identity.",
-      },
-      {
-        id: 3,
-        name: "Manpower Platform",
-        description:
-          "Platforms for recruitment, staffing, and workforce management with user-friendly interfaces.",
-      },
-      {
-        id: 4,
-        name: "Real Estate",
-        description:
-          "Property listing and management websites tailored for real estate agencies and brokers.",
-      },
-      {
-        id: 5,
-        name: "E-Commerce",
-        description:
-          "Online stores with secure payment gateways, product catalogs, and shopping cart functionality.",
-      },
-      {
-        id: 6,
-        name: "Booking System",
-        description:
-          "Websites with integrated booking and scheduling systems for services and events.",
-      },
-    ],
+    problems: [
+      { icon: MdOutlineSpeed, label: "Slow Loading Speed" },
+      { icon: FaMobileAlt, label: "Poor Mobile Responsiveness" },
+      { icon: FaEye, label: "Low Search Visibility" },
+      { icon: FaSlidersH, label: "Outdated, Confusing Design" },
+    ] as ProblemItem[],
   },
 ];
 
@@ -179,7 +151,7 @@ interface ServiceCtaConfigEntry {
 const serviceCtaConfig: Record<ServiceCtaKey, ServiceCtaConfigEntry> = {
   videoSurvey: { label: "Take Video Survey", kind: "primary" },
   websiteAudit: {
-    label: "Already have a site? Get a Website Audit",
+    label: "Get a Free Website Audit",
     kind: "secondary",
   },
 };
@@ -274,6 +246,34 @@ function ServiceCtaButtons({
     </div>
   );
 }
+
+/* ============================================================================
+ * COMPONENT — Problem list (used on Website Development block)
+ * ========================================================================== */
+
+function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
+  if (!problems || problems.length === 0) return null;
+
+  return (
+    <div className="mt-5">
+      <p className="text-xs font-extrabold tracking-widest uppercase text-red-500 mb-2">
+        Common Reasons Sales Are Slipping Away
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+        {problems.map((problem) => (
+          <div
+            key={problem.label}
+            className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-red-100"
+          >
+            <problem.icon className="h-4 w-4 text-red-500 shrink-0" />
+            <span>{problem.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
   const total = steps.length;
   const size = 440;
@@ -481,14 +481,9 @@ const brandingServices: BrandingService[] = [
     icon: FaHashtag,
     color: "#0ea5e9",
     tagline: "Consistent content, real engagement.",
-    // Reuses the illustration from the main "Social Media Marketing"
-    // block above — shown as the carousel thumbnail and as the large
-    // image when this card is expanded.
     thumbnailImage: "/images/services/marketing.svg",
-    // Shows the "Request Social Media Management" CTA button when this
-    // card expands.
     requestButtonKey: "socialMedia",
-    processSteps: socialMediaProcessSteps, // ADD THIS LINE
+    processSteps: socialMediaProcessSteps,
     benefits: [
       {
         icon: FaCalendarAlt,
@@ -549,7 +544,6 @@ const brandingServices: BrandingService[] = [
     image: "photo_video.png",
     subtitle: "Capturing Moments That Tell Your Story",
     description: `Our professional photography and videography services bring your brand to life through compelling visual content. From product shoots to promotional videos, we create stunning media that resonates with your audience and elevates your brand presence.`,
-    // CTA relevant to THIS card only — video content lives here
     ctas: ["videoSurvey"] as const,
     categories: [
       {
@@ -591,10 +585,6 @@ const brandingServices: BrandingService[] = [
     ],
   },
   {
-    // now a full "detail" card (image + subtitle + description + On-Page/
-    // Off-Page/Local SEO categories), same shape as Photography & JuanTap,
-    // instead of the generic 4-benefit tile. Still shows the
-    // SEOAuditBanner lead-gen form when expanded.
     name: "SEO",
     type: "detail",
     image: "seo.svg",
@@ -623,9 +613,6 @@ const brandingServices: BrandingService[] = [
     ],
   },
   {
-    // Converted from a plain "detail" card to a "benefits" card so it can
-    // show the "Apply for JuanTap" lead-gen button (same treatment as
-    // Social Media Management / TikTok Shop Opening) when expanded.
     name: "JuanTap",
     type: "benefits",
     icon: FaAddressCard,
@@ -664,8 +651,6 @@ const brandingServices: BrandingService[] = [
     color: "#f59e0b",
     tagline: "Put your brand in front of the right people, fast.",
     thumbnailImage: "/paidads.png",
-    // Shows the "Request Paid Ads" CTA button when this card expands,
-    // same treatment as the other lead-gen cards.
     requestButtonKey: "paidAds",
     benefits: [
       {
@@ -696,8 +681,6 @@ const brandingServices: BrandingService[] = [
     image: "design.svg",
     subtitle: "Bringing Your Brand to Life with Stunning Designs",
     description: `Our creative team designs visually appealing graphics that reflect your brand identity, making a lasting impression on your audience. From logos to promotional materials, we've got you covered.`,
-    // Shows the "Request Graphic Design" CTA button when this card
-    // expands, same treatment as the other lead-gen cards.
     requestButtonKey: "graphicDesign",
     categories: [
       {
@@ -969,15 +952,11 @@ function SEOAuditBanner() {
 /* ============================================================================
  * SECTION: Market Research
  * ========================================================================== */
-/* ============================================================================
- * Market research hero illustration — dashboard + magnifier + stat panels
- * ========================================================================== */
 const MarketResearchIllustration = () => (
   <div className="w-full aspect-video rounded-xl overflow-hidden">
     <svg viewBox="0 0 640 360" className="w-full h-full block">
       <rect width="640" height="360" fill="#0d1b3e" />
 
-      {/* dashboard card */}
       <rect
         x="40"
         y="45"
@@ -999,7 +978,6 @@ const MarketResearchIllustration = () => (
         opacity="0.4"
       />
 
-      {/* bars */}
       <rect x="70" y="195" width="30" height="95" rx="5" fill="#38bdf8" />
       <rect
         x="115"
@@ -1031,7 +1009,6 @@ const MarketResearchIllustration = () => (
         opacity="0.8"
       />
 
-      {/* trend line */}
       <polyline
         points="85,185 130,155 175,110 220,135 265,85 310,100"
         fill="none"
@@ -1043,7 +1020,6 @@ const MarketResearchIllustration = () => (
       />
       <circle cx="310" cy="100" r="5" fill="#ffffff" />
 
-      {/* magnifying glass */}
       <circle
         cx="345"
         cy="240"
@@ -1074,7 +1050,6 @@ const MarketResearchIllustration = () => (
         $
       </text>
 
-      {/* right-side stat panels */}
       <rect
         x="430"
         y="45"
@@ -1395,10 +1370,6 @@ function BrandingSection({
                     </div>
                   </div>
                 ) : activeService.thumbnailImage ? (
-                  // Image + benefits side-by-side (used by TikTok Shop
-                  // Opening, JuanTap, Paid Ads, and any other benefits-card
-                  // that sets thumbnailImage but NOT processSteps).
-                  // Mirrors the "detail" card layout below.
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
                     <img
                       src={activeService.thumbnailImage}
@@ -1456,7 +1427,6 @@ function BrandingSection({
                     </div>
                   </div>
                 ) : (
-                  // Default layout — plain grid of benefit tiles, no image
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {activeService.benefits.map((benefit) => (
                       <div
@@ -1533,9 +1503,6 @@ function BrandingSection({
                       onWebsiteAudit={onWebsiteAudit}
                       className="mt-4 flex flex-wrap gap-3"
                     />
-                    {/* lead-gen "Request ..." button for detail-type cards
-                        that set requestButtonKey (Graphic Design) — mirrors
-                        the benefits-card treatment above */}
                     {activeService.requestButtonKey && (
                       <div className="mt-4">
                         <ShadButton
@@ -1575,8 +1542,6 @@ function BrandingSection({
                     </div>
                   ))}
                 </div>
-                {/* shows the SEO audit lead-gen form under this detail
-                    card's categories when the card requests it (SEO only) */}
                 {activeService.showSEOAuditForm && <SEOAuditBanner />}
               </div>
             )}
@@ -1589,9 +1554,6 @@ function BrandingSection({
 
 /* ============================================================================
  * SECTION: All page modals, in one place
- * ------------------------------------------------------------------------
- * Dati kalat sa file: 1 Dialog inline sa gitna ng JSX, 2 pang modal sa
- * dulo. Dito sila lahat sama-sama, at malinaw agad kung ilan at ano sila.
  * ========================================================================== */
 
 interface ServiceModalsProps {
@@ -1633,7 +1595,6 @@ function ServiceModals({
 }: ServiceModalsProps) {
   return (
     <>
-      {/* 1. Video survey */}
       <Dialog open={videoSurveyOpen} onOpenChange={onVideoSurveyOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0 [&>button]:hidden">
           <VideoSurveyForm
@@ -1643,43 +1604,36 @@ function ServiceModals({
         </DialogContent>
       </Dialog>
 
-      {/* 2. Request a market research report */}
       <RequestReportModal
         isOpen={reportOpen}
         onOpenChange={onReportOpenChange}
       />
 
-      {/* 3. Request a website audit */}
       <RequestWebsiteAuditModal
         isOpen={auditOpen}
         onOpenChange={onAuditOpenChange}
       />
 
-      {/* 4. Request social media management */}
       <RequestSocialMediaModal
         isOpen={socialMediaOpen}
         onOpenChange={onSocialMediaOpenChange}
       />
 
-      {/* 5. Request TikTok Shop opening */}
       <RequestTikTokShopModal
         isOpen={tiktokShopOpen}
         onOpenChange={onTiktokShopOpenChange}
       />
 
-      {/* 6. Apply for JuanTap */}
       <RequestJuanTapModal
         isOpen={juantapOpen}
         onOpenChange={onJuantapOpenChange}
       />
 
-      {/* 7. Request graphic design */}
       <RequestGraphicDesignModal
         isOpen={graphicDesignOpen}
         onOpenChange={onGraphicDesignOpenChange}
       />
 
-      {/* 8. Request paid ads */}
       <RequestPaidAdsModal
         isOpen={paidAdsOpen}
         onOpenChange={onPaidAdsOpenChange}
@@ -1693,8 +1647,6 @@ function ServiceModals({
  * ========================================================================== */
 
 export default function Services() {
-  // All modal state lives together here — one glance tells you every
-  // modal this page can open.
   const [videoSurveyOpen, setVideoSurveyOpen] = useState(false);
   const {
     isOpen: reportOpen,
@@ -1732,7 +1684,6 @@ export default function Services() {
     onOpenChange: onPaidAdsOpenChange,
   } = useDisclosure();
 
-  // Routes a benefits/detail-card lead-gen button click to the right modal.
   const handleRequestButtonClick = (key: BenefitsRequestButtonKey) => {
     if (key === "socialMedia") openSocialMedia();
     if (key === "tiktokShop") openTiktokShop();
@@ -1782,6 +1733,8 @@ export default function Services() {
                           {service.description}
                         </p>
 
+                        <ServiceProblemList problems={service.problems} />
+
                         <ServiceCtaButtons
                           ctas={service.ctas}
                           onVideoSurvey={() => setVideoSurveyOpen(true)}
@@ -1789,28 +1742,6 @@ export default function Services() {
                         />
                       </div>
                     </div>
-                  </div>
-
-                  {/* Category cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-                    {service.categories.map((category, catIndex) => (
-                      <div
-                        key={`service-${serviceIndex}-category-${category.id ?? catIndex}`}
-                        className={`rounded-lg p-4 transition-all duration-300 cursor-pointer group hover:shadow-lg hover:shadow-blue-400/50
-                          ${
-                            catIndex % 2 === 0
-                              ? "bg-gradient-to-r from-slate-50 via-primary/20 to-accent/10 hover:to-primary/50"
-                              : "bg-gradient-to-r from-accent/10 via-accent/30 to-primary/10 hover:to-primary/50"
-                          }`}
-                      >
-                        <h3 className="text-primary font-bold text-lg">
-                          {category.name}
-                        </h3>
-                        <p className="text-gray-600 text-base mt-2">
-                          {category.description}
-                        </p>
-                      </div>
-                    ))}
                   </div>
                 </div>
               ))}
@@ -1826,7 +1757,6 @@ export default function Services() {
         </div>
       </section>
 
-      {/* All modals for this page, rendered together */}
       <ServiceModals
         videoSurveyOpen={videoSurveyOpen}
         onVideoSurveyOpenChange={setVideoSurveyOpen}

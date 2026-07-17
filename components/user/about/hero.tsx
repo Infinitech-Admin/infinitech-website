@@ -11,12 +11,10 @@ const Hero = () => {
       <div className="max-w-3xl">
         <span className="font-bold text-accent text-4xl">ABOUT US</span>
         <div className="space-y-6">
-          <h1 className={`text-3xl text-primary ${poetsen_one.className}`}>
-            We believe in delivering high-quality solutions to help you grow
-            your business effectively.
-          </h1>
           <p className="text-lg text-gray-700">
-            At Infinitech Advertising Corporation, we deliver high-quality,
+            We deliver innovative digital solutions that help businesses grow,
+            strengthen their brand, and achieve measurable results. At
+            Infinitech Advertising Corporation, we deliver high-quality,
             innovative solutions that enhance your brand while staying within
             your budget. From web and mobile app development to business system
             solutions, we help your business stand out. Our responsibility is to
