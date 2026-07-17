@@ -84,6 +84,7 @@ interface ProcessStep {
   icon: React.ComponentType<IconProps>;
   title: string;
   color: string;
+  description: string; // ADD THIS
 }
 interface ServiceCategory {
   id: number;
@@ -251,7 +252,7 @@ interface ServiceCtaConfigEntry {
 const serviceCtaConfig: Record<ServiceCtaKey, ServiceCtaConfigEntry> = {
   videoSurvey: { label: "Take Video Survey", kind: "primary" },
   websiteAudit: {
-    label: "Already have a site? Get a Website Audit",
+    label: "Get a Free Website Audit",
     kind: "secondary",
   },
 };
@@ -372,9 +373,9 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
 
 function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
   const total = steps.length;
-  const size = 320; // fixed px size — matches the footprint of the other thumbnail images
-  const radius = 35; // percent, used for both the ring path and node positions
-  const gapDeg = 9; // trims each arc so it doesn't run under the node circles
+  const size = 440; // was 320 — bigger canvas so nodes/labels have room
+  const radius = 36; // percent, ring path + node positions
+  const gapDeg = 8; // trims each arc so it doesn't run under the node circles
   const toRad = (deg: number) => (deg * Math.PI) / 180;
 
   return (
@@ -409,7 +410,7 @@ function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
               d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
               fill="none"
               stroke="#cbd5e1"
-              strokeWidth="1.4"
+              strokeWidth="1.2"
               markerEnd="url(#processArrow)"
             />
           );
@@ -418,12 +419,12 @@ function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
 
       <div
         className="absolute inset-0 flex flex-col items-center justify-center text-center"
-        style={{ padding: "0 34px" }}
+        style={{ padding: "0 60px" }}
       >
-        <span className="text-[7px] font-extrabold tracking-widest uppercase text-slate-400">
+        <span className="text-[9px] font-extrabold tracking-widest uppercase text-slate-400">
           Continuous Cycle
         </span>
-        <span className="text-primary font-bold text-[10px] mt-0.5 leading-tight">
+        <span className="text-primary font-bold text-sm mt-1 leading-tight">
           Strategy to Growth
         </span>
       </div>
@@ -440,22 +441,22 @@ function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
               left: `${left}%`,
               top: `${top}%`,
               transform: "translate(-50%, -50%)",
-              width: "62px",
+              width: "84px", // was 62px — more room, less overlap
             }}
           >
             <div
               className="relative flex items-center justify-center rounded-full text-white shadow-md ring-2 ring-white"
-              style={{ backgroundColor: step.color, width: 26, height: 26 }}
+              style={{ backgroundColor: step.color, width: 36, height: 36 }}
             >
-              <step.icon style={{ width: 11, height: 11 }} />
+              <step.icon style={{ width: 15, height: 15 }} />
               <span
                 className="absolute flex items-center justify-center rounded-full bg-white font-bold ring-1 ring-gray-200"
                 style={{
-                  top: -4,
-                  right: -4,
-                  width: 12,
-                  height: 12,
-                  fontSize: "7px",
+                  top: -5,
+                  right: -5,
+                  width: 16,
+                  height: 16,
+                  fontSize: "9px",
                   color: step.color,
                 }}
               >
@@ -463,8 +464,8 @@ function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
               </span>
             </div>
             <span
-              className="mt-1 font-semibold text-primary leading-tight"
-              style={{ fontSize: "8px" }}
+              className="mt-1.5 font-semibold text-primary leading-tight"
+              style={{ fontSize: "11px" }}
             >
               {step.title}
             </span>
@@ -524,14 +525,54 @@ const researchBenefits = [
  * ========================================================================== */
 
 const socialMediaProcessSteps: ProcessStep[] = [
-  { icon: FaUsers, title: "Initial Consultation", color: "#0ea5e9" },
-  { icon: FaChartLine, title: "Research & Planning", color: "#6366f1" },
-  { icon: FaPalette, title: "Content Creation", color: "#8b5cf6" },
-  { icon: FaVideo, title: "Production", color: "#f59e0b" },
-  { icon: FaBullhorn, title: "Publishing", color: "#ef4444" },
-  { icon: FaChartBar, title: "Analysis", color: "#14b8a6" },
-  { icon: FaSlidersH, title: "Optimization", color: "#22c55e" },
-  { icon: FaBolt, title: "Continuous Growth", color: "#ec4899" },
+  {
+    icon: FaUsers,
+    title: "Initial Consultation",
+    color: "#0ea5e9",
+    description: "We learn your brand, goals, and target audience.",
+  },
+  {
+    icon: FaChartLine,
+    title: "Research & Planning",
+    color: "#6366f1",
+    description: "We map out content pillars and a posting strategy.",
+  },
+  {
+    icon: FaPalette,
+    title: "Content Creation",
+    color: "#8b5cf6",
+    description: "We design graphics, captions, and creative assets.",
+  },
+  {
+    icon: FaVideo,
+    title: "Production",
+    color: "#f59e0b",
+    description: "We shoot and edit photos and videos for your pages.",
+  },
+  {
+    icon: FaBullhorn,
+    title: "Publishing",
+    color: "#ef4444",
+    description: "We schedule and post content at optimal times.",
+  },
+  {
+    icon: FaChartBar,
+    title: "Analysis",
+    color: "#14b8a6",
+    description: "We track performance and audience engagement.",
+  },
+  {
+    icon: FaSlidersH,
+    title: "Optimization",
+    color: "#22c55e",
+    description: "We refine strategy based on what the data shows.",
+  },
+  {
+    icon: FaBolt,
+    title: "Continuous Growth",
+    color: "#ec4899",
+    description: "We repeat the cycle to keep growing your brand.",
+  },
 ];
 
 /* ============================================================================
@@ -1488,13 +1529,42 @@ function BrandingSection({
                 )}
 
                 {activeService.processSteps ? (
-                  <div>
-                    <CircularProcessDiagram
-                      steps={activeService.processSteps}
-                    />
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                    <div className="hidden lg:flex flex-col gap-3">
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          8-Step
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Proven, repeatable process from strategy to growth.
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          Monthly
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Performance reports so you always know what's working.
+                        </p>
+                      </div>
+                    </div>
 
-                    {activeService.requestButtonKey && (
-                      <div className="flex justify-center mt-2">
+                    <div className="flex justify-center lg:col-span-1">
+                      <CircularProcessDiagram
+                        steps={activeService.processSteps}
+                      />
+                    </div>
+
+                    <div className="hidden lg:flex flex-col gap-3">
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          Data-Backed
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Every step is optimized using real engagement data.
+                        </p>
+                      </div>
+                      {activeService.requestButtonKey && (
                         <ShadButton
                           onClick={() =>
                             onRequestButtonClick(
@@ -1504,7 +1574,7 @@ function BrandingSection({
                           className={
                             benefitsRequestButtonConfig[
                               activeService.requestButtonKey
-                            ].className
+                            ].className + " w-full"
                           }
                         >
                           {
@@ -1513,8 +1583,8 @@ function BrandingSection({
                             ].label
                           }
                         </ShadButton>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ) : activeService.thumbnailImage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">

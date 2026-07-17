@@ -61,6 +61,13 @@ interface ServiceCategory {
   name: string;
   description: string;
 }
+interface ProcessStep {
+  icon: React.ComponentType<IconProps>;
+  title: string;
+  color: string;
+  description: string;
+}
+
 interface BenefitsService {
   name: string;
   type: "benefits";
@@ -78,6 +85,7 @@ interface BenefitsService {
   // expands. Key selects which modal/label to use (see
   // benefitsRequestButtonConfig below).
   requestButtonKey?: BenefitsRequestButtonKey;
+  processSteps?: ProcessStep[]; // ADD THIS
 }
 interface DetailService {
   name: string;
@@ -266,7 +274,110 @@ function ServiceCtaButtons({
     </div>
   );
 }
+function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
+  const total = steps.length;
+  const size = 440;
+  const radius = 36;
+  const gapDeg = 8;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
 
+  return (
+    <div
+      className="relative mx-auto"
+      style={{ width: size, height: size, maxWidth: "100%" }}
+    >
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+        <defs>
+          <marker
+            id="processArrow"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
+            orient="auto"
+          >
+            <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8" />
+          </marker>
+        </defs>
+
+        {steps.map((_, i) => {
+          const angleStart = -90 + (i * 360) / total + gapDeg;
+          const angleEnd = -90 + ((i + 1) * 360) / total - gapDeg;
+          const x1 = 50 + radius * Math.cos(toRad(angleStart));
+          const y1 = 50 + radius * Math.sin(toRad(angleStart));
+          const x2 = 50 + radius * Math.cos(toRad(angleEnd));
+          const y2 = 50 + radius * Math.sin(toRad(angleEnd));
+          return (
+            <path
+              key={`arc-${i}`}
+              d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
+              fill="none"
+              stroke="#cbd5e1"
+              strokeWidth="1.2"
+              markerEnd="url(#processArrow)"
+            />
+          );
+        })}
+      </svg>
+
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center text-center"
+        style={{ padding: "0 60px" }}
+      >
+        <span className="text-[9px] font-extrabold tracking-widest uppercase text-slate-400">
+          Continuous Cycle
+        </span>
+        <span className="text-primary font-bold text-sm mt-1 leading-tight">
+          Strategy to Growth
+        </span>
+      </div>
+
+      {steps.map((step, i) => {
+        const angle = -90 + (i * 360) / total;
+        const left = 50 + radius * Math.cos(toRad(angle));
+        const top = 50 + radius * Math.sin(toRad(angle));
+        return (
+          <div
+            key={step.title}
+            className="absolute flex flex-col items-center text-center"
+            style={{
+              left: `${left}%`,
+              top: `${top}%`,
+              transform: "translate(-50%, -50%)",
+              width: "84px",
+            }}
+          >
+            <div
+              className="relative flex items-center justify-center rounded-full text-white shadow-md ring-2 ring-white"
+              style={{ backgroundColor: step.color, width: 36, height: 36 }}
+            >
+              <step.icon style={{ width: 15, height: 15 }} />
+              <span
+                className="absolute flex items-center justify-center rounded-full bg-white font-bold ring-1 ring-gray-200"
+                style={{
+                  top: -5,
+                  right: -5,
+                  width: 16,
+                  height: 16,
+                  fontSize: "9px",
+                  color: step.color,
+                }}
+              >
+                {i + 1}
+              </span>
+            </div>
+            <span
+              className="mt-1.5 font-semibold text-primary leading-tight"
+              style={{ fontSize: "11px" }}
+            >
+              {step.title}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 /* ============================================================================
  * DATA — Market research benefits
  * ========================================================================== */
@@ -313,7 +424,56 @@ const researchBenefits = [
 /* ============================================================================
  * DATA — Branding & marketing carousel
  * ========================================================================== */
-
+const socialMediaProcessSteps: ProcessStep[] = [
+  {
+    icon: FaUsers,
+    title: "Initial Consultation",
+    color: "#0ea5e9",
+    description: "We learn your brand, goals, and target audience.",
+  },
+  {
+    icon: FaChartLine,
+    title: "Research & Planning",
+    color: "#6366f1",
+    description: "We map out content pillars and a posting strategy.",
+  },
+  {
+    icon: FaPalette,
+    title: "Content Creation",
+    color: "#8b5cf6",
+    description: "We design graphics, captions, and creative assets.",
+  },
+  {
+    icon: FaVideo,
+    title: "Production",
+    color: "#f59e0b",
+    description: "We shoot and edit photos and videos for your pages.",
+  },
+  {
+    icon: FaBullhorn,
+    title: "Publishing",
+    color: "#ef4444",
+    description: "We schedule and post content at optimal times.",
+  },
+  {
+    icon: FaChartBar,
+    title: "Analysis",
+    color: "#14b8a6",
+    description: "We track performance and audience engagement.",
+  },
+  {
+    icon: FaSlidersH,
+    title: "Optimization",
+    color: "#22c55e",
+    description: "We refine strategy based on what the data shows.",
+  },
+  {
+    icon: FaBolt,
+    title: "Continuous Growth",
+    color: "#ec4899",
+    description: "We repeat the cycle to keep growing your brand.",
+  },
+];
 const brandingServices: BrandingService[] = [
   {
     name: "Social Media Management",
@@ -328,6 +488,7 @@ const brandingServices: BrandingService[] = [
     // Shows the "Request Social Media Management" CTA button when this
     // card expands.
     requestButtonKey: "socialMedia",
+    processSteps: socialMediaProcessSteps, // ADD THIS LINE
     benefits: [
       {
         icon: FaCalendarAlt,
@@ -1175,10 +1336,68 @@ function BrandingSection({
                   </p>
                 )}
 
-                {activeService.thumbnailImage ? (
-                  // Image + benefits side-by-side (used by Social Media
-                  // Management, TikTok Shop Opening, JuanTap, Paid Ads,
-                  // and any other benefits-card that sets thumbnailImage).
+                {activeService.processSteps ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                    <div className="hidden lg:flex flex-col gap-3">
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          8-Step
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Proven, repeatable process from strategy to growth.
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          Monthly
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Performance reports so you always know what's working.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center lg:col-span-1">
+                      <CircularProcessDiagram
+                        steps={activeService.processSteps}
+                      />
+                    </div>
+
+                    <div className="hidden lg:flex flex-col gap-3">
+                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                        <p className="text-primary font-bold text-2xl">
+                          Data-Backed
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Every step is optimized using real engagement data.
+                        </p>
+                      </div>
+                      {activeService.requestButtonKey && (
+                        <ShadButton
+                          onClick={() =>
+                            onRequestButtonClick(
+                              activeService.requestButtonKey!,
+                            )
+                          }
+                          className={
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].className + " w-full"
+                          }
+                        >
+                          {
+                            benefitsRequestButtonConfig[
+                              activeService.requestButtonKey
+                            ].label
+                          }
+                        </ShadButton>
+                      )}
+                    </div>
+                  </div>
+                ) : activeService.thumbnailImage ? (
+                  // Image + benefits side-by-side (used by TikTok Shop
+                  // Opening, JuanTap, Paid Ads, and any other benefits-card
+                  // that sets thumbnailImage but NOT processSteps).
                   // Mirrors the "detail" card layout below.
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
                     <img

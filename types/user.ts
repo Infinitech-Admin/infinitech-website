@@ -11,7 +11,6 @@ export type Plans = {
   };
 };
 
-
 export type Service = {
   name: string;
   description: string | string[]; // support string OR array
@@ -19,6 +18,3 @@ export type Service = {
   monthly?: number;
   isSelected?: boolean;
 };
-
-
-

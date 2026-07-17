@@ -12,8 +12,8 @@ export const links = [
     href: "/solutions",
   },
   {
-    name: "Testimonials",
-    href: "/testimonials",
+    name: "Blog",
+    href: "/blog",
   },
   {
     name: "Pricing",
@@ -23,5 +23,4 @@ export const links = [
     name: "Contact Us",
     href: "/contact",
   },
-
 ];

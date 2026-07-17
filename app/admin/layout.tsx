@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Video,
   IdCard,
+  FileText,
   Ticket,
   FileCheck,
   UserCheck,
@@ -83,6 +84,7 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Market Research",
         icon: BarChart3,
       },
+      { href: "/admin/blog", label: "Blog", icon: FileText },
     ],
   },
   {
