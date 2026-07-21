@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { Check, ShoppingCart, Plus } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
 
 interface Plan {
@@ -158,7 +158,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
               </div>
             </div>
 
-            {/* Price & Button */}
+            {/* Price & Button (MOBILE) */}
             <div className="flex items-end justify-between gap-3 pt-4 border-t border-slate-700 mt-auto">
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1 mb-1">
@@ -181,6 +181,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 </span>
               </div>
 
+              {/* Cart button hidden
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -195,6 +196,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
               >
                 <ShoppingCart className="w-4 h-4" />
               </button>
+              */}
             </div>
           </div>
         </div>
@@ -243,7 +245,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
               </div>
             </div>
 
-            {/* Right: Price & Cart Button */}
+            {/* Right: Price & Cart Button (DESKTOP) */}
             <div className="flex flex-col items-end justify-between shrink-0 h-full">
               {/* Price */}
               <div className="text-right">
@@ -261,6 +263,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 </span>
               </div>
 
+              {/* Cart button hidden
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -275,6 +278,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
               >
                 <ShoppingCart className="w-4 h-4" />
               </button>
+              */}
             </div>
           </div>
         </div>
