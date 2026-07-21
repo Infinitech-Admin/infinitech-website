@@ -187,7 +187,7 @@ const packages = [
 const services = [
   {
     title: "WEBSITE DEVELOPMENT",
-    subtitle: "Why is your website losing you money instead of making it?",
+    subtitle: "Why is your website losing\nyour money instead of making it?",
     // description: `Most lost sales don't happen because people don't want your product — they happen because your website loses them first. We fix the issues that quietly drive visitors away, and build fast, mobile-ready websites that turn traffic into paying customers.`,
     image: "web-dev.svg",
     ctas: ["websiteAudit"] as const,
