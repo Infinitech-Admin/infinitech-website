@@ -44,7 +44,7 @@ interface Tier {
 const services = [
   {
     title: "WEBSITE Solutions",
-    subtitle: "Why is your website losing you money instead of making it?",
+    subtitle: "Why is your website losing you\nmoney instead of making it?",
     image: "web-dev.svg",
     ctas: ["websiteAudit"] as const,
     problems: [
@@ -465,7 +465,7 @@ export default function WebsiteDevelopment() {
                         <span className="text-xl text-accent font-bold">
                           {service.title}
                         </span>
-                        <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
+                        <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One'] whitespace-pre-line">
                           {service.subtitle}
                         </h1>
 
