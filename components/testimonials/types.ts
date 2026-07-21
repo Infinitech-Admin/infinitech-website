@@ -14,6 +14,8 @@ export interface TestimonialFormData {
   name: string;
   position: string;
   company: string;
+  email: string;
+  phone: string;
   message: string;
-  page: "home" | "solutions" | "both";
+  page: "solutions" | "home" | "both";
 }

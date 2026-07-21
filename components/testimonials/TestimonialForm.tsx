@@ -7,6 +7,8 @@ import { TestimonialFormData } from "./types";
 const EMPTY_FORM: TestimonialFormData = {
   name: "",
   position: "",
+  email: "",
+  phone: "",
   company: "",
   message: "",
   page: "solutions",
@@ -25,6 +27,14 @@ export default function TestimonialForm({
   const validate = (): boolean => {
     const newErrors: Partial<TestimonialFormData> = {};
     if (!form.name.trim()) newErrors.name = "Name is required";
+
+    if (form.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email.trim())) {
+        newErrors.email = "Please enter a valid email address";
+      }
+    }
+
     if (!form.message.trim()) newErrors.message = "Message is required";
     if (form.message.trim().length < 20)
       newErrors.message = "Please write at least 20 characters";
@@ -153,6 +163,41 @@ export default function TestimonialForm({
                 value={form.position}
                 onChange={handleInputChange}
                 placeholder="e.g. Marketing Manager"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">
+                Email Address
+              </label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleInputChange}
+                placeholder="e.g. juan@company.com"
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10 ${
+                  errors.email
+                    ? "border-red-400 bg-red-50"
+                    : "border-gray-200 bg-gray-50"
+                }`}
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                name="phone"
+                type="tel"
+                value={form.phone}
+                onChange={handleInputChange}
+                placeholder="e.g. 0917 123 4567"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </div>
