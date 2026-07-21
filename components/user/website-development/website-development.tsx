@@ -44,7 +44,7 @@ interface Tier {
 const services = [
   {
     title: "WEBSITE Solutions",
-    subtitle: "Why is your website losing you\nmoney instead of making it?",
+    subtitle: "Why is your website losing\nyour money instead of making it?",
     image: "web-dev.svg",
     ctas: ["websiteAudit"] as const,
     problems: [
