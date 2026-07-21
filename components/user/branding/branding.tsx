@@ -632,7 +632,7 @@ const brandingServices: BrandingService[] = [
       { src: "/studio-shoot2.jpg", alt: "Studio shoot sample 2" },
       { src: "/studio-shoot3.jpg", alt: "Studio shoot sample 3" },
       {
-        src: "/IZAKAYA-SOFT-OPENING.mp4",
+        src: "/IZAKAYA-SOFT-OPENING-2.mp4",
         alt: "Photography & videography showreel",
       },
     ],
