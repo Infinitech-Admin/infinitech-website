@@ -17,5 +17,13 @@ export interface TestimonialFormData {
   email: string;
   phone: string;
   message: string;
-  page: "solutions" | "home" | "both";
+  page:
+    | "website-development"
+    | "marketing-research"
+    | "seo"
+    | "social-media-management"
+    | "video-photography"
+    | "graphic-design"
+    | "tiktok-shop-open"
+    | "juantap";
 }

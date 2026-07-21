@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useDisclosure } from "@heroui/react";
 import { Button as ShadButton } from "@/components/ui/button";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ZoomIn, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import VideoSurveyForm from "@/components/video-survey-form";
 import RequestSocialMediaModal from "@/components/Requestsocialmediamodal ";
@@ -30,6 +31,10 @@ import {
   FaEye,
   FaCrosshairs,
   FaSlidersH,
+  FaSearchMinus,
+  FaMapMarkerAlt,
+  FaLink,
+  FaGlobe,
 } from "react-icons/fa";
 
 /* ============================================================================
@@ -76,11 +81,22 @@ interface BenefitsService {
   color: string;
   tagline: string;
   benefits: BenefitItem[];
-  thumbnailImage?: string;
+  thumbnailImage?: string; // image OR video (.mp4/.webm/.mov) src
   showSEOAuditForm?: boolean;
   requestButtonKey?: BenefitsRequestButtonKey;
   processSteps?: ProcessStep[];
+  // Optional supporting photo shown under the circular process diagram
+  // (currently used by Social Media Management's "Behind the Scenes" shot).
+  behindTheScenesImage?: string;
 }
+// A single item in a detail-service's extra media gallery. `src` can be an
+// image or a video (.mp4/.webm/.mov) — detected automatically via
+// isVideoFile, same convention as thumbnailImage.
+interface GalleryItem {
+  src: string;
+  alt: string;
+}
+
 interface DetailService {
   name: string;
   type: "detail";
@@ -91,8 +107,32 @@ interface DetailService {
   ctas?: readonly ServiceCtaKey[];
   showSEOAuditForm?: boolean;
   requestButtonKey?: BenefitsRequestButtonKey;
+  // Optional "why this matters" pain-point callouts (currently used by SEO).
+  painPointsHeading?: string;
+  painPoints?: BenefitItem[];
+  // Optional guarantee/results banner (currently used by SEO).
+  guaranteeHeading?: string;
+  guaranteeText?: string;
+  // Optional extra photo/video gallery shown as a thumbnail grid, each item
+  // opens full-size in the shared MediaLightbox.
+  gallery?: GalleryItem[];
 }
 type BrandingService = BenefitsService | DetailService;
+
+// Detail-service `image` values are either a root-relative path (starts with
+// "/", e.g. "/product-shoot.jpg" living directly in /public) or a bare
+// filename that lives in /public/images/services/ (e.g. "seo.svg"). This
+// resolves either form to the correct final src, avoiding double-slash /
+// wrong-folder bugs.
+function resolveDetailImage(image: string): string {
+  return image.startsWith("/") ? image : `/images/services/${image}`;
+}
+
+// Detects whether a thumbnail src is a video file so it renders with <video>
+// instead of <img>.
+function isVideoFile(src: string): boolean {
+  return /\.(mp4|webm|mov)$/i.test(src);
+}
 
 type BenefitsRequestButtonKey =
   | "socialMedia"
@@ -162,6 +202,165 @@ function ServiceCtaButtons({
         );
       })}
     </div>
+  );
+}
+
+// Wraps an <img> so it's clickable to open a full-size preview. Shows a
+// subtle zoom affordance on hover so it's clear the image is interactive.
+function ZoomableImage({
+  src,
+  alt,
+  className,
+  onZoom,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  onZoom: (src: string, alt: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onZoom(src, alt)}
+      className="group relative block w-full cursor-zoom-in overflow-hidden rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-label={`View larger image of ${alt}`}
+    >
+      <img src={src} alt={alt} className={className} />
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100">
+          <ZoomIn className="h-4 w-4 text-primary" />
+        </span>
+      </span>
+    </button>
+  );
+}
+
+// Full-screen preview shown when a ZoomableImage or GalleryThumb is clicked.
+// Renders a <video> with controls when the src is a video file, otherwise an
+// <img>. Click the backdrop, press Escape, or hit the close button to
+// dismiss.
+//
+// Rendered via a portal directly into document.body. This is deliberate:
+// if any ancestor in the page (layout wrappers, page-transition containers,
+// etc.) has a CSS `transform`, `filter`, or `will-change` set, it becomes
+// the containing block for descendant `position: fixed` elements — so the
+// "fullscreen" overlay ends up clipped/sized to that ancestor instead of
+// the real viewport. Portaling to <body> sidesteps that entirely.
+function MediaLightbox({
+  media,
+  onClose,
+}: {
+  media: { src: string; alt: string } | null;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!media) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [media, onClose]);
+
+  if (!mounted || !media) return null;
+
+  const isVideo = isVideoFile(media.src);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-4 sm:p-8 animate-in fade-in duration-200"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={media.alt}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 flex h-11 w-11 items-center justify-center rounded-full bg-white text-primary shadow-lg transition-transform hover:scale-105 active:scale-95"
+        aria-label="Close preview"
+      >
+        <LuX size={22} />
+      </button>
+      {isVideo ? (
+        <video
+          src={media.src}
+          className="max-h-[85vh] max-w-[85vw] rounded-xl shadow-2xl"
+          controls
+          autoPlay
+          playsInline
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <img
+          src={media.src}
+          alt={media.alt}
+          className="max-h-[85vh] max-w-[85vw] object-contain rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+    </div>,
+    document.body,
+  );
+}
+
+// A single thumbnail in a detail-service's gallery grid. Videos preview as
+// a silent looping clip with a play badge; images get the zoom badge.
+// Either way, clicking opens the full media in MediaLightbox.
+function GalleryThumb({
+  item,
+  onOpen,
+}: {
+  item: GalleryItem;
+  onOpen: (src: string, alt: string) => void;
+}) {
+  const isVideo = isVideoFile(item.src);
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(item.src, item.alt)}
+      className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-label={`View larger ${isVideo ? "video" : "image"}: ${item.alt}`}
+    >
+      {isVideo ? (
+        <video
+          src={item.src}
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      ) : (
+        <img
+          src={item.src}
+          alt={item.alt}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100">
+          {isVideo ? (
+            <Play className="h-3.5 w-3.5 fill-primary text-primary" />
+          ) : (
+            <ZoomIn className="h-3.5 w-3.5 text-primary" />
+          )}
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -324,6 +523,35 @@ const socialMediaProcessSteps: ProcessStep[] = [
   },
 ];
 
+// Pain points shown under the SEO detail card — why prospects can't find the
+// business today.
+const seoPainPoints: BenefitItem[] = [
+  {
+    icon: FaSearchMinus,
+    title: "Buried in Search Results",
+    description:
+      "Your competitors show up on page 1 of Google — your site doesn't.",
+  },
+  {
+    icon: FaMapMarkerAlt,
+    title: "Invisible in Local Search",
+    description:
+      'Nearby customers searching "near me" can\'t find you on Google Maps.',
+  },
+  {
+    icon: FaLink,
+    title: "Weak Backlink Profile",
+    description:
+      "Low authority signals tell Google your site isn't trustworthy yet.",
+  },
+  {
+    icon: FaGlobe,
+    title: "Outdated, Unoptimized Content",
+    description:
+      "Missing keywords and technical issues keep Google from ranking you.",
+  },
+];
+
 const brandingServices: BrandingService[] = [
   {
     name: "Social Media Management",
@@ -334,6 +562,7 @@ const brandingServices: BrandingService[] = [
     thumbnailImage: "/images/services/marketing.svg",
     requestButtonKey: "socialMedia",
     processSteps: socialMediaProcessSteps,
+    behindTheScenesImage: "/behind-the-scene.jpg",
     benefits: [
       {
         icon: FaCalendarAlt,
@@ -391,10 +620,22 @@ const brandingServices: BrandingService[] = [
   {
     name: "Photography & Videography",
     type: "detail",
-    image: "photo_video.png",
+    image: "/product-shoot.jpg",
     subtitle: "Capturing Moments That Tell Your Story",
     description: `Our professional photography and videography services bring your brand to life through compelling visual content. From product shoots to promotional videos, we create stunning media that resonates with your audience and elevates your brand presence.`,
     ctas: ["videoSurvey"] as const,
+    gallery: [
+      { src: "/product-shoot1.jpg", alt: "Product photography sample 1" },
+      { src: "/product-shoot2.jpg", alt: "Product photography sample 2" },
+      { src: "/product-shoot3.jpg", alt: "Product photography sample 3" },
+      { src: "/studio-shoot1.jpg", alt: "Studio shoot sample 1" },
+      { src: "/studio-shoot2.jpg", alt: "Studio shoot sample 2" },
+      { src: "/studio-shoot3.jpg", alt: "Studio shoot sample 3" },
+      {
+        src: "/IZAKAYA-SOFT-OPENING.mp4",
+        alt: "Photography & videography showreel",
+      },
+    ],
     categories: [
       {
         id: 1,
@@ -441,6 +682,11 @@ const brandingServices: BrandingService[] = [
     subtitle: "Boost Your Online Visibility with SEO",
     description: `Our SEO strategies help improve your website's search engine rankings, driving more organic traffic and increasing your online presence. Let us optimize your site and ensure it reaches the right audience.`,
     showSEOAuditForm: true,
+    painPointsHeading: "Why Can't People Find You?",
+    painPoints: seoPainPoints,
+    guaranteeHeading: "Our Guarantee",
+    guaranteeText:
+      "We improve your on-page SEO, technical SEO, and backlink profile so Google can find, trust, and rank your site. Most clients see first-page rankings for their target keywords within 4–5 months — and we keep optimizing until you get there.",
     categories: [
       {
         id: 1,
@@ -468,7 +714,7 @@ const brandingServices: BrandingService[] = [
     icon: FaAddressCard,
     color: "#6366f1",
     tagline: "Share your info with a single tap.",
-    thumbnailImage: "/images/services/juantap.png",
+    thumbnailImage: "/demo.mp4",
     requestButtonKey: "juantap",
     benefits: [
       {
@@ -528,7 +774,7 @@ const brandingServices: BrandingService[] = [
   {
     name: "Graphic Design",
     type: "detail",
-    image: "design.svg",
+    image: "/graphic-demo.jpg",
     subtitle: "Bringing Your Brand to Life with Stunning Designs",
     description: `Our creative team designs visually appealing graphics that reflect your brand identity, making a lasting impression on your audience. From logos to promotional materials, we've got you covered.`,
     requestButtonKey: "graphicDesign",
@@ -811,7 +1057,14 @@ function BrandingSection({
   const [selectedService, setSelectedService] = useState<string | null>(
     brandingServices[0]?.name ?? null,
   );
+  const [lightboxMedia, setLightboxMedia] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const openLightbox = (src: string, alt: string) =>
+    setLightboxMedia({ src, alt });
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({
@@ -862,11 +1115,22 @@ function BrandingSection({
                 }
               >
                 {service.type === "benefits" && service.thumbnailImage ? (
-                  <img
-                    src={service.thumbnailImage}
-                    alt={service.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+                  isVideoFile(service.thumbnailImage) ? (
+                    <video
+                      src={service.thumbnailImage}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={service.thumbnailImage}
+                      alt={service.name}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )
                 ) : service.type === "benefits" ? (
                   <div
                     className="absolute inset-0 flex items-center justify-center"
@@ -878,7 +1142,7 @@ function BrandingSection({
                   </div>
                 ) : (
                   <img
-                    src={`/images/services/${service.image}`}
+                    src={resolveDetailImage(service.image)}
                     alt={service.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
@@ -950,70 +1214,102 @@ function BrandingSection({
                 )}
 
                 {activeService.processSteps ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-                    <div className="hidden lg:flex flex-col gap-3">
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          8-Step
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Proven, repeatable process from strategy to growth.
-                        </p>
+                  <>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                      <div className="hidden lg:flex flex-col gap-3">
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            8-Step
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Proven, repeatable process from strategy to growth.
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            Monthly
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Performance reports so you always know what's
+                            working.
+                          </p>
+                        </div>
                       </div>
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          Monthly
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Performance reports so you always know what's working.
-                        </p>
+
+                      <div className="flex justify-center lg:col-span-1">
+                        <CircularProcessDiagram
+                          steps={activeService.processSteps}
+                        />
+                      </div>
+
+                      <div className="hidden lg:flex flex-col gap-3">
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            Data-Backed
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Every step is optimized using real engagement data.
+                          </p>
+                        </div>
+                        {activeService.requestButtonKey && (
+                          <ShadButton
+                            onClick={() =>
+                              onRequestButtonClick(
+                                activeService.requestButtonKey!,
+                              )
+                            }
+                            className={
+                              benefitsRequestButtonConfig[
+                                activeService.requestButtonKey
+                              ].className + " w-full"
+                            }
+                          >
+                            {
+                              benefitsRequestButtonConfig[
+                                activeService.requestButtonKey
+                              ].label
+                            }
+                          </ShadButton>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex justify-center lg:col-span-1">
-                      <CircularProcessDiagram
-                        steps={activeService.processSteps}
-                      />
-                    </div>
-
-                    <div className="hidden lg:flex flex-col gap-3">
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          Data-Backed
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Every step is optimized using real engagement data.
-                        </p>
+                    {activeService.behindTheScenesImage && (
+                      <div className="mt-6">
+                        <h4 className="text-primary font-semibold text-sm mb-2 text-center lg:text-left">
+                          Behind the Scenes
+                        </h4>
+                        <div className="mx-auto lg:mx-0 max-w-md">
+                          <ZoomableImage
+                            src={activeService.behindTheScenesImage}
+                            alt={`${activeService.name} — behind the scenes`}
+                            className="h-48 w-full object-cover rounded-xl"
+                            onZoom={openLightbox}
+                          />
+                        </div>
                       </div>
-                      {activeService.requestButtonKey && (
-                        <ShadButton
-                          onClick={() =>
-                            onRequestButtonClick(
-                              activeService.requestButtonKey!,
-                            )
-                          }
-                          className={
-                            benefitsRequestButtonConfig[
-                              activeService.requestButtonKey
-                            ].className + " w-full"
-                          }
-                        >
-                          {
-                            benefitsRequestButtonConfig[
-                              activeService.requestButtonKey
-                            ].label
-                          }
-                        </ShadButton>
-                      )}
-                    </div>
-                  </div>
+                    )}
+                  </>
                 ) : activeService.thumbnailImage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
-                    <img
-                      src={activeService.thumbnailImage}
-                      alt={activeService.name}
-                      className="w-full h-56 object-contain"
-                    />
+                    {isVideoFile(activeService.thumbnailImage) ? (
+                      <video
+                        src={activeService.thumbnailImage}
+                        className="w-full h-56 object-contain rounded-lg bg-slate-900"
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <ZoomableImage
+                        src={activeService.thumbnailImage}
+                        alt={activeService.name}
+                        className="w-full h-56 object-contain"
+                        onZoom={openLightbox}
+                      />
+                    )}
                     <div className="grid grid-cols-1 gap-4">
                       {activeService.benefits.map((benefit) => (
                         <div
@@ -1123,10 +1419,11 @@ function BrandingSection({
             ) : (
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
-                  <img
-                    src={`/images/services/${activeService.image}`}
+                  <ZoomableImage
+                    src={resolveDetailImage(activeService.image)}
                     alt={activeService.name}
                     className="w-full h-56 object-contain"
+                    onZoom={openLightbox}
                   />
                   <div>
                     <h4 className="text-primary font-bold text-base mb-2">
@@ -1164,6 +1461,77 @@ function BrandingSection({
                     )}
                   </div>
                 </div>
+
+                {/* Extra photo/video gallery (currently used by Photography & Videography) */}
+                {activeService.gallery && activeService.gallery.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-primary font-bold text-base mb-3">
+                      Gallery
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+                      {activeService.gallery.map((item) => (
+                        <GalleryThumb
+                          key={item.src}
+                          item={item}
+                          onOpen={openLightbox}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Why can't people find you — SEO pain points */}
+                {activeService.painPoints && (
+                  <div className="mb-6">
+                    {activeService.painPointsHeading && (
+                      <h4 className="text-primary font-bold text-base mb-3">
+                        {activeService.painPointsHeading}
+                      </h4>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {activeService.painPoints.map((point) => (
+                        <div
+                          key={point.title}
+                          className="flex items-start gap-3 rounded-lg bg-red-50 p-3 ring-1 ring-red-100"
+                        >
+                          <point.icon className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">
+                              {point.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {point.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Guarantee / expected results banner */}
+                {activeService.guaranteeText && (
+                  <div
+                    className="mb-6 rounded-xl p-5"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
+                    }}
+                  >
+                    {activeService.guaranteeHeading && (
+                      <span
+                        className="text-xs font-bold uppercase tracking-wide"
+                        style={{ color: "#f5a623" }}
+                      >
+                        {activeService.guaranteeHeading}
+                      </span>
+                    )}
+                    <p className="mt-2 text-sm text-gray-200 leading-relaxed">
+                      {activeService.guaranteeText}
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {activeService.categories.map((category) => (
                     <div
@@ -1185,6 +1553,11 @@ function BrandingSection({
           </div>
         </div>
       )}
+
+      <MediaLightbox
+        media={lightboxMedia}
+        onClose={() => setLightboxMedia(null)}
+      />
     </div>
   );
 }

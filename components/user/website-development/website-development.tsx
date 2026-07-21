@@ -32,6 +32,9 @@ interface Tier {
   key: string;
   name: string;
   description: string;
+  bestForHeading: string; // e.g. "Startups & Small Businesses"
+  bestFor: string[]; // bullet list, e.g. ["Freelancers", "Local shops"]
+  purpose: string; // "Business purpose" paragraph
   examples: ExampleSite[];
 }
 
@@ -40,7 +43,7 @@ interface Tier {
  * ========================================================================== */
 const services = [
   {
-    title: "WEBSITE DEVELOPMENT",
+    title: "WEBSITE Solutions",
     subtitle: "Why is your website losing you money instead of making it?",
     image: "web-dev.svg",
     ctas: ["websiteAudit"] as const,
@@ -65,6 +68,10 @@ const websiteTiers: Tier[] = [
     key: "standard",
     name: "Standard",
     description: "A clean, professional site to establish your presence.",
+    bestForHeading: "Startups & Small Businesses",
+    bestFor: ["Freelancers", "Local shops", "Restaurants, clinics"],
+    purpose:
+      "Build an online presence and allow customers to find and contact the business professionally.",
     examples: [
       {
         name: "Anilao Scuba Diving Center",
@@ -98,6 +105,16 @@ const websiteTiers: Tier[] = [
     key: "premium",
     name: "Premium",
     description: "More pages and features for growing businesses.",
+    bestForHeading: "Growing SMEs",
+    bestFor: [
+      "Professional services",
+      "Construction firms",
+      "Consulting companies",
+      "Manpower agencies",
+      "Schools",
+    ],
+    purpose:
+      "Improve customer engagement, provide better user experience, and gain valuable visitor insights for business growth.",
     examples: [
       {
         name: "ABIC Manpower Services",
@@ -125,6 +142,16 @@ const websiteTiers: Tier[] = [
     key: "business",
     name: "Business",
     description: "A full-featured site with custom functionality.",
+    bestForHeading: "Medium-sized Enterprises",
+    bestFor: [
+      "Manufacturing, distributors",
+      "Real estate",
+      "Logistics",
+      "Hospitals",
+      "Corporate companies",
+    ],
+    purpose:
+      "Generate qualified leads, improve Google visibility, manage customer information efficiently, and strengthen brand credibility.",
     examples: [
       {
         name: "DMCI Real Estate Portal",
@@ -167,6 +194,16 @@ const websiteTiers: Tier[] = [
     key: "commerce",
     name: "Commerce",
     description: "A complete online store, built to sell.",
+    bestForHeading: "Large Enterprises & eCommerce Brands",
+    bestFor: [
+      "Retail chains",
+      "Wholesalers",
+      "Online stores",
+      "Franchise businesses",
+      "Import/export companies",
+    ],
+    purpose:
+      "Create a complete digital sales ecosystem that automates sales, customer management, reporting, and online transactions.",
     examples: [
       {
         name: "Yamaaraw E-Commerce",
@@ -262,6 +299,44 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
 }
 
 /* ============================================================================
+ * COMPONENT — Tier info panel (Best For / Business Purpose)
+ * ========================================================================== */
+function TierInfoPanel({ tier }: { tier: Tier }) {
+  return (
+    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="rounded-xl bg-slate-50 ring-1 ring-gray-200 p-5">
+        <span className="text-xs font-bold uppercase tracking-wide text-accent">
+          Best For
+        </span>
+        <p className="mt-2 text-sm font-semibold text-primary">
+          {tier.bestForHeading}
+        </p>
+        <ul className="mt-3 space-y-1.5">
+          {tier.bestFor.map((item) => (
+            <li
+              key={item}
+              className="flex items-start gap-2 text-sm text-gray-600"
+            >
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-xl bg-[#0d1b3e] p-5">
+        <span className="text-xs font-bold uppercase tracking-wide text-[#f5a623]">
+          Business Purpose
+        </span>
+        <p className="mt-2 text-sm text-gray-200 leading-relaxed">
+          {tier.purpose}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
  * SECTION — Website tier tabs + example sites
  * ========================================================================== */
 function WebsiteTiersSection() {
@@ -273,7 +348,7 @@ function WebsiteTiersSection() {
       <div className="max-w-xl mx-auto text-center mb-8">
         <span className="text-xl text-accent font-bold">PACKAGES</span>
         <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
-          Choose the Right Fit for Your Business
+          Find Your Perfect Fit Among Our 4 Tiers
         </h1>
         <p className="text-lg text-gray-600 mt-4">
           Browse real examples of websites we've built at each tier.
@@ -306,6 +381,8 @@ function WebsiteTiersSection() {
             <h3 className="text-primary font-bold text-xl mb-1">{tier.name}</h3>
             <p className="text-gray-500 text-sm">{tier.description}</p>
           </div>
+
+          <TierInfoPanel tier={tier} />
 
           {tier.examples.length === 0 ? (
             <p className="text-center text-sm text-gray-400 italic py-8">

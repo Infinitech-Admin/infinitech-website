@@ -11,7 +11,7 @@ const EMPTY_FORM: TestimonialFormData = {
   phone: "",
   company: "",
   message: "",
-  page: "solutions",
+  page: "website-development",
 };
 
 export default function TestimonialForm({
@@ -225,9 +225,16 @@ export default function TestimonialForm({
                 onChange={handleSelectChange}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
-                <option value="solutions">Solutions</option>
-                <option value="home">General</option>
-                <option value="both">Both</option>
+                <option value="website-development">Website Development</option>
+                <option value="marketing-research">Marketing Research</option>
+                <option value="seo">SEO</option>
+                <option value="social-media-management">
+                  Social Media Management
+                </option>
+                <option value="video-photography">Video & Photography</option>
+                <option value="graphic-design">Graphic Design</option>
+                <option value="tiktok-shop-open">TikTok Shop Open</option>
+                <option value="juantap">JuanTap</option>
               </select>
             </div>
 

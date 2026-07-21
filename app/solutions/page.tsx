@@ -1,33 +1,41 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import Solutions from "@/components/user/solutions/solutions";
 import WebsiteDevelopment from "@/components/user/website-development/website-development";
 import MarketingResearch from "@/components/user/marketing-research/marketing-research";
 import Branding from "@/components/user/branding/branding";
 
-type Tab = "website" | "solutions" | "marketing-research" | "branding";
+type Tab = "website" | "marketing-research" | "branding";
 
 const tabs: { key: Tab; label: string }[] = [
   { key: "website", label: "Website Solutions" },
-  // { key: "solutions", label: "Solutions" },
   { key: "marketing-research", label: "Marketing Research" },
   { key: "branding", label: "Branding" },
 ];
 
-const Page = () => {
+const ServicesContent = () => {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("website");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab") as Tab | null;
+    if (tabParam && tabs.some((t) => t.key === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
   return (
-    <div className=" pt-20 md:pt-24 min-h-screen bg-gradient-to-br from-slate-900 via-blue-700 to-slate-900">
+    <div className="pt-20 md:pt-24 min-h-screen bg-gradient-to-br from-slate-900 via-blue-700 to-slate-900">
       {/* Header */}
       <section className="max-w-3xl mx-auto text-center mb-12 px-6">
         <h1 className="text-4xl md:text-5xl text-accent font-bold tracking-tight mb-4 uppercase">
           Services
         </h1>
-        <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
+        {/* <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
           Website Solutions, Marketing Research, and Branding — Everything You
           Need to Power Your Digital Growth.
-        </p>
+        </p> */}
       </section>
 
       {/* Tabs */}
@@ -53,11 +61,19 @@ const Page = () => {
       {/* Content */}
       <div className="relative z-10">
         {activeTab === "website" && <WebsiteDevelopment />}
-        {activeTab === "solutions" && <Solutions />}
         {activeTab === "marketing-research" && <MarketingResearch />}
         {activeTab === "branding" && <Branding />}
       </div>
     </div>
+  );
+};
+
+// 👉 Suspense wrapper is required for useSearchParams() in App Router
+const Page = () => {
+  return (
+    <Suspense fallback={null}>
+      <ServicesContent />
+    </Suspense>
   );
 };
 
