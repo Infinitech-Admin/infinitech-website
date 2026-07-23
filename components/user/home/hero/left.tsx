@@ -2,42 +2,49 @@
 
 import React from "react";
 import { LuArrowRight } from "react-icons/lu";
-import { Chip, Button } from "@heroui/react";
-import { GoDotFill, GoCheck } from "react-icons/go";
+import { Button } from "@heroui/react";
+import { GoCheck } from "react-icons/go";
 import { poetsen_one } from "@/config/fonts";
 import { useRouter } from "next/navigation";
 
-const trustPoints = [
-  "20+ Projects",
-  "All Services, One Team",
-  "Fast Turnaround",
+const whyChooseUs = [
+  "Convenient One-Stop Shop",
   "Affordable Pricing",
+  "Personalized Support",
+  "Quality You Can Trust",
+];
+
+// TODO: Replace "__" with your real team member count before deploying
+const stats = [
+  { value: "2+", label: "Years in Business" },
+  // { value: "20+", label: "Projects Completed" },
+  { value: "10+", label: "Services Offered" },
+  { value: "15+", label: "Team Members" },
 ];
 
 const Left = () => {
   const router = useRouter();
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6 z-10">
       <div className="space-y-4">
-        {/* <Chip
-          className="hidden md:flex"
-          startContent={<GoDotFill />}
-          variant="bordered"
-          color="warning"
-        >
-          Your One-Stop Digital Partner
-        </Chip> */}
-
         <h1
           className={`text-accent text-5xl sm:text-7xl font-bold leading-tight ${poetsen_one.className}`}
         >
-          One-Stop Solutions <br /> To Grow Your Business
+          Why Choose Us
         </h1>
 
-        <p className="md:text-lg text-gray-400">
-          Website Solutions • Marketing Research • Branding
-        </p>
+        <ul className="space-y-2 pt-2">
+          {whyChooseUs.map((item) => (
+            <li
+              key={item}
+              className="flex items-center gap-2 text-lg text-gray-300"
+            >
+              <GoCheck className="text-accent-light shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="flex flex-wrap gap-4 pt-2">
@@ -61,15 +68,15 @@ const Left = () => {
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2">
-        {trustPoints.map((point) => (
-          <span
-            key={point}
-            className="flex items-center gap-1.5 text-sm text-gray-400"
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-white/5 border border-white/10 rounded-lg px-3 py-4 text-center"
           >
-            <GoCheck className="text-accent-light" />
-            {point}
-          </span>
+            <div className="text-2xl font-bold text-accent">{stat.value}</div>
+            <div className="text-xs text-gray-400 mt-1">{stat.label}</div>
+          </div>
         ))}
       </div>
     </div>

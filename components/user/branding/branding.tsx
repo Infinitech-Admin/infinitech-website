@@ -1118,7 +1118,7 @@ function BrandingSection({
                   isVideoFile(service.thumbnailImage) ? (
                     <video
                       src={service.thumbnailImage}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover..."
                       autoPlay
                       loop
                       muted

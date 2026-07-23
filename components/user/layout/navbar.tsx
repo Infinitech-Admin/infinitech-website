@@ -17,13 +17,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { links } from "@/data/links";
 
 const serviceItems = [
-  { key: "website", label: "Website Solutions", tab: "website" },
+  { key: "website", label: "Website Solutions", href: "/solutions/website" },
   {
     key: "marketing-research",
     label: "Marketing Research",
-    tab: "marketing-research",
+    href: "/solutions/marketing-research",
   },
-  { key: "branding", label: "Branding", tab: "branding" },
+  { key: "branding", label: "Branding", href: "/solutions/branding" },
 ];
 
 const NavBar = () => {
@@ -33,6 +33,7 @@ const NavBar = () => {
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [servicesHover, setServicesHover] = useState(false);
   const isActive = (href: string) => pathname == href;
+  const isServicesActive = pathname.startsWith("/solutions");
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -66,8 +67,8 @@ const NavBar = () => {
     setDeferredPrompt(null);
   };
 
-  const goToServiceTab = (tab: string) => {
-    router.push(`/solutions?tab=${tab}`);
+  const goToService = (href: string) => {
+    router.push(href);
   };
 
   return (
@@ -111,11 +112,11 @@ const NavBar = () => {
               >
                 <Button
                   className={`cursor-pointer ${
-                    isActive(link.href)
+                    isServicesActive
                       ? "text-gray-400 bg-primary font-semibold"
                       : "text-black"
                   }`}
-                  variant={isActive(link.href) ? "solid" : "light"}
+                  variant={isServicesActive ? "solid" : "light"}
                   endContent={
                     <LuChevronDown
                       size={16}
@@ -135,7 +136,7 @@ const NavBar = () => {
                     {serviceItems.map((item) => (
                       <button
                         key={item.key}
-                        onClick={() => goToServiceTab(item.tab)}
+                        onClick={() => goToService(item.href)}
                         className="whitespace-nowrap text-center px-4 py-2 rounded-md border border-slate-200 text-slate-700 text-sm font-medium
           hover:border-primary hover:text-primary hover:bg-slate-50 transition-colors"
                       >
@@ -236,7 +237,7 @@ const NavBar = () => {
                           className="cursor-pointer text-slate-600"
                           onClick={() => {
                             setIsOpen(false);
-                            goToServiceTab(item.tab);
+                            goToService(item.href);
                           }}
                         >
                           {item.label}

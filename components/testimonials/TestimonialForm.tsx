@@ -107,11 +107,10 @@ export default function TestimonialForm({
         >
           <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
-        <h3 className="text-xl font-bold text-gray-800">
-          Thank you for your feedback!
-        </h3>
+        <h3 className="text-xl font-bold text-gray-800">Thanks for sharing!</h3>
         <p className="text-gray-500 text-sm">
-          Your testimonial has been submitted and is pending review.
+          We've received your challenge and will get back to you with the right
+          solution.
         </p>
       </div>
     );
@@ -313,7 +312,7 @@ export default function TestimonialForm({
                   <path d="M22 2 11 13" />
                   <path d="M22 2 15 22 11 13 2 9l20-7z" />
                 </svg>
-                Submit Testimonial
+                Submit
               </>
             )}
           </button>
