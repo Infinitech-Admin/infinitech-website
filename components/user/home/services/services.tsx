@@ -152,11 +152,9 @@ function isVideoFile(src: string): boolean {
 /* ============================================================================
  * DATA — Website Solutions pricing packages
  *
- * NOTE (Option A dedupe fix): `bestFor` now lives directly on each package
- * and is rendered inside the Full Plan Details card itself (right under the
- * price). The old standalone "Which Plan Is Right For You?" table that
- * repeated name + icon + bestFor in a separate block has been removed —
- * see WebsiteSolutionsSection below.
+ * NOTE: `features` is kept here in case other parts of the app still read
+ * it (e.g. a comparison table elsewhere), but PricingCard below no longer
+ * renders it — cards now only show name, price, and `bestFor`.
  * ========================================================================== */
 
 const packages = [
@@ -369,20 +367,17 @@ function ServiceCtaButtons({
 /* ============================================================================
  * COMPONENT — Problem list (Website Solutions section)
  *
- * Redesigned as compact horizontal stat cards: icon + label + one-line
- * consequence + supporting stat pill. Sized to its own content only — do NOT
- * add h-full / self-stretch here. When this sits beside the pricing column
- * in a two-column grid, the wrapper grid must use `items-start` so this
- * shorter column is left at its natural height instead of being stretched
- * to match the taller pricing column (that stretching is what caused the
- * big empty-space bug in earlier iterations).
+ * UPDATED: now a single row of 4 on larger screens (grid-cols-2 on small
+ * screens so cards don't get crushed on mobile, sm:grid-cols-4 from the
+ * small breakpoint up). Sized to its own content only — do NOT add h-full /
+ * self-stretch here.
  * ========================================================================== */
 
 function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
   if (!problems || problems.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {problems.map((problem) => (
         <div key={problem.label} className="group h-44 [perspective:1200px]">
           <div className="relative h-full w-full transition-transform duration-500 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
@@ -1404,10 +1399,9 @@ function SEOAuditBanner() {
 /* ============================================================================
  * COMPONENT — Compact pricing card (Website Solutions section)
  *
- * Table-style layout: header (icon, name, price, one-line "best for"), then
- * every feature listed as its own row with a divider — like a compact spec
- * table. All features are always visible (no "+N more" toggle) so visitors
- * can compare plans at a glance without extra clicks.
+ * SIMPLIFIED: no more feature list. Card shows icon + name, price, and the
+ * one-line "best for" explanation only. `features` in the data array is no
+ * longer read here (kept in `packages` in case something else uses it).
  * ========================================================================== */
 
 function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
@@ -1436,23 +1430,9 @@ function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
         <span className="text-[10px] font-medium text-slate-300">/month</span>
       </p>
 
-      <p className="text-slate-300 text-[11px] leading-relaxed mb-3 line-clamp-2">
+      <p className="text-slate-300 text-[11px] leading-relaxed">
         {pkg.bestFor}
       </p>
-
-      {/* Table-style feature list: every feature is always visible as a
-         row with a divider, like a compact spec table — no expand/collapse. */}
-      <div className="border-t border-white/10">
-        {pkg.features.map((f) => (
-          <div
-            key={f}
-            className="flex items-start gap-1.5 py-1.5 border-b border-white/10 last:border-b-0"
-          >
-            <GoCheck className="text-accent-light shrink-0 mt-0.5 h-3 w-3" />
-            <span className="text-slate-200 text-[11px] leading-snug">{f}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1460,10 +1440,7 @@ function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
 /* ============================================================================
  * COMPONENT — Mini "Which Plan Is Right For Me" FAQ
  *
- * Sits under the problem-card grid in the left column of Website Solutions,
- * filling the space next to the (taller) pricing table. Answers plan-
- * selection questions directly instead of duplicating the "Get a Free
- * Audit" CTA that already exists elsewhere on the site.
+ * Sits under the pricing header banner, above the pricing row.
  * ========================================================================== */
 
 interface PlanFaqItem {
@@ -1499,7 +1476,7 @@ function PlanFaqAccordion() {
 
   return (
     <div
-      className="mt-4 rounded-2xl p-5 sm:p-6"
+      className="rounded-2xl p-5 sm:p-6"
       style={{
         background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
         boxShadow: "0 8px 30px rgba(13,27,62,0.35)",
@@ -1556,13 +1533,12 @@ function PlanFaqAccordion() {
 /* ============================================================================
  * SECTION: Website Solutions
  *
- * Problem cards sit on the LEFT (compact stat cards, sized to their own
- * content) with the "Which Plan Is Right For Me" FAQ stacked right under
- * them to fill the remaining vertical space; pricing table sits on the
- * RIGHT (2x2 grid of 4 plans). The wrapper grid uses `items-start` — NOT
- * `items-stretch` and NOT `h-full` on either child — so the shorter column
- * is left at its natural height instead of being force-stretched to match
- * the taller column.
+ * RESTRUCTURED: problems are now a single full-width row (2-across on
+ * mobile, 4-across from `sm` up), stacked directly above a single full-width
+ * pricing row (also 2-across on mobile, 4-across from `sm` up), with the
+ * "Which Plan Is Right For Me" FAQ sitting between the pricing header and
+ * the pricing row. This replaces the previous two-column
+ * (problems+FAQ left / pricing right) layout.
  * ========================================================================== */
 
 function WebsiteSolutionsSection({
@@ -1587,28 +1563,19 @@ function WebsiteSolutionsSection({
               {service.subtitle}
             </h1>
 
-            {/* Problem cards on the left, pricing table on the right */}
-            <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              <div>
-                <ServiceProblemList problems={service.problems} />
-                <PlanFaqAccordion />
-              </div>
+            {/* Row 1: problems — single row */}
+            <div className="mt-5">
+              <ServiceProblemList problems={service.problems} />
+            </div>
 
-              <div>
-                <div className="rounded-2xl overflow-hidden bg-[#0d1b3e] px-5 py-4 mb-4">
-                  <p className="text-white font-bold text-lg">
-                    Which Plan Is Right For You?
-                  </p>
-                  <p className="text-slate-300 text-xs mt-0.5">
-                    Pick the plan that matches where your business is right now.
-                  </p>
-                </div>
+            {/* Row 2: FAQ on the left, the 4 pricing tiers on the right — one row */}
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <PlanFaqAccordion />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {packages.map((pkg) => (
-                    <PricingCard key={pkg.name} pkg={pkg} />
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                {packages.map((pkg) => (
+                  <PricingCard key={pkg.name} pkg={pkg} />
+                ))}
               </div>
             </div>
 
