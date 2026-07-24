@@ -59,12 +59,10 @@ const PricingCard: React.FC<PricingCardProps> = ({
               ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500"
               : "bg-slate-800/50 border border-slate-700"
           }
-        w-10 h-[50vh] flex items-center justify-center`}
+        w-12 h-[50vh] flex items-center justify-center`}
       >
-        <div className="transform -rotate-90 whitespace-nowrap text-center flex items-center gap-2">
-          <h3 className="font-bold text-white text-xl md:text-base">
-            {plan.name}
-          </h3>
+        <div className="transform -rotate-90 whitespace-nowrap text-center flex items-center gap-3">
+          <h3 className="font-bold text-white text-xl">{plan.name}</h3>
           <div className="flex items-baseline gap-0.5">
             <span className="font-semibold text-white text-lg">₱</span>
             <span className="font-medium text-white text-xl">
@@ -74,7 +72,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
               })}
             </span>
           </div>
-          <span className="text-slate-400 font-medium text-xs">
+          <span className="text-slate-300 font-medium text-sm">
             {getBillingText()}
           </span>
         </div>
@@ -89,8 +87,8 @@ const PricingCard: React.FC<PricingCardProps> = ({
         <div
           className={`relative rounded-2xl transition-all duration-500 ease-in-out cursor-pointer ${
             isHovered
-              ? "z-20 shadow-2xl shadow-cyan-500/20 scale-105 w-[30vh] md:w-[40vh] md:mx-5"
-              : "w-[40vh]"
+              ? "z-20 shadow-2xl shadow-cyan-500/20 scale-105 w-[85vw] max-w-sm md:w-[26rem] md:mx-5"
+              : "w-[85vw] max-w-sm md:w-[26rem]"
           } ${
             plan.popular
               ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-500/40"
@@ -105,9 +103,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
             </div>
           )}
 
-          <div
-            className={`p-5 lg:p-6 transition-all duration-500 flex flex-col ${isHovered ? "" : ""}`}
-          >
+          <div className="p-6 transition-all duration-500 flex flex-col">
             {/* Plan Header */}
             <div className="mb-4">
               <h3
@@ -116,9 +112,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 {plan.name}
               </h3>
               {plan.badge && (
-                <p
-                  className={`text-slate-400 transition-all duration-500 ${isHovered ? "text-xs" : "text-xs"}`}
-                >
+                <p className="text-slate-300 text-sm leading-snug">
                   {plan.badge}
                 </p>
               )}
@@ -126,32 +120,28 @@ const PricingCard: React.FC<PricingCardProps> = ({
 
             {/* Features Section */}
             <div className="mb-4 flex-1">
-              <h4
-                className={`font-semibold text-white mb-3 transition-all duration-500 ${isHovered ? "text-md" : "text-md"}`}
-              >
+              <h4 className="font-semibold text-white mb-3 text-base">
                 What's included:
               </h4>
               <div
-                className={`transition-all duration-500 ${isHovered ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-1"}`}
+                className={`transition-all duration-500 ${isHovered ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-2.5"}`}
               >
                 {(isHovered ? plan.features : plan.features.slice(0, 8)).map(
                   (feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
+                    <div key={idx} className="flex items-start gap-2.5">
                       <Check
-                        className={`flex-shrink-0 transition-all duration-500 ${
+                        className={`flex-shrink-0 mt-0.5 w-4 h-4 ${
                           plan.popular ? "text-cyan-400" : "text-slate-400"
-                        } ${isHovered ? "w-5 h-5 mt-0.5" : "w-3 h-3 mt-0.5"}`}
+                        }`}
                       />
-                      <span
-                        className={`text-slate-200 transition-all duration-500 ${isHovered ? "text-sm" : "text-sm"}`}
-                      >
+                      <span className="text-slate-100 text-sm leading-relaxed">
                         {feature}
                       </span>
                     </div>
                   ),
                 )}
                 {!isHovered && plan.features.length > 8 && (
-                  <span className="text-slate-400 text-xs italic">
+                  <span className="text-slate-400 text-sm italic pl-6">
                     +{plan.features.length - 8} more
                   </span>
                 )}
@@ -176,27 +166,10 @@ const PricingCard: React.FC<PricingCardProps> = ({
                     })}
                   </span>
                 </div>
-                <span className="text-slate-400 font-medium text-sm block truncate">
+                <span className="text-slate-300 font-medium text-sm block truncate">
                   {getBillingText()}
                 </span>
               </div>
-
-              {/* Cart button hidden
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddToCart?.();
-                }}
-                className={`p-2.5 rounded-xl transition-all duration-300 flex-shrink-0 ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                    : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
-                }`}
-                title="Add to cart"
-              >
-                <ShoppingCart className="w-4 h-4" />
-              </button>
-              */}
             </div>
           </div>
         </div>
@@ -204,7 +177,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
 
       {isDesktopOrLaptop && (
         <div
-          className={`relative rounded-2xl transition-all duration-300 h-full ${
+          className={`relative rounded-2xl transition-all duration-300 h-full flex flex-col ${
             plan.popular
               ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20"
               : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70"
@@ -219,66 +192,45 @@ const PricingCard: React.FC<PricingCardProps> = ({
             </div>
           )}
 
-          <div className="p-5 flex flex-row gap-6 h-full">
-            {/* Left: Plan Info & Features */}
-            <div className="flex-1 min-w-0">
-              {/* Plan Header */}
-              <div className="mb-3">
-                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                {plan.badge && (
-                  <p className="text-xs text-slate-400">{plan.badge}</p>
-                )}
-              </div>
-
-              {/* Features List - Two columns */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {plan.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <Check
-                      className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
-                    />
-                    <span className="text-slate-300 text-xs leading-relaxed">
-                      {feature}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          <div className="p-6 flex flex-col h-full">
+            {/* Plan Header */}
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+              {plan.badge && (
+                <p className="text-slate-300 text-sm leading-snug">
+                  {plan.badge}
+                </p>
+              )}
             </div>
 
-            {/* Right: Price & Cart Button (DESKTOP) */}
-            <div className="flex flex-col items-end justify-between shrink-0 h-full">
-              {/* Price */}
-              <div className="text-right">
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-2xl font-black text-white">₱</span>
-                  <span className="text-2xl font-black text-white">
-                    {price.toLocaleString("en-PH", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </span>
-                </div>
-                <span className="text-slate-400 font-medium text-xs">
+            {/* Price */}
+            <div className="mb-5 pb-5 border-b border-slate-700">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black text-white">₱</span>
+                <span className="text-3xl font-black text-white">
+                  {price.toLocaleString("en-PH", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
+                <span className="text-slate-300 font-medium text-sm ml-1">
                   {getBillingText()}
                 </span>
               </div>
+            </div>
 
-              {/* Cart button hidden
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddToCart?.();
-                }}
-                className={`p-2.5 rounded-xl transition-all duration-300 flex-shrink-0 ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                    : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
-                }`}
-                title="Add to cart"
-              >
-                <ShoppingCart className="w-4 h-4" />
-              </button>
-              */}
+            {/* Features List - single column, full width for readability */}
+            <div className="flex flex-col gap-2.5 flex-1">
+              {plan.features.map((feature, idx) => (
+                <div key={idx} className="flex items-start gap-2.5">
+                  <Check
+                    className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
+                  />
+                  <span className="text-slate-100 text-sm leading-relaxed">
+                    {feature}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
