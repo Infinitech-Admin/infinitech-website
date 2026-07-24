@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button, useDisclosure } from "@heroui/react";
 import { Button as ShadButton } from "@/components/ui/button";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ZoomIn, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import VideoSurveyForm from "@/components/video-survey-form";
 import RequestReportModal from "@/components/RequestReportModal";
@@ -37,6 +38,9 @@ import {
   FaCrosshairs,
   FaSlidersH,
   FaSearchDollar,
+  FaSearchMinus,
+  FaMapMarkerAlt,
+  FaLink,
   FaAddressCard,
   FaUsers,
   FaPalette,
@@ -45,23 +49,8 @@ import {
   FaCalendarCheck,
   FaBriefcase,
   FaShoppingCart,
-  FaMobileAlt,
 } from "react-icons/fa";
 import { GoCheck } from "react-icons/go";
-import { MdOutlineSpeed } from "react-icons/md";
-
-/* ============================================================================
- * TABS — top-level navigation, keeps the page short instead of one long
- * scroll. Each tab renders only its own section.
- * ========================================================================== */
-
-const mainCategories = [
-  { key: "website", title: "Website Solutions" },
-  { key: "research", title: "Marketing Research" },
-  { key: "branding", title: "Branding" },
-] as const;
-
-type MainCategoryKey = (typeof mainCategories)[number]["key"];
 
 /* ============================================================================
  * TYPES
@@ -77,19 +66,29 @@ interface BenefitItem {
   description: string;
 }
 interface ProblemItem {
-  icon: React.ComponentType<IconProps>;
+  icon?: React.ComponentType<IconProps>;
+  image?: string; // path under /public, e.g. "/images/services/problems/slow-loading.svg"
   label: string;
+  consequence?: string; // one-line "why this costs you" copy shown under the label
+  stat?: string; // short supporting stat shown as a pill badge
 }
 interface ProcessStep {
   icon: React.ComponentType<IconProps>;
   title: string;
   color: string;
-  description: string; // ADD THIS
+  description: string;
 }
 interface ServiceCategory {
   id: number;
   name: string;
   description: string;
+}
+// A single item in a detail-service's extra media gallery. `src` can be an
+// image or a video (.mp4/.webm/.mov) — detected automatically via
+// isVideoFile, same convention as thumbnailImage.
+interface GalleryItem {
+  src: string;
+  alt: string;
 }
 interface BenefitsService {
   name: string;
@@ -98,10 +97,19 @@ interface BenefitsService {
   color: string;
   tagline: string;
   benefits: BenefitItem[];
-  thumbnailImage?: string;
+  thumbnailImage?: string; // image OR video (.mp4/.webm/.mov) src
   showSEOAuditForm?: boolean;
   requestButtonKey?: BenefitsRequestButtonKey;
   processSteps?: ProcessStep[];
+  // Optional supporting photo shown under the circular process diagram
+  // (currently used by Social Media Management's "Behind the Scenes" shot).
+  behindTheScenesImage?: string;
+}
+interface ServiceBlock {
+  title: string;
+  subtitle: string;
+  ctas?: readonly ServiceCtaKey[];
+  problems: ProblemItem[];
 }
 interface DetailService {
   name: string;
@@ -114,11 +122,41 @@ interface DetailService {
   problems?: ProblemItem[];
   showSEOAuditForm?: boolean;
   requestButtonKey?: BenefitsRequestButtonKey;
+  // Optional "why this matters" pain-point callouts (currently used by SEO).
+  painPointsHeading?: string;
+  painPoints?: BenefitItem[];
+  // Optional guarantee/results banner (currently used by SEO).
+  guaranteeHeading?: string;
+  guaranteeText?: string;
+  // Optional extra photo/video gallery shown as a thumbnail grid, each item
+  // opens full-size in the shared MediaLightbox.
+  gallery?: GalleryItem[];
 }
 type BrandingService = BenefitsService | DetailService;
 
+// Detail-service `image` values are either a root-relative path (starts with
+// "/", e.g. "/product-shoot.jpg" living directly in /public) or a bare
+// filename that lives in /public/images/services/ (e.g. "seo.svg"). This
+// resolves either form to the correct final src, avoiding double-slash /
+// wrong-folder bugs.
+function resolveDetailImage(image: string): string {
+  return image.startsWith("/") ? image : `/images/services/${image}`;
+}
+
+// Detects whether a thumbnail src is a video file so it renders with <video>
+// instead of <img>.
+function isVideoFile(src: string): boolean {
+  return /\.(mp4|webm|mov)$/i.test(src);
+}
+
 /* ============================================================================
  * DATA — Website Solutions pricing packages
+ *
+ * NOTE (Option A dedupe fix): `bestFor` now lives directly on each package
+ * and is rendered inside the Full Plan Details card itself (right under the
+ * price). The old standalone "Which Plan Is Right For You?" table that
+ * repeated name + icon + bestFor in a separate block has been removed —
+ * see WebsiteSolutionsSection below.
  * ========================================================================== */
 
 const packages = [
@@ -127,6 +165,8 @@ const packages = [
     price: "6,888",
     icon: FaGlobe,
     popular: false,
+    bestFor:
+      "New businesses that need a clean, professional site live online fast.",
     features: [
       "Up to 5 pages",
       "Social Media Links integration",
@@ -140,6 +180,8 @@ const packages = [
     price: "9,999",
     icon: FaCalendarCheck,
     popular: true,
+    bestFor:
+      "Growing businesses that want a client dashboard, analytics, and a more polished look.",
     features: [
       "Everything in Standard, plus:",
       "Up to 10 Website Pages",
@@ -155,6 +197,8 @@ const packages = [
     price: "14,999",
     icon: FaBriefcase,
     popular: false,
+    bestFor:
+      "Established businesses ready to rank on Google and manage leads with a real admin system.",
     features: [
       "SEO Pro Setup + Dashboard Reports",
       "eCommerce-Ready Products Catalog",
@@ -169,6 +213,8 @@ const packages = [
     price: "21,999",
     icon: FaShoppingCart,
     popular: false,
+    bestFor:
+      "Businesses selling online that need full eCommerce, bookings, and VIP support.",
     features: [
       "Advanced Conversion Tracking",
       "Full eCommerce System",
@@ -184,57 +230,37 @@ const packages = [
  * DATA — main service blocks (Website Dev / Design / Social Media)
  * ========================================================================== */
 
-const services = [
+const services: ServiceBlock[] = [
   {
     title: "WEBSITE DEVELOPMENT",
     subtitle: "Why is your website losing\nyour money instead of making it?",
-    // description: `Most lost sales don't happen because people don't want your product — they happen because your website loses them first. We fix the issues that quietly drive visitors away, and build fast, mobile-ready websites that turn traffic into paying customers.`,
-    image: "web-dev.svg",
-    ctas: ["websiteAudit"] as const,
     problems: [
-      { icon: MdOutlineSpeed, label: "Slow Loading Speed" },
-      { icon: FaMobileAlt, label: "Poor Mobile Responsiveness" },
-      { icon: FaEye, label: "Low Search Visibility" },
-      { icon: FaSlidersH, label: "Outdated, Confusing Design" },
+      {
+        image: "/images/services/problems/slow-loading.png",
+        label: "Slow Loading Speed",
+        consequence: "Visitors leave before your page even finishes loading.",
+        stat: "53% bounce after 3s",
+      },
+      {
+        image: "/images/services/problems/mobile-responsiveness.png",
+        label: "Poor Mobile Responsiveness",
+        consequence: "Broken layouts turn mobile shoppers away for good.",
+        stat: "60% of traffic is mobile",
+      },
+      {
+        image: "/images/services/problems/search-visibility.png",
+        label: "Low Search Visibility",
+        consequence: "Buried past page one means invisible to new customers.",
+        stat: "75% never click page 2",
+      },
+      {
+        image: "/images/services/problems/outdated-design.png",
+        label: "Outdated, Confusing Design",
+        consequence:
+          "Visitors judge credibility in seconds based on design alone.",
+        stat: "75% judge trust by design",
+      },
     ] as ProblemItem[],
-    categories: [
-      {
-        id: 1,
-        name: "Hotel Management",
-        description:
-          "Websites designed for hotels, resorts, and hospitality businesses with booking and management features.",
-      },
-      {
-        id: 2,
-        name: "Corporate Website",
-        description:
-          "Professional websites for companies to showcase services, portfolios, and corporate identity.",
-      },
-      {
-        id: 3,
-        name: "Manpower Platform",
-        description:
-          "Platforms for recruitment, staffing, and workforce management with user-friendly interfaces.",
-      },
-      {
-        id: 4,
-        name: "Real Estate",
-        description:
-          "Property listing and management websites tailored for real estate agencies and brokers.",
-      },
-      {
-        id: 5,
-        name: "E-Commerce",
-        description:
-          "Online stores with secure payment gateways, product catalogs, and shopping cart functionality.",
-      },
-      {
-        id: 6,
-        name: "Booking System",
-        description:
-          "Websites with integrated booking and scheduling systems for services and events.",
-      },
-    ],
   },
 ];
 
@@ -341,41 +367,316 @@ function ServiceCtaButtons({
 }
 
 /* ============================================================================
- * COMPONENT — Problem list (used on Website Development block)
+ * COMPONENT — Problem list (Website Solutions section)
+ *
+ * Redesigned as compact horizontal stat cards: icon + label + one-line
+ * consequence + supporting stat pill. Sized to its own content only — do NOT
+ * add h-full / self-stretch here. When this sits beside the pricing column
+ * in a two-column grid, the wrapper grid must use `items-start` so this
+ * shorter column is left at its natural height instead of being stretched
+ * to match the taller pricing column (that stretching is what caused the
+ * big empty-space bug in earlier iterations).
  * ========================================================================== */
 
 function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
   if (!problems || problems.length === 0) return null;
 
   return (
-    <div className="mt-5">
-      {/* <p className="text-xs font-extrabold tracking-widest uppercase text-red-500 mb-2">
-        Common Reasons Sales Are Slipping Away
-      </p> */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-        {problems.map((problem) => (
-          <div
-            key={problem.label}
-            className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-red-100"
-          >
-            <problem.icon className="h-4 w-4 text-red-500 shrink-0" />
-            <span>{problem.label}</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {problems.map((problem) => (
+        <div key={problem.label} className="group h-44 [perspective:1200px]">
+          <div className="relative h-full w-full transition-transform duration-500 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+            {/* Front face — icon + copy, same layout as before */}
+            <div className="absolute inset-0 flex items-start gap-3.5 rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                {problem.image ? (
+                  <img
+                    src={problem.image}
+                    alt=""
+                    className="h-6 w-6 object-contain"
+                  />
+                ) : problem.icon ? (
+                  <problem.icon className="h-5 w-5 text-red-600" />
+                ) : null}
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-primary mb-1">
+                  {problem.label}
+                </p>
+                {problem.consequence && (
+                  <p className="text-xs text-gray-500 leading-relaxed mb-2">
+                    {problem.consequence}
+                  </p>
+                )}
+                {problem.stat && (
+                  <span className="inline-block rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700">
+                    {problem.stat}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Back face — the actual image, revealed when the card flips on hover */}
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              {problem.image ? (
+                <img
+                  src={problem.image}
+                  alt={problem.label}
+                  className="h-24 w-24 object-contain"
+                />
+              ) : problem.icon ? (
+                <problem.icon className="h-20 w-20 text-red-500" />
+              ) : null}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 /* ============================================================================
- * COMPONENT — Circular process diagram (SDLC-style repeating cycle)
+ * COMPONENT — Decorative SVG graphic for the Website Development hero (fills
+ * the space left behind by the removed illustration image, reinforcing the
+ * "audit / diagnose your site" theme).
+ * ========================================================================== */
+
+function WebsiteDiagnosticGraphic() {
+  return (
+    <svg viewBox="0 0 200 160" className="h-14 w-16 shrink-0">
+      <rect x="10" y="10" width="140" height="100" rx="10" fill="#0d1b3e" />
+      <rect x="22" y="26" width="70" height="8" rx="4" fill="#f5a623" />
+      <rect
+        x="22"
+        y="42"
+        width="100"
+        height="6"
+        rx="3"
+        fill="#ffffff"
+        opacity="0.35"
+      />
+      <rect
+        x="22"
+        y="56"
+        width="85"
+        height="6"
+        rx="3"
+        fill="#ffffff"
+        opacity="0.25"
+      />
+      <rect
+        x="22"
+        y="70"
+        width="60"
+        height="6"
+        rx="3"
+        fill="#ffffff"
+        opacity="0.25"
+      />
+      <circle
+        cx="150"
+        cy="95"
+        r="34"
+        fill="#ffffff"
+        stroke="#f5a623"
+        strokeWidth="7"
+      />
+      <circle
+        cx="150"
+        cy="95"
+        r="22"
+        fill="none"
+        stroke="#0d1b3e"
+        strokeWidth="2"
+        opacity="0.5"
+      />
+      <line
+        x1="174"
+        y1="119"
+        x2="196"
+        y2="141"
+        stroke="#f5a623"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M138 95 l8 8 l16 -18"
+        fill="none"
+        stroke="#0d1b3e"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/* ============================================================================
+ * COMPONENT — Zoomable image + full-screen media lightbox + gallery thumb
+ * (shared by the advanced Branding & Marketing section)
+ * ========================================================================== */
+
+function ZoomableImage({
+  src,
+  alt,
+  className,
+  onZoom,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  onZoom: (src: string, alt: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onZoom(src, alt)}
+      className="group relative block w-full cursor-zoom-in overflow-hidden rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-label={`View larger image of ${alt}`}
+    >
+      <img src={src} alt={alt} className={className} />
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100">
+          <ZoomIn className="h-4 w-4 text-primary" />
+        </span>
+      </span>
+    </button>
+  );
+}
+
+// Rendered via a portal directly into document.body. This is deliberate:
+// if any ancestor in the page (layout wrappers, page-transition containers,
+// etc.) has a CSS `transform`, `filter`, or `will-change` set, it becomes
+// the containing block for descendant `position: fixed` elements — so the
+// "fullscreen" overlay ends up clipped/sized to that ancestor instead of
+// the real viewport. Portaling to <body> sidesteps that entirely.
+function MediaLightbox({
+  media,
+  onClose,
+}: {
+  media: { src: string; alt: string } | null;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!media) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [media, onClose]);
+
+  if (!mounted || !media) return null;
+
+  const isVideo = isVideoFile(media.src);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-4 sm:p-8 animate-in fade-in duration-200"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={media.alt}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 flex h-11 w-11 items-center justify-center rounded-full bg-white text-primary shadow-lg transition-transform hover:scale-105 active:scale-95"
+        aria-label="Close preview"
+      >
+        <LuX size={22} />
+      </button>
+      {isVideo ? (
+        <video
+          src={media.src}
+          className="max-h-[85vh] max-w-[85vw] rounded-xl shadow-2xl"
+          controls
+          autoPlay
+          playsInline
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <img
+          src={media.src}
+          alt={media.alt}
+          className="max-h-[85vh] max-w-[85vw] object-contain rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+    </div>,
+    document.body,
+  );
+}
+
+// A single thumbnail in a detail-service's gallery grid. Videos preview as
+// a silent looping clip with a play badge; images get the zoom badge.
+// Either way, clicking opens the full media in MediaLightbox.
+function GalleryThumb({
+  item,
+  onOpen,
+}: {
+  item: GalleryItem;
+  onOpen: (src: string, alt: string) => void;
+}) {
+  const isVideo = isVideoFile(item.src);
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(item.src, item.alt)}
+      className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-label={`View larger ${isVideo ? "video" : "image"}: ${item.alt}`}
+    >
+      {isVideo ? (
+        <video
+          src={item.src}
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      ) : (
+        <img
+          src={item.src}
+          alt={item.alt}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100">
+          {isVideo ? (
+            <Play className="h-3.5 w-3.5 fill-primary text-primary" />
+          ) : (
+            <ZoomIn className="h-3.5 w-3.5 text-primary" />
+          )}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/* ============================================================================
+ * COMPONENT — Circular process diagram
  * ========================================================================== */
 
 function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
   const total = steps.length;
-  const size = 440; // was 320 — bigger canvas so nodes/labels have room
-  const radius = 36; // percent, ring path + node positions
-  const gapDeg = 8; // trims each arc so it doesn't run under the node circles
+  const size = 440;
+  const radius = 36;
+  const gapDeg = 8;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
 
   return (
@@ -441,7 +742,7 @@ function CircularProcessDiagram({ steps }: { steps: ProcessStep[] }) {
               left: `${left}%`,
               top: `${top}%`,
               transform: "translate(-50%, -50%)",
-              width: "84px", // was 62px — more room, less overlap
+              width: "84px",
             }}
           >
             <div
@@ -520,8 +821,7 @@ const researchBenefits = [
 ];
 
 /* ============================================================================
- * DATA — Social Media Management process cycle (Initial Consultation ->
- * ... -> Continuous Growth, looping back to Initial Consultation)
+ * DATA — Social Media Management process cycle
  * ========================================================================== */
 
 const socialMediaProcessSteps: ProcessStep[] = [
@@ -575,8 +875,37 @@ const socialMediaProcessSteps: ProcessStep[] = [
   },
 ];
 
+// Pain points shown under the SEO detail card — why prospects can't find the
+// business today.
+const seoPainPoints: BenefitItem[] = [
+  {
+    icon: FaSearchMinus,
+    title: "Buried in Search Results",
+    description:
+      "Your competitors show up on page 1 of Google — your site doesn't.",
+  },
+  {
+    icon: FaMapMarkerAlt,
+    title: "Invisible in Local Search",
+    description:
+      'Nearby customers searching "near me" can\'t find you on Google Maps.',
+  },
+  {
+    icon: FaLink,
+    title: "Weak Backlink Profile",
+    description:
+      "Low authority signals tell Google your site isn't trustworthy yet.",
+  },
+  {
+    icon: FaGlobe,
+    title: "Outdated, Unoptimized Content",
+    description:
+      "Missing keywords and technical issues keep Google from ranking you.",
+  },
+];
+
 /* ============================================================================
- * DATA — Branding & marketing carousel
+ * DATA — Branding & marketing carousel (advanced version, w/ gallery + video)
  * ========================================================================== */
 
 const brandingServices: BrandingService[] = [
@@ -585,11 +914,11 @@ const brandingServices: BrandingService[] = [
     type: "benefits",
     icon: FaHashtag,
     color: "#0ea5e9",
-    tagline:
-      "We don't sell followers. We build brands that naturally attract followers, earn trust, and generate business growth.",
+    tagline: "Consistent content, real engagement.",
     thumbnailImage: "/images/services/marketing.svg",
     requestButtonKey: "socialMedia",
     processSteps: socialMediaProcessSteps,
+    behindTheScenesImage: "/behind-the-scene.jpg",
     benefits: [
       {
         icon: FaCalendarAlt,
@@ -647,10 +976,22 @@ const brandingServices: BrandingService[] = [
   {
     name: "Photography & Videography",
     type: "detail",
-    image: "photo_video.png",
+    image: "/product-shoot.jpg",
     subtitle: "Capturing Moments That Tell Your Story",
     description: `Our professional photography and videography services bring your brand to life through compelling visual content. From product shoots to promotional videos, we create stunning media that resonates with your audience and elevates your brand presence.`,
     ctas: ["videoSurvey"] as const,
+    gallery: [
+      { src: "/product-shoot1.jpg", alt: "Product photography sample 1" },
+      { src: "/product-shoot2.jpg", alt: "Product photography sample 2" },
+      { src: "/product-shoot3.jpg", alt: "Product photography sample 3" },
+      { src: "/studio-shoot1.jpg", alt: "Studio shoot sample 1" },
+      { src: "/studio-shoot2.jpg", alt: "Studio shoot sample 2" },
+      { src: "/studio-shoot3.jpg", alt: "Studio shoot sample 3" },
+      {
+        src: "/IZAKAYA-SOFT-OPENING-2.mp4",
+        alt: "Photography & videography showreel",
+      },
+    ],
     categories: [
       {
         id: 1,
@@ -693,7 +1034,7 @@ const brandingServices: BrandingService[] = [
   {
     name: "Graphic Design",
     type: "detail",
-    image: "design.svg",
+    image: "/graphic-demo.jpg",
     subtitle: "Bringing Your Brand to Life with Stunning Designs",
     description: `Our creative team designs visually appealing graphics that reflect your brand identity, making a lasting impression on your audience. From logos to promotional materials, we've got you covered.`,
     requestButtonKey: "graphicDesign",
@@ -722,6 +1063,11 @@ const brandingServices: BrandingService[] = [
     subtitle: "Boost Your Online Visibility with SEO",
     description: `Our SEO strategies help improve your website's search engine rankings, driving more organic traffic and increasing your online presence. Let us optimize your site and ensure it reaches the right audience.`,
     showSEOAuditForm: true,
+    painPointsHeading: "Why Can't People Find You?",
+    painPoints: seoPainPoints,
+    guaranteeHeading: "Our Guarantee",
+    guaranteeText:
+      "We improve your on-page SEO, technical SEO, and backlink profile so Google can find, trust, and rank your site. Most clients see first-page rankings for their target keywords within 4–5 months — and we keep optimizing until you get there.",
     categories: [
       {
         id: 1,
@@ -749,7 +1095,7 @@ const brandingServices: BrandingService[] = [
     icon: FaAddressCard,
     color: "#6366f1",
     tagline: "Share your info with a single tap.",
-    thumbnailImage: "/images/services/juantap.png",
+    thumbnailImage: "/demo.mp4",
     requestButtonKey: "juantap",
     benefits: [
       {
@@ -1056,7 +1402,167 @@ function SEOAuditBanner() {
 }
 
 /* ============================================================================
- * SECTION: Website Solutions (services detail blocks + pricing packages)
+ * COMPONENT — Compact pricing card (Website Solutions section)
+ *
+ * Table-style layout: header (icon, name, price, one-line "best for"), then
+ * every feature listed as its own row with a divider — like a compact spec
+ * table. All features are always visible (no "+N more" toggle) so visitors
+ * can compare plans at a glance without extra clicks.
+ * ========================================================================== */
+
+function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
+  return (
+    <div
+      className={`relative rounded-2xl p-4 flex flex-col transition-all hover:-translate-y-1
+        ${
+          pkg.popular
+            ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-accent shadow-xl shadow-accent/20"
+            : "bg-slate-800 border border-slate-700 hover:bg-slate-700"
+        }`}
+    >
+      {pkg.popular && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+          Most Popular
+        </span>
+      )}
+
+      <div className="flex items-center gap-2 mt-1.5 mb-1">
+        <pkg.icon className="h-5 w-5 text-accent-light" />
+        <h3 className="text-white font-bold text-sm">{pkg.name}</h3>
+      </div>
+
+      <p className="text-lg font-black text-white mt-0.5 mb-1.5">
+        ₱{pkg.price}
+        <span className="text-[10px] font-medium text-slate-300">/month</span>
+      </p>
+
+      <p className="text-slate-300 text-[11px] leading-relaxed mb-3 line-clamp-2">
+        {pkg.bestFor}
+      </p>
+
+      {/* Table-style feature list: every feature is always visible as a
+         row with a divider, like a compact spec table — no expand/collapse. */}
+      <div className="border-t border-white/10">
+        {pkg.features.map((f) => (
+          <div
+            key={f}
+            className="flex items-start gap-1.5 py-1.5 border-b border-white/10 last:border-b-0"
+          >
+            <GoCheck className="text-accent-light shrink-0 mt-0.5 h-3 w-3" />
+            <span className="text-slate-200 text-[11px] leading-snug">{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * COMPONENT — Mini "Which Plan Is Right For Me" FAQ
+ *
+ * Sits under the problem-card grid in the left column of Website Solutions,
+ * filling the space next to the (taller) pricing table. Answers plan-
+ * selection questions directly instead of duplicating the "Get a Free
+ * Audit" CTA that already exists elsewhere on the site.
+ * ========================================================================== */
+
+interface PlanFaqItem {
+  question: string;
+  answer: string;
+}
+
+const planFaqItems: PlanFaqItem[] = [
+  {
+    question: "I'm just starting out — which plan fits?",
+    answer:
+      "Go with Standard. You get a clean 5-page site live fast, without paying for features you don't need yet.",
+  },
+  {
+    question: "I want a dashboard and better design — what then?",
+    answer:
+      "Premium is built for that: client login, traffic analytics, and a design upgrade — our most popular pick.",
+  },
+  {
+    question: "I want to rank on Google and manage leads properly.",
+    answer:
+      "Business adds SEO Pro setup, a products catalog, and admin/lead tracking for teams ready to scale.",
+  },
+  {
+    question: "I sell products online and need bookings too.",
+    answer:
+      "Commerce gives you full eCommerce, a booking calendar, and VIP support — built for active online sellers.",
+  },
+];
+
+function PlanFaqAccordion() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <div
+      className="mt-4 rounded-2xl p-5 sm:p-6"
+      style={{
+        background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
+        boxShadow: "0 8px 30px rgba(13,27,62,0.35)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <FaSearchDollar className="h-4 w-4" style={{ color: "#f5a623" }} />
+        <p className="text-white font-bold text-sm sm:text-base">
+          Which Plan Is Right For Me?
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {planFaqItems.map((item, i) => {
+          const isOpen = openIndex === i;
+          return (
+            <div
+              key={item.question}
+              className="rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenIndex(isOpen ? null : i)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+              >
+                <span className="text-white text-xs sm:text-sm font-semibold">
+                  {item.question}
+                </span>
+                <span
+                  className="shrink-0 text-xs font-bold transition-transform duration-200"
+                  style={{
+                    color: "#f5a623",
+                    transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
+                  }}
+                >
+                  +
+                </span>
+              </button>
+              {isOpen && (
+                <div className="px-4 pb-3">
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    {item.answer}
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * SECTION: Website Solutions
+ *
+ * Problem cards sit on the LEFT (compact stat cards, sized to their own
+ * content) with the "Which Plan Is Right For Me" FAQ stacked right under
+ * them to fill the remaining vertical space; pricing table sits on the
+ * RIGHT (2x2 grid of 4 plans). The wrapper grid uses `items-start` — NOT
+ * `items-stretch` and NOT `h-full` on either child — so the shorter column
+ * is left at its natural height instead of being force-stretched to match
+ * the taller column.
  * ========================================================================== */
 
 function WebsiteSolutionsSection({
@@ -1070,106 +1576,50 @@ function WebsiteSolutionsSection({
     <div className="w-full">
       {services.map((service, serviceIndex) => (
         <div key={`${service.title}-${serviceIndex}`} className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 mb-8">
-            <div
-              className={serviceIndex % 2 === 0 ? "md:order-2" : "md:order-1"}
-            >
-              <img
-                className="w-full h-[28rem] object-contain"
-                alt={service.title}
-                src={`/images/services/${service.image}`}
-              />
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <WebsiteDiagnosticGraphic />
+              <span className="text-xl text-accent font-bold">
+                {service.title}
+              </span>
             </div>
+            <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
+              {service.subtitle}
+            </h1>
 
-            <div
-              className={serviceIndex % 2 === 0 ? "md:order-1" : "md:order-2"}
-            >
-              <div className="max-w-lg">
-                <span className="text-xl text-accent font-bold">
-                  {service.title}
-                </span>
-                <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
-                  {service.subtitle}
-                </h1>
-                {/* <p className="text-lg text-gray-600 mt-4">
-                  {service.description}
-                </p> */}
-
+            {/* Problem cards on the left, pricing table on the right */}
+            <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <div>
                 <ServiceProblemList problems={service.problems} />
+                <PlanFaqAccordion />
+              </div>
 
-                <ServiceCtaButtons
-                  ctas={service.ctas}
-                  onVideoSurvey={onVideoSurvey}
-                  onWebsiteAudit={onWebsiteAudit}
-                />
+              <div>
+                <div className="rounded-2xl overflow-hidden bg-[#0d1b3e] px-5 py-4 mb-4">
+                  <p className="text-white font-bold text-lg">
+                    Which Plan Is Right For You?
+                  </p>
+                  <p className="text-slate-300 text-xs mt-0.5">
+                    Pick the plan that matches where your business is right now.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {packages.map((pkg) => (
+                    <PricingCard key={pkg.name} pkg={pkg} />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-            {service.categories.map((category, catIndex) => (
-              <div
-                key={`service-${serviceIndex}-category-${category.id ?? catIndex}`}
-                className={`rounded-lg p-4 transition-all duration-300 cursor-pointer group hover:shadow-lg hover:shadow-blue-400/50
-                  ${
-                    catIndex % 2 === 0
-                      ? "bg-gradient-to-r from-slate-50 via-primary/20 to-accent/10 hover:to-primary/50"
-                      : "bg-gradient-to-r from-accent/10 via-accent/30 to-primary/10 hover:to-primary/50"
-                  }`}
-              >
-                <h3 className="text-primary font-bold text-lg">
-                  {category.name}
-                </h3>
-                <p className="text-gray-600 text-base mt-2">
-                  {category.description}
-                </p>
-              </div>
-            ))}
+            <ServiceCtaButtons
+              ctas={service.ctas}
+              onVideoSurvey={onVideoSurvey}
+              onWebsiteAudit={onWebsiteAudit}
+            />
           </div>
         </div>
       ))}
-
-      <div className="text-center mb-6">
-        <h4 className="text-primary font-bold text-lg">
-          Or Choose a Ready-Made Plan
-        </h4>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {packages.map((pkg) => (
-          <div
-            key={pkg.name}
-            className={`relative rounded-2xl p-5 flex flex-col transition-all hover:-translate-y-1
-              ${
-                pkg.popular
-                  ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-accent shadow-xl shadow-accent/20"
-                  : "bg-slate-800 border border-slate-700 hover:bg-slate-700"
-              }`}
-          >
-            {pkg.popular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                Most Popular
-              </span>
-            )}
-
-            <pkg.icon className="h-8 w-8 text-accent-light mb-3 mt-2" />
-            <h3 className="text-white font-bold text-lg">{pkg.name}</h3>
-            <p className="text-2xl font-black text-white mt-1 mb-4">
-              ₱{pkg.price}
-              <span className="text-sm font-medium text-slate-400">/month</span>
-            </p>
-
-            <div className="space-y-2 flex-1">
-              {pkg.features.map((f) => (
-                <div key={f} className="flex items-start gap-2">
-                  <GoCheck className="text-accent-light shrink-0 mt-0.5" />
-                  <span className="text-slate-300 text-sm">{f}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1350,25 +1800,27 @@ function MarketResearchSection({
         </h4>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 rounded-2xl bg-slate-50 p-4 sm:p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 rounded-2xl bg-slate-50 p-4 sm:p-6 items-stretch">
         {researchBenefits.map((benefit) => (
           <div
             key={benefit.title}
-            className="rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all"
+            className="rounded-xl bg-white p-3.5 h-full flex flex-col text-center shadow-sm ring-1 ring-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all"
           >
             <div
-              className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full"
+              className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full"
               style={{ backgroundColor: `${benefit.color}1a` }}
             >
               <benefit.icon
-                className="h-6 w-6"
+                className="h-4.5 w-4.5"
                 style={{ color: benefit.color }}
               />
             </div>
-            <h3 className="text-primary font-semibold text-sm mb-1">
+            <h3 className="text-primary font-semibold text-xs mb-1">
               {benefit.title}
             </h3>
-            <p className="text-gray-500 text-xs">{benefit.description}</p>
+            <p className="text-gray-500 text-[11px] leading-snug">
+              {benefit.description}
+            </p>
           </div>
         ))}
       </div>
@@ -1377,7 +1829,8 @@ function MarketResearchSection({
 }
 
 /* ============================================================================
- * SECTION: Branding & Marketing carousel
+ * SECTION: Branding & Marketing — advanced version (scrollable carousel,
+ * photo/video gallery, full-screen lightbox, SEO pain points + guarantee).
  * ========================================================================== */
 
 function BrandingSection({
@@ -1392,7 +1845,14 @@ function BrandingSection({
   const [selectedService, setSelectedService] = useState<string | null>(
     brandingServices[0]?.name ?? null,
   );
+  const [lightboxMedia, setLightboxMedia] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const openLightbox = (src: string, alt: string) =>
+    setLightboxMedia({ src, alt });
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({
@@ -1407,28 +1867,18 @@ function BrandingSection({
 
   return (
     <div className="w-full">
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <button
-          type="button"
           onClick={() => scroll("left")}
+          className="hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50"
           aria-label="Scroll left"
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-white text-primary shadow-md ring-1 ring-gray-200 hover:bg-primary hover:text-white transition-colors"
         >
-          <LuChevronLeft size={18} />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scroll("right")}
-          aria-label="Scroll right"
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-white text-primary shadow-md ring-1 ring-gray-200 hover:bg-primary hover:text-white transition-colors"
-        >
-          <LuChevronRight size={18} />
+          <LuChevronLeft className="text-primary" size={20} />
         </button>
 
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 px-2 sm:px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {brandingServices.map((service) => {
             const isSelected = selectedService === service.name;
@@ -1442,18 +1892,22 @@ function BrandingSection({
                 }
               >
                 {service.type === "benefits" && service.thumbnailImage ? (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center p-3"
-                    style={{
-                      background: `linear-gradient(135deg, ${service.color}, ${service.color}cc)`,
-                    }}
-                  >
+                  isVideoFile(service.thumbnailImage) ? (
+                    <video
+                      src={service.thumbnailImage}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
                     <img
                       src={service.thumbnailImage}
                       alt={service.name}
-                      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                  </div>
+                  )
                 ) : service.type === "benefits" ? (
                   <div
                     className="absolute inset-0 flex items-center justify-center"
@@ -1461,11 +1915,11 @@ function BrandingSection({
                       background: `linear-gradient(135deg, ${service.color}, ${service.color}cc)`,
                     }}
                   >
-                    <service.icon className="h-10 w-10 text-white/90 transition-transform duration-300 group-hover:scale-110" />
+                    <service.icon className="h-10 w-10 text-white/90" />
                   </div>
                 ) : (
                   <img
-                    src={`/images/services/${service.image}`}
+                    src={resolveDetailImage(service.image)}
                     alt={service.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
@@ -1478,6 +1932,14 @@ function BrandingSection({
             );
           })}
         </div>
+
+        <button
+          onClick={() => scroll("right")}
+          className="hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50"
+          aria-label="Scroll right"
+        >
+          <LuChevronRight className="text-primary" size={20} />
+        </button>
       </div>
 
       {activeService && (
@@ -1529,70 +1991,102 @@ function BrandingSection({
                 )}
 
                 {activeService.processSteps ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-                    <div className="hidden lg:flex flex-col gap-3">
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          8-Step
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Proven, repeatable process from strategy to growth.
-                        </p>
+                  <>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                      <div className="hidden lg:flex flex-col gap-3">
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            8-Step
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Proven, repeatable process from strategy to growth.
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            Monthly
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Performance reports so you always know what's
+                            working.
+                          </p>
+                        </div>
                       </div>
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          Monthly
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Performance reports so you always know what's working.
-                        </p>
+
+                      <div className="flex justify-center lg:col-span-1">
+                        <CircularProcessDiagram
+                          steps={activeService.processSteps}
+                        />
+                      </div>
+
+                      <div className="hidden lg:flex flex-col gap-3">
+                        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
+                          <p className="text-primary font-bold text-2xl">
+                            Data-Backed
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Every step is optimized using real engagement data.
+                          </p>
+                        </div>
+                        {activeService.requestButtonKey && (
+                          <ShadButton
+                            onClick={() =>
+                              onRequestButtonClick(
+                                activeService.requestButtonKey!,
+                              )
+                            }
+                            className={
+                              benefitsRequestButtonConfig[
+                                activeService.requestButtonKey
+                              ].className + " w-full"
+                            }
+                          >
+                            {
+                              benefitsRequestButtonConfig[
+                                activeService.requestButtonKey
+                              ].label
+                            }
+                          </ShadButton>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex justify-center lg:col-span-1">
-                      <CircularProcessDiagram
-                        steps={activeService.processSteps}
-                      />
-                    </div>
-
-                    <div className="hidden lg:flex flex-col gap-3">
-                      <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-gray-100">
-                        <p className="text-primary font-bold text-2xl">
-                          Data-Backed
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Every step is optimized using real engagement data.
-                        </p>
+                    {activeService.behindTheScenesImage && (
+                      <div className="mt-6">
+                        <h4 className="text-primary font-semibold text-sm mb-2 text-center lg:text-left">
+                          Behind the Scenes
+                        </h4>
+                        <div className="mx-auto lg:mx-0 max-w-md">
+                          <ZoomableImage
+                            src={activeService.behindTheScenesImage}
+                            alt={`${activeService.name} — behind the scenes`}
+                            className="h-48 w-full object-cover rounded-xl"
+                            onZoom={openLightbox}
+                          />
+                        </div>
                       </div>
-                      {activeService.requestButtonKey && (
-                        <ShadButton
-                          onClick={() =>
-                            onRequestButtonClick(
-                              activeService.requestButtonKey!,
-                            )
-                          }
-                          className={
-                            benefitsRequestButtonConfig[
-                              activeService.requestButtonKey
-                            ].className + " w-full"
-                          }
-                        >
-                          {
-                            benefitsRequestButtonConfig[
-                              activeService.requestButtonKey
-                            ].label
-                          }
-                        </ShadButton>
-                      )}
-                    </div>
-                  </div>
+                    )}
+                  </>
                 ) : activeService.thumbnailImage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
-                    <img
-                      src={activeService.thumbnailImage}
-                      alt={activeService.name}
-                      className="w-full h-56 object-contain"
-                    />
+                    {isVideoFile(activeService.thumbnailImage) ? (
+                      <video
+                        src={activeService.thumbnailImage}
+                        className="w-full h-56 object-contain rounded-lg bg-slate-900"
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <ZoomableImage
+                        src={activeService.thumbnailImage}
+                        alt={activeService.name}
+                        className="w-full h-56 object-contain"
+                        onZoom={openLightbox}
+                      />
+                    )}
                     <div className="grid grid-cols-1 gap-4">
                       {activeService.benefits.map((benefit) => (
                         <div
@@ -1702,10 +2196,11 @@ function BrandingSection({
             ) : (
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
-                  <img
-                    src={`/images/services/${activeService.image}`}
+                  <ZoomableImage
+                    src={resolveDetailImage(activeService.image)}
                     alt={activeService.name}
                     className="w-full h-56 object-contain"
+                    onZoom={openLightbox}
                   />
                   <div>
                     <h4 className="text-primary font-bold text-base mb-2">
@@ -1747,6 +2242,77 @@ function BrandingSection({
                     )}
                   </div>
                 </div>
+
+                {/* Extra photo/video gallery (currently used by Photography & Videography) */}
+                {activeService.gallery && activeService.gallery.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-primary font-bold text-base mb-3">
+                      Gallery
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+                      {activeService.gallery.map((item) => (
+                        <GalleryThumb
+                          key={item.src}
+                          item={item}
+                          onOpen={openLightbox}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Why can't people find you — SEO pain points */}
+                {activeService.painPoints && (
+                  <div className="mb-6">
+                    {activeService.painPointsHeading && (
+                      <h4 className="text-primary font-bold text-base mb-3">
+                        {activeService.painPointsHeading}
+                      </h4>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {activeService.painPoints.map((point) => (
+                        <div
+                          key={point.title}
+                          className="flex items-start gap-3 rounded-lg bg-red-50 p-3 ring-1 ring-red-100"
+                        >
+                          <point.icon className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">
+                              {point.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {point.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Guarantee / expected results banner */}
+                {activeService.guaranteeText && (
+                  <div
+                    className="mb-6 rounded-xl p-5"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
+                    }}
+                  >
+                    {activeService.guaranteeHeading && (
+                      <span
+                        className="text-xs font-bold uppercase tracking-wide"
+                        style={{ color: "#f5a623" }}
+                      >
+                        {activeService.guaranteeHeading}
+                      </span>
+                    )}
+                    <p className="mt-2 text-sm text-gray-200 leading-relaxed">
+                      {activeService.guaranteeText}
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {activeService.categories.map((category) => (
                     <div
@@ -1768,12 +2334,89 @@ function BrandingSection({
           </div>
         </div>
       )}
+
+      <MediaLightbox
+        media={lightboxMedia}
+        onClose={() => setLightboxMedia(null)}
+      />
     </div>
   );
 }
 
 /* ============================================================================
- * SECTION: All page modals, in one place
+ * SECTION: Category card + its details, side-by-side (card is sticky on the
+ * left, its own section content sits directly beside it on the right — not
+ * stacked below a separate row of cards).
+ * ========================================================================== */
+
+interface MainSectionCardData {
+  title: string;
+  description: string;
+  icon: React.ComponentType<IconProps>;
+  color: string;
+}
+
+const mainSectionCards: MainSectionCardData[] = [
+  {
+    title: "Website Solutions",
+    description: "Custom websites & ready-made plans",
+    icon: FaGlobe,
+    color: "#10b981",
+  },
+  {
+    title: "Market Research",
+    description: "Data-backed insights for smarter decisions",
+    icon: FaSearchDollar,
+    color: "#0ea5e9",
+  },
+  {
+    title: "Branding & Marketing",
+    description: "Grow your brand across every channel",
+    icon: FaPalette,
+    color: "#8b5cf6",
+  },
+];
+
+function CategoryCard({ card }: { card: MainSectionCardData }) {
+  return (
+    <div className="flex flex-col items-center text-center rounded-2xl bg-white p-10 shadow-md ring-1 ring-gray-100 md:sticky md:top-24">
+      <div
+        className="flex h-24 w-24 items-center justify-center rounded-3xl mb-6"
+        style={{
+          background: `linear-gradient(135deg, ${card.color}, ${card.color}cc)`,
+        }}
+      >
+        <card.icon className="h-10 w-10 text-white" />
+      </div>
+      <h3 className="text-primary font-bold text-2xl">{card.title}</h3>
+      <p className="text-gray-500 text-sm mt-3 leading-relaxed">
+        {card.description}
+      </p>
+      <span
+        className="mt-6 h-1.5 w-full max-w-[160px] rounded-full opacity-60"
+        style={{ backgroundColor: card.color }}
+      />
+    </div>
+  );
+}
+
+function CategoryBlock({
+  card,
+  children,
+}: {
+  card: MainSectionCardData;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6 md:gap-10 items-start mb-16 last:mb-0">
+      <CategoryCard card={card} />
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * SECTION: All page modals
  * ========================================================================== */
 
 interface ServiceModalsProps {
@@ -1863,14 +2506,11 @@ function ServiceModals({
 }
 
 /* ============================================================================
- * MAIN PAGE — tabbed navigation (Website Solutions / Market Research /
- * Branding & Marketing) so the page renders only one section at a time
- * instead of one long scroll.
+ * MAIN PAGE — renders Website, Market Research, and Branding (advanced
+ * carousel/gallery/lightbox version) sections one after another.
  * ========================================================================== */
 
 export default function Services() {
-  const [activeTab, setActiveTab] = useState<MainCategoryKey>("website");
-
   const [videoSurveyOpen, setVideoSurveyOpen] = useState(false);
   const {
     isOpen: reportOpen,
@@ -1919,49 +2559,31 @@ export default function Services() {
   return (
     <section className="container mx-auto px-4 py-12 lg:py-16">
       {/* Header */}
-      <div className="max-w-xl mx-auto text-center mb-8">
+      <div className="max-w-xl mx-auto text-center mb-12">
         <h1 className="font-bold text-accent text-4xl">OUR SERVICES</h1>
         <p className="text-gray-500 mt-2">
           Solutions built to grow your business.
         </p>
       </div>
 
-      {/* Main tabs */}
-      <div className="flex flex-wrap justify-center gap-2 mb-10">
-        {mainCategories.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => setActiveTab(cat.key)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors border
-              ${
-                activeTab === cat.key
-                  ? "bg-primary text-white border-primary"
-                  : "bg-transparent text-primary border-primary/30 hover:border-primary hover:bg-primary/5"
-              }`}
-          >
-            {cat.title}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "website" && (
+      <CategoryBlock card={mainSectionCards[0]}>
         <WebsiteSolutionsSection
           onVideoSurvey={() => setVideoSurveyOpen(true)}
           onWebsiteAudit={openAudit}
         />
-      )}
+      </CategoryBlock>
 
-      {activeTab === "research" && (
+      <CategoryBlock card={mainSectionCards[1]}>
         <MarketResearchSection onRequestReport={openReport} />
-      )}
+      </CategoryBlock>
 
-      {activeTab === "branding" && (
+      <CategoryBlock card={mainSectionCards[2]}>
         <BrandingSection
           onVideoSurvey={() => setVideoSurveyOpen(true)}
           onWebsiteAudit={openAudit}
           onRequestButtonClick={handleRequestButtonClick}
         />
-      )}
+      </CategoryBlock>
 
       <ServiceModals
         videoSurveyOpen={videoSurveyOpen}

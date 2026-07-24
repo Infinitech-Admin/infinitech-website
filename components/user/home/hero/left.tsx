@@ -11,7 +11,7 @@ const whyChooseUs = [
   "Convenient One-Stop Shop",
   "Affordable Pricing",
   "Personalized Support",
-  "Quality You Can Trust",
+  "Trusted Quality",
 ];
 
 // TODO: Replace "__" with your real team member count before deploying

@@ -1,5 +1,4 @@
 import Branding from "@/components/user/branding/branding";
-import { FaPalette } from "react-icons/fa";
 
 export default function BrandingPage() {
   return (
@@ -21,12 +20,9 @@ export default function BrandingPage() {
         />
         <div className="relative max-w-3xl mx-auto text-center px-6">
           <span className="inline-flex items-center justify-center gap-3 text-4xl md:text-5xl font-bold tracking-tight uppercase text-accent mb-3">
-            {/* <FaPalette className="h-8 w-8 md:h-10 md:w-10" /> */}
             Branding
           </span>
-          {/* <h1 className="text-lg md:text-xl font-semibold text-white/90 tracking-wide">
-            Branding
-          </h1> */}
+
           <p className="text-slate-300 mt-4 text-base md:text-lg">
             Grow your brand across every channel — social, ads, and visual
             identity.
