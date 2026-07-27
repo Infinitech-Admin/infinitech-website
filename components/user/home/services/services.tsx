@@ -2331,13 +2331,13 @@ const mainSectionCards: MainSectionCardData[] = [
     color: "#10b981",
   },
   {
-    title: "Market Research",
+    title: "Marketing Research",
     description: "Data-backed insights for smarter decisions",
     icon: FaSearchDollar,
     color: "#0ea5e9",
   },
   {
-    title: "Branding & Marketing",
+    title: "Branding",
     description: "Grow your brand across every channel",
     icon: FaPalette,
     color: "#8b5cf6",
