@@ -18,7 +18,7 @@ const whyChooseUs = [
 const stats = [
   { value: "2+", label: "Years in Business" },
   // { value: "20+", label: "Projects Completed" },
-  { value: "10+", label: "Services Offered" },
+  { value: "30+", label: "Services Offered" },
   { value: "15+", label: "Team Members" },
 ];
 
