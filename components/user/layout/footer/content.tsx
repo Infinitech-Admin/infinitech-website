@@ -51,9 +51,9 @@ const Content = ({ onOpenSupport }: ContentProps) => {
             <Link href="/solutions" className="text-default-200">
               Solutions
             </Link>
-            <Link href="/testimonials" className="text-default-200">
+            {/* <Link href="/testimonials" className="text-default-200">
               Testimonials
-            </Link>
+            </Link> */}
             <Link href="/contact" className="text-default-200">
               Contact Us
             </Link>
@@ -78,9 +78,7 @@ const Content = ({ onOpenSupport }: ContentProps) => {
             size={24}
             className="cursor-pointer"
             onClick={() =>
-              open(
-                "https://www.facebook.com/profile.php?id=100080647808810"
-              )
+              open("https://www.facebook.com/profile.php?id=100080647808810")
             }
           />
         </div>
@@ -102,9 +100,19 @@ const Content = ({ onOpenSupport }: ContentProps) => {
           }}
           className="px-6 py-3 bg-orange-400 hover:bg-orange-500 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01"/>
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 16v-4m0-4h.01"
+            />
           </svg>
           Get Support
         </button>
