@@ -19,4 +19,4 @@ const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
 };
 
 export default Error;
-//redeploy
+
