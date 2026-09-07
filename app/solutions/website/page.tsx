@@ -120,6 +120,11 @@ const websiteTiers: Tier[] = [
       "Improve customer engagement, provide better user experience, and gain valuable visitor insights for business growth.",
     examples: [
       {
+        name: "Dr. Dental",
+        url: "https://dr-dental-alpha.vercel.app/",
+        image: "/websites/drdental.png",
+      },
+      {
         name: "ABIC Manpower Services",
         url: "https://abicmanpower.com/",
         image: "/websites/abicmanpower.png",
@@ -156,6 +161,11 @@ const websiteTiers: Tier[] = [
     purpose:
       "Generate qualified leads, improve Google visibility, manage customer information efficiently, and strengthen brand credibility.",
     examples: [
+      {
+        name: "Quanta",
+        url: "https://staging-quanta.vercel.app/",
+        image: "/websites/quanta.png",
+      },
       {
         name: "DMCI Real Estate Portal",
         url: "https://dmci-agent-website.vercel.app/",
@@ -203,6 +213,11 @@ const websiteTiers: Tier[] = [
     purpose:
       "Create a complete digital sales ecosystem that automates sales, customer management, reporting, and online transactions.",
     examples: [
+      {
+        name: "Tissue Market",
+        url: "https://www.tissuemarket.com/",
+        image: "/websites/tissuemarket.png",
+      },
       {
         name: "Yamaaraw E-Commerce",
         url: "https://yamaaraw-ecom-shopph.vercel.app/",
