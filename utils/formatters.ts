@@ -11,3 +11,4 @@ export const capitalize = (string: string) => {
 export const removeSpaces = (string: string) => {
   return string.replace(/ /g, "");
 };
+//deployed
