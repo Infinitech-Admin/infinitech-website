@@ -20,6 +20,10 @@ export const links = [
     href: "/pricing",
   },
   {
+    name: "Portal Demo",
+    href: "/portal-demo",
+  },
+  {
     name: "Contact Us",
     href: "/contact",
   },
