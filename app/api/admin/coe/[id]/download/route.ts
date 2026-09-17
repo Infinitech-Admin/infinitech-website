@@ -9,7 +9,7 @@ import { generateCoeDocx } from "@/lib/coe/generate-coe-docx";
 import { generateCoePdf } from "@/lib/coe/generate-coe-pdf";
 import type { Coe, CompanyKey } from "@/components/admin/coe-types";
 
-const laravelUrl = process.env.NEXT_PUBLIC_API_UR || "http://localhost:8000";
+const laravelUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function GET(
   request: NextRequest,
