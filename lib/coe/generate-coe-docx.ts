@@ -7,6 +7,7 @@
 
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 import {
   Document,
   Packer,
@@ -24,80 +25,66 @@ import {
   BorderStyle,
 } from "docx";
 import type { Coe } from "@/components/admin/coe-types";
+import {
+  type CompanyKey,
+  COMPANY_PROFILES,
+  DEFAULT_COMPANY_KEY,
+  FOOTER_ADDRESS,
+  FOOTER_PHONE,
+  ISSUED_CITY,
+  SIGNATORY_ROLE,
+  formatDate,
+  formatCurrency,
+  ordinal,
+  normalizeCoe,
+  getPngDimensions,
+} from "./coe-shared";
 
-// Two companies share this generator — ABIC Realty & Consultancy Corporation
-// and Infinitech Advertising Corporation — depending on which employer a
-// given employee's COE is for. The admin picks the company on the form
-// (nothing is persisted on the Laravel side for this), and that choice flows
-// straight through to whichever profile below gets used for the header logo
-// and the company name in the body text.
-export type CompanyKey = "infinitech" | "abic";
+export type { CompanyKey };
 
-interface CompanyProfile {
-  name: string;
-  // File name only — resolved against public/images/ below. Drop the actual
-  // PNGs in that folder; no other setup needed.
-  logoFile: string;
-}
+// Distance (in twips, 1/1440 inch) from the physical page edge to the
+// header/footer content. Set to 0 so the logo sits flush at the top of the
+// page and the address/phone block sits flush at the bottom — no dead space
+// above the header or below the footer. If a printer ever clips the logo or
+// footer text too close to the edge, nudge these up a little (e.g. 150-200)
+// rather than back to the old default of 720.
+// 0.3cm = 0.3 / 2.54in * 1440 twips/in ≈ 170 twips.
+const HEADER_DISTANCE = 170;
+const FOOTER_DISTANCE = 0;
 
-const COMPANY_PROFILES: Record<CompanyKey, CompanyProfile> = {
-  infinitech: {
-    name: process.env.COE_COMPANY_NAME ?? "INFINITECH ADVERTISING CORPORATION",
-    logoFile: process.env.COE_INFINITECH_LOGO_FILE ?? "logo.png",
-  },
-  abic: {
-    name:
-      process.env.COE_ABIC_COMPANY_NAME ??
-      "ABIC REALTY & CONSULTANCY CORPORATION",
-    logoFile: process.env.COE_ABIC_LOGO_FILE ?? "ABIC-Realty-logo.png",
-  },
-};
+// docx's ImageRun transformation width/height are in pixels at 96 DPI;
+// 1440 twips per inch ÷ 96 px per inch = 15 twips per pixel.
+const PIXELS_TO_TWIPS = 15;
+// Breathing room between the bottom of the (trimmed) logo and the first
+// line of body content — not the whole fixed page margin, just a little air.
+const HEADER_TOP_MARGIN_BUFFER = 650;
+// Fallback top margin when there's no logo to size against.
+const DEFAULT_TOP_MARGIN_NO_LOGO = 1000;
 
-const DEFAULT_COMPANY_KEY: CompanyKey =
-  (process.env.COE_DEFAULT_COMPANY as CompanyKey) ?? "infinitech";
+// Word applies its "Normal" style default line spacing (roughly 1.15x /
+// 276 twips) to every paragraph unless a paragraph says otherwise. That
+// extra leading is invisible in the editor but shows up as dead air above
+// and below single-line header/footer content — the exact "big space on
+// top" symptom, since spacing.before/after = 0 only controls space
+// *between* paragraphs, not the line's own height. `line: 240` = exactly
+// single-spaced (240 twips = 1 line at 12pt), which removes it.
+const TIGHT_LINE = { line: 240, lineRule: "auto" as const };
 
-const FOOTER_ADDRESS =
-  process.env.COE_FOOTER_ADDRESS ??
-  "Unit 311 Campos Rueda Bldg., Urban Avenue, Brgy. Pio Del Pilar, Makati City, 1230";
-const FOOTER_PHONE = process.env.COE_FOOTER_PHONE ?? "(02) 7001-6157";
-const ISSUED_CITY = process.env.COE_ISSUED_CITY ?? "Makati City, Philippines";
-const SIGNATORY_ROLE =
-  process.env.COE_SIGNATORY_ROLE ?? "Authorized Company Representative";
-
-const formatDate = (iso: string | null | undefined) => {
-  if (!iso) return "—";
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const formatCurrency = (amount: number | string | null | undefined) => {
-  const numeric = Number(amount ?? 0);
-  const safeNumeric = isNaN(numeric) ? 0 : numeric;
-  return `₱${safeNumeric.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const ordinal = (n: number) => {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
-  switch (n % 10) {
-    case 1:
-      return `${n}st`;
-    case 2:
-      return `${n}nd`;
-    case 3:
-      return `${n}rd`;
-    default:
-      return `${n}th`;
+// Most exported logo PNGs carry a chunk of transparent (or white) canvas
+// around the actual mark — normal for a design file, but deadly here
+// because the header height is derived straight from the image's pixel
+// dimensions. Trimming that padding off before we ever measure/embed the
+// image is what actually removes the gap; no page-margin setting can
+// compensate for whitespace that's literally part of the source pixels.
+async function trimLogoPadding(buffer: Buffer): Promise<Buffer> {
+  try {
+    return await sharp(buffer).trim().png().toBuffer();
+  } catch {
+    // If trim() finds nothing to trim (or the file isn't a clean PNG),
+    // fall back to the original bytes rather than failing generation.
+    return buffer;
   }
-};
+}
 
 const NO_BORDER = {
   style: BorderStyle.NONE,
@@ -111,35 +98,6 @@ const noBorders = () => ({
   left: NO_BORDER,
   right: NO_BORDER,
 });
-
-// Fills in every string/number field TextRun/formatters touch so a single
-// null field from the API can never crash document generation again. Add
-// new fields here as the Coe type grows.
-function normalizeCoe(coe: Coe): Coe {
-  return {
-    ...coe,
-    employee_name: coe.employee_name ?? "",
-    position: coe.position ?? "",
-    department: coe.department ?? "",
-    certificate_no: coe.certificate_no ?? "",
-    period_from: coe.period_from ?? "",
-    period_to: coe.period_to ?? "",
-    issued_at: coe.issued_at ?? "",
-    salary: coe.salary ?? 0,
-    allowances: coe.allowances ?? [],
-    signatory_name: coe.signatory_name ?? "",
-    signatory_title: coe.signatory_title ?? "",
-  };
-}
-
-// Reads a PNG's real pixel dimensions from its IHDR chunk so the logo can be
-// scaled proportionally instead of stretched into a fixed box.
-function getPngDimensions(buffer: Buffer): { width: number; height: number } {
-  // PNG signature (8 bytes) + IHDR chunk: width @ 16-19, height @ 20-23 (big-endian)
-  const width = buffer.readUInt32BE(16);
-  const height = buffer.readUInt32BE(20);
-  return { width, height };
-}
 
 // "Certificate No.   CE - 0050" — borderless table so label/value sit flush right,
 // same trick used in the original template. Each cell's own paragraph carries
@@ -199,7 +157,7 @@ function buildCopy(
 
   children.push(
     new Paragraph({
-      spacing: { after: 300 },
+      spacing: { before: 300, after: 300 },
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
@@ -248,7 +206,7 @@ function buildCopy(
   coe.allowances.forEach((allowance, index) => {
     bodyRuns.push(new TextRun(index === 0 ? " and a monthly " : " and "));
     bodyRuns.push(new TextRun({ text: allowance.label ?? "", bold: true }));
-    bodyRuns.push(new TextRun(" allowance of "));
+    bodyRuns.push(new TextRun(" of "));
     bodyRuns.push(
       new TextRun({ text: formatCurrency(allowance.amount), bold: true }),
     );
@@ -349,7 +307,8 @@ export async function generateCoeDocx(
   let logoBuffer: Buffer | null = null;
 
   if (hasLogo) {
-    logoBuffer = fs.readFileSync(logoPath);
+    const rawLogoBuffer = fs.readFileSync(logoPath);
+    logoBuffer = await trimLogoPadding(rawLogoBuffer);
     const { width: naturalWidth, height: naturalHeight } =
       getPngDimensions(logoBuffer);
     const targetWidth = 140;
@@ -362,6 +321,13 @@ export async function generateCoeDocx(
   const header = new Header({
     children: [
       new Paragraph({
+        // spacing before/after 0 so the logo doesn't pick up the Normal
+        // style's default paragraph spacing on top of the header distance
+        // below — this paragraph should sit flush against wherever the
+        // header area starts. `line: 240` additionally kills Word's default
+        // ~1.15x line-height leading, which otherwise pads a single-line
+        // image paragraph with visible space above/below it.
+        spacing: { before: 0, after: 0, ...TIGHT_LINE },
         alignment: AlignmentType.CENTER,
         children:
           hasLogo && logoBuffer
@@ -380,12 +346,14 @@ export async function generateCoeDocx(
   const footer = new Footer({
     children: [
       new Paragraph({
+        spacing: { before: 0, after: 0, ...TIGHT_LINE },
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({ text: FOOTER_ADDRESS, size: 18, color: "595959" }),
         ],
       }),
       new Paragraph({
+        spacing: { before: 0, after: 0, ...TIGHT_LINE },
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({ text: FOOTER_PHONE, size: 18, color: "595959" }),
@@ -394,6 +362,16 @@ export async function generateCoeDocx(
     ],
   });
 
+  // Sized off the *trimmed* logo's actual height so the gap between the
+  // header and the body text tracks whatever the logo really measures —
+  // a flat 1000-twip margin looked fine only by coincidence when the old,
+  // padded logo happened to be about that tall.
+  const topMargin = hasLogo
+    ? HEADER_DISTANCE +
+      logoTransformation.height * PIXELS_TO_TWIPS +
+      HEADER_TOP_MARGIN_BUFFER
+    : DEFAULT_TOP_MARGIN_NO_LOGO;
+
   const doc = new Document({
     sections: [
       {
@@ -401,14 +379,28 @@ export async function generateCoeDocx(
           page: {
             // US Letter (DXA). Switch to A4 defaults if your office standard is A4.
             size: { width: 12240, height: 15840 },
-            margin: { top: 1000, bottom: 1000, left: 1200, right: 1200 },
+            margin: {
+              top: topMargin,
+              bottom: 1000,
+              left: 1200,
+              right: 1200,
+              // Distance from the page edge to the header/footer area itself
+              // (separate from the top/bottom body margins above). Flush to
+              // the edge so there's no gap above the logo or below the
+              // footer text.
+              header: HEADER_DISTANCE,
+              footer: FOOTER_DISTANCE,
+            },
           },
         },
         headers: { default: header },
         footers: { default: footer },
         children: [
           ...buildCopy(coe, "EMPLOYEE'S COPY", profile.name),
-          new Paragraph({ children: [new PageBreak()] }),
+          new Paragraph({
+            spacing: { before: 0, after: 0 },
+            children: [new PageBreak()],
+          }),
           ...buildCopy(coe, "EMPLOYER'S COPY", profile.name),
         ],
       },

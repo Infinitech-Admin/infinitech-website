@@ -79,6 +79,11 @@ import {
   buildCoeFilename,
 } from "@/components/admin/coe-types";
 
+// The two downloadable formats for a generated certificate. "docx" stays the
+// default so existing behavior (Word doc with employee's + employer's copy)
+// doesn't change unless someone explicitly picks PDF.
+type CoeDownloadFormat = "docx" | "pdf";
+
 const ITEMS_PER_PAGE = 10;
 
 const formatDate = (dateString?: string | null) => {
@@ -143,6 +148,11 @@ export default function EmployeeMasterfilePage() {
   const [coeFormErrors, setCoeFormErrors] = useState<
     Partial<Record<keyof CoeFormData, boolean>>
   >({});
+
+  // Which file type to hand back after generating — chosen in the dialog,
+  // right next to the Generate & Download button.
+  const [coeDownloadFormat, setCoeDownloadFormat] =
+    useState<CoeDownloadFormat>("docx");
 
   const [coeLookupStatus, setCoeLookupStatus] = useState<
     "idle" | "loading" | "found" | "not_found"
@@ -410,6 +420,7 @@ export default function EmployeeMasterfilePage() {
     setCoeFormData({ ...emptyCoeForm(), id_number: employee.id_number });
     setCoeFormErrors({});
     setCoeLookupStatus("idle");
+    setCoeDownloadFormat("docx");
     setCoeDialogOpen(true);
   };
 
@@ -498,22 +509,26 @@ export default function EmployeeMasterfilePage() {
     return Object.keys(errors).length === 0;
   };
 
+  // `format` decides whether the download route hands back the .docx (with
+  // both copies) or the .pdf twin — see app/api/admin/coe/[id]/download.
   const downloadCoe = async (
     id: number,
     filename: string,
     company: CompanyKey,
+    format: CoeDownloadFormat,
   ) => {
     setCoeDownloading(true);
     try {
       const response = await fetch(
-        `/api/admin/coe/${id}/download?company=${encodeURIComponent(company)}`,
+        `/api/admin/coe/${id}/download?company=${encodeURIComponent(company)}&format=${format}`,
       );
       if (!response.ok) throw new Error();
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
+      a.download =
+        format === "pdf" ? filename.replace(/\.docx$/i, ".pdf") : filename;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -568,6 +583,7 @@ export default function EmployeeMasterfilePage() {
         data.data.id,
         buildCoeFilename(data.data),
         coeFormData.company,
+        coeDownloadFormat,
       );
     } catch (error: any) {
       toast({
@@ -1170,8 +1186,8 @@ export default function EmployeeMasterfilePage() {
             <DialogDescription>
               Name, department, position, and period start are pulled from this
               employee's masterfile record. Salary, allowances, coverage end
-              date, and signatory still need to be filled in. Downloads as a
-              .docx with the employee's copy and employer's copy.
+              date, and signatory still need to be filled in. Choose Word or PDF
+              below before generating.
             </DialogDescription>
           </DialogHeader>
 
@@ -1184,7 +1200,25 @@ export default function EmployeeMasterfilePage() {
             lockIdNumber
           />
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-4 flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="flex items-center gap-2 mr-auto">
+              <span className="text-sm text-muted-foreground">Download as</span>
+              <Select
+                value={coeDownloadFormat}
+                onValueChange={(v) =>
+                  setCoeDownloadFormat(v as CoeDownloadFormat)
+                }
+                disabled={coeSubmitting || coeDownloading}
+              >
+                <SelectTrigger className="h-9 w-[110px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="docx">Word (.docx)</SelectItem>
+                  <SelectItem value="pdf">PDF (.pdf)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               variant="outline"
               onClick={() => setCoeDialogOpen(false)}
