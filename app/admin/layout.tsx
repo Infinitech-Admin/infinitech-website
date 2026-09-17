@@ -55,7 +55,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Lead Generation",
     items: [
       { href: "/admin/masterfile", label: "Employee Masterfile", icon: Inbox },
-      { href: "/admin/coe", label: "COE", icon: Inbox },
+      // { href: "/admin/coe", label: "COE", icon: Inbox },
       { href: "/admin/inquiries", label: "Inquiries", icon: Inbox },
       { href: "/admin/website-audit", label: "Website Audit", icon: Search },
       { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
