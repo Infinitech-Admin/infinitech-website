@@ -6,7 +6,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { generateCoeDocx } from "@/lib/coe/generate-coe-docx";
-import type { Coe } from "@/components/admin/coe-types";
+import type { Coe, CompanyKey } from "@/components/admin/coe-types";
 
 const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
 
@@ -16,6 +16,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // ?company=abic or ?company=infinitech — anything else (missing,
+    // mistyped) falls back to infinitech rather than erroring out.
+    const companyParam = request.nextUrl.searchParams.get("company");
+    const company: CompanyKey = companyParam === "abic" ? "abic" : "infinitech";
 
     const response = await fetch(`${laravelUrl}/api/admin/coe/${id}`, {
       headers: { Accept: "application/json" },
@@ -60,7 +65,7 @@ export async function GET(
     }
 
     const coe: Coe = data.data;
-    const buffer = await generateCoeDocx(coe);
+    const buffer = await generateCoeDocx(coe, company);
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

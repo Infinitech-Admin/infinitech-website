@@ -1,5 +1,13 @@
 // File: components/admin/coe-types.ts
 
+import {
+  EMPLOYEE_ALLOWANCE_TYPES,
+  type AllowanceFormState,
+  emptyAllowancesState,
+  allowancesToFormState,
+  buildEmployeeAllowances,
+} from "./employee-types";
+
 export interface Allowance {
   label: string;
   amount: number;
@@ -12,13 +20,31 @@ export interface EmployeeLookup {
   department: string;
   position: string;
   date_hired: string | null;
+  salary: string; // decimal:2 cast on the Laravel side -> comes back as a string, e.g. "45000.00"
+  allowances: Allowance[] | null;
 }
+
+// Which employer this COE is for. Not persisted on the Laravel side — the
+// admin picks it on the form, and it's carried straight through to the
+// Next.js doc generator (which decides the logo + company name from it).
+// Add a third entry here if a third company ever comes into play.
+export type CompanyKey = "infinitech" | "abic";
+
+export const COMPANY_OPTIONS: { value: CompanyKey; label: string }[] = [
+  { value: "infinitech", label: "Infinitech Advertising Corporation" },
+  { value: "abic", label: "ABIC Realty & Consultancy Corporation" },
+];
 
 export interface Coe {
   id: number;
   certificate_no: string;
   employee_id: number;
   employee_name: string;
+  // Split name fields, alongside employee_name, specifically so the download
+  // filename can be "Lastname_Firstname-COE-<no>" instead of stitching the
+  // combined full_name apart (which is ambiguous with middle names).
+  employee_first_name: string | null;
+  employee_last_name: string | null;
   id_number: string;
   department: string;
   position: string;
@@ -40,10 +66,14 @@ export interface CoeFormData {
   position: string;
   date_hired: string | null;
   salary: string;
-  meal_checked: boolean;
-  meal_amount: string;
-  transportation_checked: boolean;
-  transportation_amount: string;
+  // Which employer this COE is being issued under — see CompanyKey above.
+  company: CompanyKey;
+  // Reuses the exact same checked/amount map shape as the employee masterfile
+  // form (one entry per EMPLOYEE_ALLOWANCE_TYPES key: meal, load, gas,
+  // transportation) so a lookup can drop the employee's saved allowances
+  // straight in, and any new allowance type added to the masterfile shows up
+  // here automatically — no more hardcoded per-type fields to keep in sync.
+  allowances: AllowanceFormState;
   period_from: string;
   period_to: string;
   issued_at: string;
@@ -53,6 +83,14 @@ export interface CoeFormData {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// The signatory is effectively always the same person, so it's pre-typed by
+// default — still a plain editable Input in CoeForm, just not blank, so the
+// common case needs zero typing but an unusual case (different signatory)
+// can still overwrite it.
+const DEFAULT_SIGNATORY_NAME = "MARIA KRISSA CHAREZ R. BONGON";
+const DEFAULT_SIGNATORY_TITLE =
+  "Executive Assistant to the CEO / Human Resource Officer";
+
 export const emptyCoeForm = (): CoeFormData => ({
   id_number: "",
   employee_id: null,
@@ -61,34 +99,77 @@ export const emptyCoeForm = (): CoeFormData => ({
   position: "",
   date_hired: null,
   salary: "",
-  meal_checked: false,
-  meal_amount: "",
-  transportation_checked: false,
-  transportation_amount: "",
+  company: "infinitech",
+  allowances: emptyAllowancesState(),
   // Period From is auto-filled from the employee's date hired on lookup.
   // Period To is always manual — left blank so it can't be submitted unnoticed.
   period_from: "",
   period_to: "",
+  // Always today — a COE is issued the day it's generated, never backdated,
+  // so CoeForm renders this read-only.
   issued_at: today(),
-  signatory_name: "",
-  signatory_title: "",
+  signatory_name: DEFAULT_SIGNATORY_NAME,
+  signatory_title: DEFAULT_SIGNATORY_TITLE,
 });
 
-// Builds the allowances array the API expects from the two checkboxes.
-// Add more entries here if more allowance types are introduced later.
-export const buildAllowances = (data: CoeFormData): Allowance[] => {
-  const allowances: Allowance[] = [];
-  if (data.meal_checked && data.meal_amount) {
-    allowances.push({ label: "Meal", amount: Number(data.meal_amount) });
-  }
-  if (data.transportation_checked && data.transportation_amount) {
-    allowances.push({
-      label: "Transportation",
-      amount: Number(data.transportation_amount),
-    });
-  }
-  return allowances;
+// Employee lookup's allowances -> the checkbox/amount map CoeForm renders.
+// Re-exported here (thin wrapper over the shared helper) so callers only
+// need to import from coe-types, not reach into employee-types too.
+export const lookupAllowancesToFormState = allowancesToFormState;
+
+// Form state -> the array the API expects, called on submit.
+export const buildAllowances = (data: CoeFormData): Allowance[] =>
+  buildEmployeeAllowances(data.allowances);
+
+export const formatCurrency = (amount: number | string) => {
+  const numeric = Number(amount ?? 0);
+  const safeNumeric = isNaN(numeric) ? 0 : numeric;
+  return `₱${safeNumeric.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
-export const formatCurrency = (amount: number) =>
-  `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+// Strips anything that isn't safe across Windows/macOS/email attachments,
+// collapses whitespace to a single underscore, and trims stray underscores
+// left over from punctuation at the edges (e.g. "O'Brien" -> "OBrien").
+const sanitizeFilenamePart = (value: string): string =>
+  value
+    .trim()
+    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+// "Lastname_Firstname-COE-CE-0052.docx". Falls back to the combined
+// employee_name (also sanitized) if first/last aren't available, so a
+// record from before this field existed still downloads a sane filename
+// instead of throwing.
+export const buildCoeFilename = (coe: {
+  employee_first_name?: string | null;
+  employee_last_name?: string | null;
+  employee_name: string;
+  certificate_no: string;
+}): string => {
+  const last = coe.employee_last_name
+    ? sanitizeFilenamePart(coe.employee_last_name)
+    : "";
+  const first = coe.employee_first_name
+    ? sanitizeFilenamePart(coe.employee_first_name)
+    : "";
+
+  const namePart =
+    last && first
+      ? `${last}_${first}`
+      : sanitizeFilenamePart(coe.employee_name) || "Employee";
+
+  const certPart =
+    sanitizeFilenamePart(coe.certificate_no.replace(/^[A-Za-z]+-?/, "")) ||
+    sanitizeFilenamePart(coe.certificate_no) ||
+    "0000";
+
+  return `${namePart}-COE-${certPart}.docx`;
+};
+
+// Re-exported for convenience so CoeForm doesn't need a second import line
+// just for the list of allowance types to render.
+export { EMPLOYEE_ALLOWANCE_TYPES };

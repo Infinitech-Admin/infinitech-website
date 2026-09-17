@@ -25,8 +25,37 @@ import {
 } from "docx";
 import type { Coe } from "@/components/admin/coe-types";
 
-const COMPANY_NAME =
-  process.env.COE_COMPANY_NAME ?? "INFINITECH ADVERTISING CORPORATION";
+// Two companies share this generator — ABIC Realty & Consultancy Corporation
+// and Infinitech Advertising Corporation — depending on which employer a
+// given employee's COE is for. The admin picks the company on the form
+// (nothing is persisted on the Laravel side for this), and that choice flows
+// straight through to whichever profile below gets used for the header logo
+// and the company name in the body text.
+export type CompanyKey = "infinitech" | "abic";
+
+interface CompanyProfile {
+  name: string;
+  // File name only — resolved against public/images/ below. Drop the actual
+  // PNGs in that folder; no other setup needed.
+  logoFile: string;
+}
+
+const COMPANY_PROFILES: Record<CompanyKey, CompanyProfile> = {
+  infinitech: {
+    name: process.env.COE_COMPANY_NAME ?? "INFINITECH ADVERTISING CORPORATION",
+    logoFile: process.env.COE_INFINITECH_LOGO_FILE ?? "logo.png",
+  },
+  abic: {
+    name:
+      process.env.COE_ABIC_COMPANY_NAME ??
+      "ABIC REALTY & CONSULTANCY CORPORATION",
+    logoFile: process.env.COE_ABIC_LOGO_FILE ?? "ABIC-Realty-logo.png",
+  },
+};
+
+const DEFAULT_COMPANY_KEY: CompanyKey =
+  (process.env.COE_DEFAULT_COMPANY as CompanyKey) ?? "infinitech";
+
 const FOOTER_ADDRESS =
   process.env.COE_FOOTER_ADDRESS ??
   "Unit 311 Campos Rueda Bldg., Urban Avenue, Brgy. Pio Del Pilar, Makati City, 1230";
@@ -46,8 +75,14 @@ const formatDate = (iso: string | null | undefined) => {
   });
 };
 
-const formatCurrency = (amount: number | null | undefined) =>
-  `₱${(amount ?? 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+const formatCurrency = (amount: number | string | null | undefined) => {
+  const numeric = Number(amount ?? 0);
+  const safeNumeric = isNaN(numeric) ? 0 : numeric;
+  return `₱${safeNumeric.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
 const ordinal = (n: number) => {
   const rem100 = n % 100;
@@ -107,7 +142,9 @@ function getPngDimensions(buffer: Buffer): { width: number; height: number } {
 }
 
 // "Certificate No.   CE - 0050" — borderless table so label/value sit flush right,
-// same trick used in the original template.
+// same trick used in the original template. Each cell's own paragraph carries
+// a little top/bottom spacing so the row doesn't sit flush against whatever
+// is directly above/below it (EMPLOYEE'S COPY label above, body text below).
 function buildCertNoRow(certificateNo: string) {
   const spaced = certificateNo.replace("-", " - ");
   return new Table({
@@ -119,13 +156,16 @@ function buildCertNoRow(certificateNo: string) {
           new TableCell({
             width: { size: 6000, type: WidthType.DXA },
             borders: noBorders(),
-            children: [new Paragraph("")],
+            children: [
+              new Paragraph({ spacing: { before: 100, after: 100 }, text: "" }),
+            ],
           }),
           new TableCell({
             width: { size: 2000, type: WidthType.DXA },
             borders: noBorders(),
             children: [
               new Paragraph({
+                spacing: { before: 100, after: 100 },
                 alignment: AlignmentType.RIGHT,
                 children: [
                   new TextRun({ text: "Certificate No.", bold: true }),
@@ -138,6 +178,7 @@ function buildCertNoRow(certificateNo: string) {
             borders: noBorders(),
             children: [
               new Paragraph({
+                spacing: { before: 100, after: 100 },
                 alignment: AlignmentType.RIGHT,
                 children: [new TextRun({ text: spaced, italics: true })],
               }),
@@ -149,12 +190,16 @@ function buildCertNoRow(certificateNo: string) {
   });
 }
 
-function buildCopy(coe: Coe, copyLabel: string): (Paragraph | Table)[] {
+function buildCopy(
+  coe: Coe,
+  copyLabel: string,
+  companyName: string,
+): (Paragraph | Table)[] {
   const children: (Paragraph | Table)[] = [];
 
   children.push(
     new Paragraph({
-      spacing: { after: 200 },
+      spacing: { after: 300 },
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
@@ -168,6 +213,7 @@ function buildCopy(coe: Coe, copyLabel: string): (Paragraph | Table)[] {
 
   children.push(
     new Paragraph({
+      spacing: { after: 150 },
       alignment: AlignmentType.RIGHT,
       children: [
         new TextRun({ text: copyLabel, bold: true, size: 18, color: "595959" }),
@@ -176,7 +222,7 @@ function buildCopy(coe: Coe, copyLabel: string): (Paragraph | Table)[] {
   );
 
   children.push(buildCertNoRow(coe.certificate_no));
-  children.push(new Paragraph({ text: "" }));
+  children.push(new Paragraph({ spacing: { after: 300 }, text: "" }));
 
   // Body sentence — mirrors the sample: name / company / period / position /
   // department / salary, then each checked allowance appended in order.
@@ -184,7 +230,7 @@ function buildCopy(coe: Coe, copyLabel: string): (Paragraph | Table)[] {
     new TextRun("This is to certify that "),
     new TextRun({ text: coe.employee_name.toUpperCase(), bold: true }),
     new TextRun(" was employed by "),
-    new TextRun({ text: COMPANY_NAME.toUpperCase(), bold: true }),
+    new TextRun({ text: companyName.toUpperCase(), bold: true }),
     new TextRun(" from "),
     new TextRun({ text: formatDate(coe.period_from), bold: true }),
     new TextRun(" to "),
@@ -289,10 +335,14 @@ function buildCopy(coe: Coe, copyLabel: string): (Paragraph | Table)[] {
   return children;
 }
 
-export async function generateCoeDocx(coeInput: Coe): Promise<Buffer> {
+export async function generateCoeDocx(
+  coeInput: Coe,
+  companyKey: CompanyKey = DEFAULT_COMPANY_KEY,
+): Promise<Buffer> {
   const coe = normalizeCoe(coeInput);
+  const profile = COMPANY_PROFILES[companyKey] ?? COMPANY_PROFILES.infinitech;
 
-  const logoPath = path.join(process.cwd(), "public/images/logo.png");
+  const logoPath = path.join(process.cwd(), "public/images", profile.logoFile);
   const hasLogo = fs.existsSync(logoPath);
 
   let logoTransformation = { width: 140, height: 70 };
@@ -357,9 +407,9 @@ export async function generateCoeDocx(coeInput: Coe): Promise<Buffer> {
         headers: { default: header },
         footers: { default: footer },
         children: [
-          ...buildCopy(coe, "EMPLOYEE'S COPY"),
+          ...buildCopy(coe, "EMPLOYEE'S COPY", profile.name),
           new Paragraph({ children: [new PageBreak()] }),
-          ...buildCopy(coe, "EMPLOYER'S COPY"),
+          ...buildCopy(coe, "EMPLOYER'S COPY", profile.name),
         ],
       },
     ],

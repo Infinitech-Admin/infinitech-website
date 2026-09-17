@@ -3,6 +3,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -11,11 +12,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { EmployeeFormData } from "./employee-types";
+import {
+  EMPLOYEE_ALLOWANCE_TYPES,
+  EMPLOYEE_STATUSES,
+  type EmployeeFormData,
+} from "./employee-types";
 
 interface Props {
   data: EmployeeFormData;
   onChange: (field: keyof EmployeeFormData, value: string) => void;
+  /** Toggling / amount-typing for one allowance type at a time. */
+  onAllowanceChange: (
+    key: string,
+    patch: Partial<{ checked: boolean; amount: string }>,
+  ) => void;
   /** field names the caller marked invalid (missing/required) after a failed submit attempt */
   errors?: Partial<Record<keyof EmployeeFormData, boolean>>;
 }
@@ -28,6 +38,8 @@ const SECTION_FIELDS: Record<string, (keyof EmployeeFormData)[]> = {
     "department",
     "position",
     "date_hired",
+    "status",
+    "salary",
     "last_name",
     "first_name",
     "middle_name",
@@ -37,6 +49,7 @@ const SECTION_FIELDS: Record<string, (keyof EmployeeFormData)[]> = {
     "civil_status",
     "gender",
   ],
+  allowances: [],
   government: [
     "sss_number",
     "philhealth_number",
@@ -78,6 +91,8 @@ function Field({
   required,
   invalid,
   type = "text",
+  min,
+  step,
 }: {
   label: string;
   field: keyof EmployeeFormData;
@@ -86,6 +101,8 @@ function Field({
   required?: boolean;
   invalid?: boolean;
   type?: string;
+  min?: number;
+  step?: string;
 }) {
   return (
     <div className="space-y-1.5">
@@ -95,6 +112,8 @@ function Field({
       </Label>
       <Input
         type={type}
+        min={min}
+        step={step}
         value={(data[field] as string) ?? ""}
         onChange={(e) => onChange(field, e.target.value)}
         className={invalid ? "border-red-400 focus-visible:ring-red-400" : ""}
@@ -177,38 +196,67 @@ function Row({ children }: { children: React.ReactNode }) {
 
 /**
  * Employee Masterfile form, split into tabs so each section (Employee Info,
- * Government IDs, Family Info, Contact Info) is viewed on its own instead of
- * everything crammed into one wide two-column grid.
+ * Allowances, Government IDs, Family Info, Contact Info) is viewed on its own
+ * instead of everything crammed into one wide two-column grid.
  */
-export function EmployeeForm({ data, onChange, errors = {} }: Props) {
+export function EmployeeForm({
+  data,
+  onChange,
+  onAllowanceChange,
+  errors = {},
+}: Props) {
   const invalid = (f: keyof EmployeeFormData) => !!errors[f];
   const sectionHasError = (section: string) =>
     SECTION_FIELDS[section].some((f) => errors[f]);
 
   return (
     <Tabs defaultValue="employee" className="w-full">
-      <TabsList className="grid grid-cols-4 w-full">
+      {/*
+        `flex flex-wrap` instead of the fixed-height `grid grid-cols-5`:
+        shadcn's default TabsList is h-10, so once "Government IDs" (the
+        longest label) got squeezed into a narrow grid column and wrapped
+        onto two lines, the list's height stayed fixed at h-10 and the
+        wrapped second line spilled out over the content below it. Letting
+        the list wrap onto its own second row (and grow to fit it) while
+        keeping each label itself on one line fixes it on both mobile and
+        desktop.
+      */}
+      <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 p-1">
         <TabsTrigger
           value="employee"
-          className={sectionHasError("employee") ? "text-red-500" : ""}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
+            sectionHasError("employee") ? "text-red-500" : ""
+          }`}
         >
           Employee Info
         </TabsTrigger>
         <TabsTrigger
+          value="allowances"
+          className="flex-1 whitespace-nowrap text-xs sm:text-sm"
+        >
+          Allowances
+        </TabsTrigger>
+        <TabsTrigger
           value="government"
-          className={sectionHasError("government") ? "text-red-500" : ""}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
+            sectionHasError("government") ? "text-red-500" : ""
+          }`}
         >
           Government IDs
         </TabsTrigger>
         <TabsTrigger
           value="family"
-          className={sectionHasError("family") ? "text-red-500" : ""}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
+            sectionHasError("family") ? "text-red-500" : ""
+          }`}
         >
           Family Info
         </TabsTrigger>
         <TabsTrigger
           value="contact"
-          className={sectionHasError("contact") ? "text-red-500" : ""}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
+            sectionHasError("contact") ? "text-red-500" : ""
+          }`}
         >
           Contact Info
         </TabsTrigger>
@@ -251,6 +299,28 @@ export function EmployeeForm({ data, onChange, errors = {} }: Props) {
             required
             invalid={invalid("date_hired")}
             type="date"
+          />
+        </Row>
+        <Row>
+          <SelectField
+            label="Status"
+            field="status"
+            data={data}
+            onChange={onChange}
+            options={[...EMPLOYEE_STATUSES]}
+            required
+            invalid={invalid("status")}
+          />
+          <Field
+            label="Monthly Salary"
+            field="salary"
+            data={data}
+            onChange={onChange}
+            required
+            invalid={invalid("salary")}
+            type="number"
+            min={0}
+            step="0.01"
           />
         </Row>
 
@@ -324,6 +394,52 @@ export function EmployeeForm({ data, onChange, errors = {} }: Props) {
             invalid={invalid("gender")}
           />
         </Row>
+      </TabsContent>
+
+      {/* ── Allowances ── */}
+      <TabsContent value="allowances" className="space-y-4 pt-4">
+        <p className="text-xs text-muted-foreground">
+          Optional. Check the allowances this employee currently receives and
+          enter the amount.
+        </p>
+        <div className="space-y-3">
+          {EMPLOYEE_ALLOWANCE_TYPES.map((type) => {
+            const state = data.allowances[type.key] ?? {
+              checked: false,
+              amount: "",
+            };
+            return (
+              <div key={type.key} className="flex items-center gap-2">
+                <Checkbox
+                  checked={state.checked}
+                  onCheckedChange={(v) =>
+                    onAllowanceChange(type.key, { checked: !!v })
+                  }
+                  id={`allowance_${type.key}`}
+                />
+                <Label
+                  htmlFor={`allowance_${type.key}`}
+                  className="font-normal min-w-[190px]"
+                >
+                  {type.label}
+                </Label>
+                {state.checked && (
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Amount"
+                    value={state.amount}
+                    onChange={(e) =>
+                      onAllowanceChange(type.key, { amount: e.target.value })
+                    }
+                    className="w-40"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </TabsContent>
 
       {/* ── Government ID Numbers ── */}
