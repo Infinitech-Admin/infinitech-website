@@ -212,10 +212,22 @@ export default function EmployeeMasterfilePage() {
     {},
   );
 
-  const filteredEmployees =
+  const filteredEmployees = (
     statusFilter === "All"
       ? employees
-      : employees.filter((e) => e.status === statusFilter);
+      : employees.filter((e) => e.status === statusFilter)
+  )
+    .slice()
+    .sort((a, b) =>
+      String(a.id_number ?? "").localeCompare(
+        String(b.id_number ?? ""),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base",
+        },
+      ),
+    );
 
   const handleStatusFilterChange = (status: EmployeeStatus | "All") => {
     setStatusFilter(status);
@@ -620,7 +632,7 @@ export default function EmployeeMasterfilePage() {
     <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-900/10 dark:to-purple-950/10">
       {/* ── Header ── */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-900 dark:to-purple-900 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -700,7 +712,7 @@ export default function EmployeeMasterfilePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* ── STAT CARD ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <Card className="border-2 border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
