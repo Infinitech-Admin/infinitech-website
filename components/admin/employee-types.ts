@@ -34,8 +34,8 @@ export interface EmployeeAllowance {
 export const EMPLOYEE_ALLOWANCE_TYPES: { key: string; label: string }[] = [
   { key: "meal", label: "Meal Allowance" },
   { key: "load", label: "Load Allowance" },
-  { key: "gas", label: "Gas Allowance" },
-  { key: "transportation", label: "Transportation Allowance" },
+  // { key: "gas", label: "Gas Allowance" },
+  // { key: "transportation", label: "Transportation Allowance" },
 ];
 
 export interface Employee {
