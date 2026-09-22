@@ -19,6 +19,12 @@ import {
   type CompanyKey,
 } from "./coe-types";
 
+// Meal allowance is a fixed-choice amount rather than a free-typed number.
+// Matched by label text since the exact EMPLOYEE_ALLOWANCE_TYPES key wasn't
+// available when this was written — swap to `type.key === "meal"` (or
+// whatever the real key is) if that's more reliable.
+const MEAL_ALLOWANCE_OPTIONS = ["60", "80"];
+
 interface Props {
   data: CoeFormData;
   onChange: <K extends keyof CoeFormData>(
@@ -180,7 +186,9 @@ export function CoeForm({
 
       {/* Allowance checkboxes — one per EMPLOYEE_ALLOWANCE_TYPES entry, same
           set used on the masterfile's Allowances tab, so a lookup can drop
-          the employee's saved allowances straight into these checkboxes. */}
+          the employee's saved allowances straight into these checkboxes.
+          Meal allowance is a fixed-choice dropdown (60 / 80) instead of a
+          free-typed number; every other allowance keeps the numeric input. */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">
           Allowances
@@ -191,6 +199,8 @@ export function CoeForm({
               checked: false,
               amount: "",
             };
+            const isMealAllowance = type.label.toLowerCase().includes("meal");
+
             return (
               <div key={type.key} className="flex items-center gap-2">
                 <Checkbox
@@ -206,19 +216,38 @@ export function CoeForm({
                 >
                   {type.label}
                 </Label>
-                {state.checked && (
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="Amount"
-                    value={state.amount}
-                    onChange={(e) =>
-                      onAllowanceChange(type.key, { amount: e.target.value })
-                    }
-                    className="w-40"
-                  />
-                )}
+                {state.checked &&
+                  (isMealAllowance ? (
+                    <Select
+                      value={state.amount}
+                      onValueChange={(v) =>
+                        onAllowanceChange(type.key, { amount: v })
+                      }
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Amount" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MEAL_ALLOWANCE_OPTIONS.map((amt) => (
+                          <SelectItem key={amt} value={amt}>
+                            {amt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Amount"
+                      value={state.amount}
+                      onChange={(e) =>
+                        onAllowanceChange(type.key, { amount: e.target.value })
+                      }
+                      className="w-40"
+                    />
+                  ))}
               </div>
             );
           })}
