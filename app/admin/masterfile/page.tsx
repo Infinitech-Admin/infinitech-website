@@ -39,8 +39,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Eye,
   FilePlus2,
   FileText,
@@ -78,6 +80,8 @@ import {
   buildAllowances,
   buildCoeFilename,
 } from "@/components/admin/coe-types";
+import { ClearanceDialog } from "@/components/admin/clearance-dialog";
+import { ClearanceCertificateDialog } from "@/components/admin/clearance-certificate-dialog";
 
 // The two downloadable formats for a generated certificate. "docx" stays the
 // default so existing behavior (Word doc with employee's + employer's copy)
@@ -160,6 +164,20 @@ export default function EmployeeMasterfilePage() {
   const [coeSubmitting, setCoeSubmitting] = useState(false);
   const [coeDownloading, setCoeDownloading] = useState(false);
 
+  // ── Clearance FORM generation (per-employee, same launch points as COE) ──
+  // All the form state lives inside <ClearanceDialog />, the page only tracks
+  // which employee it's open for.
+  const [clearanceDialogOpen, setClearanceDialogOpen] = useState(false);
+  const [clearanceTargetEmployee, setClearanceTargetEmployee] =
+    useState<Employee | null>(null);
+
+  // ── Employee Clearance CERTIFICATE generation (the final "cleared" document) ──
+  // Same idea: the dialog owns its form state, the page tracks the employee.
+  const [certDialogOpen, setCertDialogOpen] = useState(false);
+  const [certTargetEmployee, setCertTargetEmployee] = useState<Employee | null>(
+    null,
+  );
+
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (!token) {
@@ -212,10 +230,22 @@ export default function EmployeeMasterfilePage() {
     {},
   );
 
-  const filteredEmployees =
+  const filteredEmployees = (
     statusFilter === "All"
       ? employees
-      : employees.filter((e) => e.status === statusFilter);
+      : employees.filter((e) => e.status === statusFilter)
+  )
+    .slice()
+    .sort((a, b) =>
+      String(a.id_number ?? "").localeCompare(
+        String(b.id_number ?? ""),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base",
+        },
+      ),
+    );
 
   const handleStatusFilterChange = (status: EmployeeStatus | "All") => {
     setStatusFilter(status);
@@ -424,6 +454,20 @@ export default function EmployeeMasterfilePage() {
     setCoeDialogOpen(true);
   };
 
+  // ── Clearance FORM generation helper ──
+
+  const openClearanceDialog = (employee: Employee) => {
+    setClearanceTargetEmployee(employee);
+    setClearanceDialogOpen(true);
+  };
+
+  // ── Clearance CERTIFICATE generation helper ──
+
+  const openCertDialog = (employee: Employee) => {
+    setCertTargetEmployee(employee);
+    setCertDialogOpen(true);
+  };
+
   const handleCoeFieldChange = <K extends keyof CoeFormData>(
     field: K,
     value: CoeFormData[K],
@@ -620,7 +664,7 @@ export default function EmployeeMasterfilePage() {
     <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-900/10 dark:to-purple-950/10">
       {/* ── Header ── */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-900 dark:to-purple-900 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -700,7 +744,7 @@ export default function EmployeeMasterfilePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* ── STAT CARD ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <Card className="border-2 border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
@@ -1053,7 +1097,7 @@ export default function EmployeeMasterfilePage() {
                                         )}
                                     </div>
                                   )}
-                                  <DialogFooter className="mt-2">
+                                  <DialogFooter className="mt-2 flex-col sm:flex-row sm:flex-wrap gap-2">
                                     <Button
                                       onClick={() =>
                                         viewRecord && openCoeDialog(viewRecord)
@@ -1062,6 +1106,25 @@ export default function EmployeeMasterfilePage() {
                                     >
                                       <FilePlus2 className="h-4 w-4 mr-2" />
                                       Generate COE
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        viewRecord &&
+                                        openClearanceDialog(viewRecord)
+                                      }
+                                      className="bg-gradient-to-r from-purple-600 to-pink-600"
+                                    >
+                                      <ClipboardCheck className="h-4 w-4 mr-2" />
+                                      Generate Clearance Form
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        viewRecord && openCertDialog(viewRecord)
+                                      }
+                                      className="bg-gradient-to-r from-emerald-600 to-teal-600"
+                                    >
+                                      <BadgeCheck className="h-4 w-4 mr-2" />
+                                      Generate Clearance
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
@@ -1076,6 +1139,28 @@ export default function EmployeeMasterfilePage() {
                                 title="Generate COE"
                               >
                                 <FileText className="h-4 w-4" />
+                              </Button>
+
+                              {/* Generate Clearance Form (shortcut, right beside Generate COE) */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openClearanceDialog(employee)}
+                                className="border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700"
+                                title="Generate Clearance Form"
+                              >
+                                <ClipboardCheck className="h-4 w-4" />
+                              </Button>
+
+                              {/* Generate Clearance (the certificate, right beside the form) */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openCertDialog(employee)}
+                                className="border-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                title="Generate Clearance"
+                              >
+                                <BadgeCheck className="h-4 w-4" />
                               </Button>
 
                               {/* Edit */}
@@ -1243,6 +1328,20 @@ export default function EmployeeMasterfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Generate Clearance FORM dialog, same launch points as the COE one ── */}
+      <ClearanceDialog
+        open={clearanceDialogOpen}
+        onOpenChange={setClearanceDialogOpen}
+        employee={clearanceTargetEmployee}
+      />
+
+      {/* ── Generate Clearance (certificate) dialog, launched beside the form's buttons ── */}
+      <ClearanceCertificateDialog
+        open={certDialogOpen}
+        onOpenChange={setCertDialogOpen}
+        employee={certTargetEmployee}
+      />
     </div>
   );
 }

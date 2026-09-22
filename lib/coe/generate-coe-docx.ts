@@ -4,6 +4,14 @@
 // using the `docx` npm package. Header logo + footer are attached once to the
 // section and repeat across both copies; EMPLOYEE'S COPY and EMPLOYER'S COPY
 // are the same section separated by a page break.
+//
+// ── SPACING (updated) ──────────────────────────────────────────────────
+// Added extra breathing room in four places per request:
+//   1. After the "Certificate No." row (the blank spacer paragraph that
+//      follows buildCertNoRow, before the body text starts).
+//   2. After the first body paragraph ("This is to certify that...").
+//   3. After the second paragraph ("This certification is issued...").
+//   4. After the "Issued this ... day of ... in ..." line.
 
 import fs from "fs";
 import path from "path";
@@ -180,7 +188,8 @@ function buildCopy(
   );
 
   children.push(buildCertNoRow(coe.certificate_no));
-  children.push(new Paragraph({ spacing: { after: 300 }, text: "" }));
+  // 1. Space after "Certificate No." — bumped from 300 -> 500 twips.
+  children.push(new Paragraph({ spacing: { after: 500 }, text: "" }));
 
   // Body sentence — mirrors the sample: name / company / period / position /
   // department / salary, then each checked allowance appended in order.
@@ -216,7 +225,8 @@ function buildCopy(
   children.push(
     new Paragraph({
       alignment: AlignmentType.JUSTIFIED,
-      spacing: { after: 200 },
+      // 2. Space after the first paragraph — bumped from 200 -> 350 twips.
+      spacing: { after: 350 },
       children: bodyRuns,
     }),
   );
@@ -224,7 +234,8 @@ function buildCopy(
   children.push(
     new Paragraph({
       alignment: AlignmentType.JUSTIFIED,
-      spacing: { after: 200 },
+      // 3. Space after the second paragraph — bumped from 200 -> 350 twips.
+      spacing: { after: 350 },
       children: [
         new TextRun(
           "This certification is issued upon the employee's request for employment and other lawful purposes for which it may be required.",
@@ -239,7 +250,9 @@ function buildCopy(
     : issuedDateRaw;
   children.push(
     new Paragraph({
-      spacing: { after: 400 },
+      // 4. Space after "Issued this ... day of ... in ..." — bumped from
+      // 400 -> 550 twips.
+      spacing: { after: 550 },
       children: [
         new TextRun("Issued this "),
         new TextRun({ text: ordinal(issuedDate.getDate()), bold: true }),

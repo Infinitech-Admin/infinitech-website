@@ -11,8 +11,9 @@ export default function ConditionalLayout({
 }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
+  const isPortalDemoRoute = pathname?.startsWith("/portal-demos");
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isPortalDemoRoute) {
     return <>{children}</>;
   }
 
