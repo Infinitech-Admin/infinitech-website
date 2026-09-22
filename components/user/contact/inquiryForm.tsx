@@ -20,15 +20,15 @@ const InquiryForm = () => {
 
   const onSubmit = async (
     values: Values,
-    actions: { resetForm: () => void }
+    actions: { resetForm: () => void },
   ) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/inquiries', {
-        method: 'POST',
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
       });
@@ -39,27 +39,33 @@ const InquiryForm = () => {
         actions.resetForm();
         toast.success(data.message);
       } else {
-        toast.error(data.message || 'Failed to submit inquiry');
+        toast.error(data.message || "Failed to submit inquiry");
       }
     } catch (error) {
-      toast.error('An error occurred. Please try again.');
-      console.error('Inquiry submission error:', error);
+      toast.error("An error occurred. Please try again.");
+      console.error("Inquiry submission error:", error);
     }
 
     setIsSubmitting(false);
   };
 
   // Handler to allow only numbers in phone field
+  // Handler to allow only numbers in phone field, must start with 09
   const handlePhoneInput = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setFieldValue: (field: string, value: any) => void
+    setFieldValue: (field: string, value: any) => void,
   ) => {
     const value = e.target.value;
-    // Only allow numbers
-    const numbersOnly = value.replace(/[^0-9]/g, '');
-    // Limit to 11 digits
-    const limitedValue = numbersOnly.slice(0, 11);
-    setFieldValue('phone', limitedValue);
+    let numbersOnly = value.replace(/[^0-9]/g, "").slice(0, 11);
+
+    // Enforce leading "09" while typing
+    if (numbersOnly.length >= 1 && numbersOnly[0] !== "0") {
+      numbersOnly = "";
+    } else if (numbersOnly.length >= 2 && numbersOnly[1] !== "9") {
+      numbersOnly = numbersOnly[0];
+    }
+
+    setFieldValue("phone", numbersOnly);
   };
 
   return (

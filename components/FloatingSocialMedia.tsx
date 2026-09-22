@@ -1,8 +1,16 @@
 // components/FloatingSocialMedia.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { MessageCircle, Send, Facebook, Phone, Mail, Globe, X } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  MessageCircle,
+  Send,
+  Facebook,
+  Phone,
+  Mail,
+  Globe,
+  X,
+} from "lucide-react";
 
 const FloatingSocialMedia = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -12,34 +20,34 @@ const FloatingSocialMedia = () => {
       href: "https://www.facebook.com/people/Infinitech-Advertising-Corp/100080647808810/",
       icon: Facebook,
       bgColor: "bg-blue-600 hover:bg-blue-700",
-      title: "Facebook"
+      title: "Facebook",
     },
-{
-  href: "https://wa.me/639456754591",
-  icon: MessageCircle,
-  bgColor: "bg-green-600 hover:bg-green-700",
-  title: "WhatsApp"
-},
+    {
+      href: "https://wa.me/639456754591",
+      icon: MessageCircle,
+      bgColor: "bg-green-600 hover:bg-green-700",
+      title: "WhatsApp",
+    },
 
-   {
-  href: "https://t.me/Developer_Justin",
-  icon: Send,   // you can replace this with a Telegram icon if you have one
-  bgColor: "bg-sky-500 hover:bg-sky-600",
-  title: "Telegram"
-},
+    {
+      href: "https://t.me/Developer_Justin",
+      icon: Send, // you can replace this with a Telegram icon if you have one
+      bgColor: "bg-sky-500 hover:bg-sky-600",
+      title: "Telegram",
+    },
 
     {
       href: "mailto:infinitechcorp.ph@gmail.com",
       icon: Mail,
       bgColor: "bg-red-600 hover:bg-red-700",
-      title: "Email"
+      title: "Email",
     },
     {
       href: "tel:+639195874915",
       icon: Phone,
       bgColor: "bg-blue-500 hover:bg-blue-600",
-      title: "Phone"
-    }
+      title: "Phone",
+    },
   ];
 
   return (
@@ -99,7 +107,7 @@ const FloatingSocialMedia = () => {
                     rel="noopener noreferrer"
                     className={`w-12 h-12 rounded-full ${link.bgColor} flex items-center justify-center shadow-lg transition-all hover:scale-110`}
                     style={{
-                      animation: `slideUp 0.3s ease-out ${reverseIndex * 0.1}s both`
+                      animation: `slideUp 0.3s ease-out ${reverseIndex * 0.1}s both`,
                     }}
                     title={link.title}
                   >
@@ -137,6 +145,4 @@ const FloatingSocialMedia = () => {
   );
 };
 
-
 export default FloatingSocialMedia;
-

@@ -1,9 +1,9 @@
-
 // app/layout.tsx
 
 import "@/styles/globals.css";
 import Providers from "./providers";
 import ConditionalLayout from "@/components/conditional-layout";
+
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { poppins } from "@/config/fonts";
 import { Toaster } from "react-hot-toast";
@@ -37,7 +37,8 @@ export const metadata: Metadata = {
 
   category: "Web Development and Digital Services",
 
-  classification: "Web Development, Mobile App Development and Digital Services",
+  classification:
+    "Web Development, Mobile App Development and Digital Services",
 
   formatDetection: {
     email: false,
@@ -79,8 +80,7 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt:
-          "Infinitech Advertising Corporation - Web and Mobile App Development",
+        alt: "Infinitech Advertising Corporation - Web and Mobile App Development",
       },
     ],
   },
@@ -88,8 +88,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
 
-    title:
-      "Infinitech Advertising Corporation | Web & Mobile App Development",
+    title: "Infinitech Advertising Corporation | Web & Mobile App Development",
 
     description:
       "Infinitech specializes in web development and mobile app development, with additional digital marketing, advertising, photography, videography, and branding services.",
@@ -139,11 +138,7 @@ export const viewport: Viewport = {
   themeColor: "#ff470a",
 };
 
-const RootLayout = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -151,42 +146,27 @@ const RootLayout = ({
         <meta name="language" content="English" />
 
         {/* Company */}
-        <meta
-          name="company"
-          content="Infinitech Advertising Corporation"
-        />
+        <meta name="company" content="Infinitech Advertising Corporation" />
 
         {/* Location */}
         <meta name="geo.region" content="PH-NCR" />
         <meta name="geo.placename" content="Makati City" />
 
         {/* Service Area */}
-        <meta
-          name="coverage"
-          content="Philippines, Metro Manila, Makati"
-        />
+        <meta name="coverage" content="Philippines, Metro Manila, Makati" />
 
         {/* Mobile */}
-        <meta
-          name="apple-mobile-web-app-capable"
-          content="yes"
-        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
 
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
 
-        <meta
-          name="format-detection"
-          content="telephone=no"
-        />
+        <meta name="format-detection" content="telephone=no" />
 
         {/* Performance */}
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
 
         <link
           rel="preconnect"
@@ -208,8 +188,7 @@ const RootLayout = ({
 
               url: "https://infinitechphil.com",
 
-              logo:
-                "https://infinitechphil.com/android-chrome-512x512.png",
+              logo: "https://infinitechphil.com/android-chrome-512x512.png",
 
               description:
                 "Digital and creative company in Makati, Philippines specializing in web development, mobile app development, digital marketing, advertising, photography, videography, and branding.",
@@ -386,18 +365,13 @@ const RootLayout = ({
 
       <body className={`${poppins.className} antialiased`}>
         <Providers>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <ConditionalLayout>{children}</ConditionalLayout>
 
           {/* Floating Components */}
-          <FloatingWidgets />
+          {/* <FloatingWidgets /> */}
 
           {/* Toast Notifications */}
-          <Toaster
-            position="top-center"
-            reverseOrder={false}
-          />
+          <Toaster position="top-center" reverseOrder={false} />
 
           {/* Vercel Analytics */}
           <Analytics />
@@ -411,4 +385,3 @@ const RootLayout = ({
 };
 
 export default RootLayout;
-
