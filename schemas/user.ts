@@ -87,6 +87,139 @@ const BLOCKED_NAME_WORDS = [
   "anonymous",
 ];
 
+// Common keyboard-mash / keyboard-row patterns
+const KEYBOARD_PATTERNS = [
+  "qwerty",
+  "asdf",
+  "asdfgh",
+  "zxcv",
+  "zxcvbn",
+  "qwe",
+  "wer",
+  "ert",
+  "sdf",
+  "dfg",
+  "fgh",
+  "xcv",
+  "cvb",
+  "vbn",
+  "jkl",
+  "hjk",
+  "poiuy",
+];
+
+// Common English bigrams (letter pairs that appear frequently in real words)
+const COMMON_BIGRAMS = new Set([
+  "th",
+  "he",
+  "in",
+  "en",
+  "nt",
+  "re",
+  "er",
+  "an",
+  "ti",
+  "es",
+  "on",
+  "at",
+  "se",
+  "nd",
+  "or",
+  "ar",
+  "al",
+  "te",
+  "co",
+  "de",
+  "to",
+  "ra",
+  "et",
+  "ed",
+  "it",
+  "sa",
+  "em",
+  "ro",
+  "is",
+  "ng",
+  "of",
+  "as",
+  "le",
+  "ou",
+  "ea",
+  "hi",
+  "el",
+  "ic",
+  "me",
+  "be",
+  "ne",
+  "ll",
+  "st",
+  "ve",
+  "so",
+  "ma",
+  "io",
+  "ta",
+  "la",
+  "ri",
+  "ch",
+  "sh",
+  "ay",
+  "ie",
+  "ow",
+  "wa",
+  "un",
+  "ly",
+  "ce",
+  "wi",
+  "ho",
+  "ur",
+  "no",
+  "ni",
+  "us",
+  "pe",
+  "om",
+  "pa",
+  "di",
+  "up",
+]);
+
+// Score how "real" a word looks based on bigram plausibility
+const bigramScore = (word: string) => {
+  const lower = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (lower.length < 2) return 1; // too short to judge, assume ok
+
+  let commonCount = 0;
+  const totalBigrams = lower.length - 1;
+
+  for (let i = 0; i < totalBigrams; i++) {
+    const pair = lower.slice(i, i + 2);
+    if (COMMON_BIGRAMS.has(pair)) commonCount++;
+  }
+
+  return commonCount / totalBigrams;
+};
+
+// Shared gibberish detector — checks consonant clusters, vowel ratio,
+// keyboard patterns, and bigram plausibility
+const isGibberishText = (text: string) => {
+  const lower = text.toLowerCase().replace(/[^a-z]/g, "");
+  if (!lower) return true;
+
+  for (const pattern of KEYBOARD_PATTERNS) {
+    if (lower.includes(pattern)) return true;
+  }
+
+  if (/[^aeiou]{4,}/.test(lower)) return true;
+
+  const vowelCount = (lower.match(/[aeiou]/g) || []).length;
+  const vowelRatio = vowelCount / lower.length;
+  if (vowelRatio < 0.25) return true;
+
+  // reject if less than 30% of letter-pairs are common English bigrams
+  if (lower.length >= 5 && bigramScore(lower) < 0.3) return true;
+
+  return false;
+};
+
 // Rejects keyboard-mash strings like "ajdglajsdasdasd"
 const isLikelyRealName = (value?: string) => {
   if (!value) return false;
@@ -94,7 +227,6 @@ const isLikelyRealName = (value?: string) => {
   const trimmed = value.trim().replace(/\s+/g, " ");
   const words = trimmed.split(" ");
 
-  // must be 2–4 words (first + last, optional middle names)
   if (words.length < 2 || words.length > 4) return false;
 
   const seen = new Set<string>();
@@ -103,11 +235,10 @@ const isLikelyRealName = (value?: string) => {
     const lower = word.toLowerCase();
 
     if (word.length < 2) return false;
-    if (!/^[A-Za-z'-]+$/.test(word)) return false; // letters only
-    if (!/[aeiouAEIOU]/.test(word)) return false; // must contain a vowel
-    if (/(.)\1{2,}/.test(word)) return false; // no 3+ repeated letters
-    if (BLOCKED_NAME_WORDS.includes(lower)) return false; // blocklist
-    if (seen.has(lower)) return false; // no repeated words e.g. "Juan Juan"
+    if (!/^[A-Za-z'-]+$/.test(word)) return false;
+    if (isGibberishText(word)) return false;
+    if (BLOCKED_NAME_WORDS.includes(lower)) return false;
+    if (seen.has(lower)) return false;
 
     seen.add(lower);
   }
@@ -128,14 +259,8 @@ const isLikelyRealEmail = (value?: string) => {
   const localPart = value.split("@")[0]?.toLowerCase();
   if (!localPart) return false;
 
-  // must contain at least one vowel somewhere in the local part
-  if (!/[aeiou]/i.test(localPart)) return false;
-
-  // reject long runs of the same character, e.g. "aaaa" or "1111"
-  if (/(.)\1{3,}/.test(localPart)) return false;
-
-  // reject local parts that are ONLY digits (e.g. "123123123@gmail.com")
-  if (/^\d+$/.test(localPart)) return false;
+  if (/^\d+$/.test(localPart)) return false; // only digits
+  if (isGibberishText(localPart)) return false;
 
   return true;
 };
@@ -148,7 +273,6 @@ const isValidPhMobile = (value?: string) => {
   const prefix = value.slice(0, 4);
   if (!VALID_PH_PREFIXES.includes(prefix)) return false;
 
-  // reject all-same-digit or simple repeating patterns e.g. "09111111111"
   if (/^(\d)\1{9,}$/.test(value.slice(2))) return false;
 
   return true;
@@ -159,9 +283,8 @@ const isValidMessage = (value?: string) => {
   if (!value) return false;
   const trimmed = value.trim();
 
-  if (!/[aeiouAEIOU]/i.test(trimmed)) return false; // must have vowels
-  if (/(.)\1{4,}/.test(trimmed)) return false; // no long repeated chars
   if (/https?:\/\/|www\./i.test(trimmed)) return false; // no links
+  if (isGibberishText(trimmed)) return false;
 
   return true;
 };
