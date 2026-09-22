@@ -20,6 +20,7 @@ import {
   PhoneCall,
   AlertCircle,
 } from "lucide-react";
+import { getEmailError, isGibberishText } from "@/lib/form-validation";
 
 interface SocialMedia {
   platform: string;
@@ -63,6 +64,28 @@ const initialFormData: FormData = {
   profile_image: null,
 };
 
+// PH mobile check for phone fields — optional (blank allowed), but if filled
+// it must be a plausible 09xxxxxxxxx number.
+const getPhFormatError = (value: string): string | null => {
+  if (!value.trim()) return null;
+  const digitsOnly = value.replace(/[^0-9]/g, "");
+  if (!/^09\d{9}$/.test(digitsOnly)) {
+    return "Enter a valid PH mobile number (e.g. 09171234567).";
+  }
+  return null;
+};
+
+// First/last name gibberish check — lenient (single word, just blocks
+// obvious keyboard-mash), since this form doesn't require full names.
+const getSimpleNameError = (value: string): string | null => {
+  if (!value.trim()) return null; // optional field
+  const trimmed = value.trim();
+  if (trimmed.length < 2) return "Too short.";
+  if (!/^[A-Za-z'-]+$/.test(trimmed)) return "Letters only.";
+  if (isGibberishText(trimmed)) return "Please enter a valid name.";
+  return null;
+};
+
 export default function RequestJuanTapModal({
   isOpen,
   onOpenChange,
@@ -81,6 +104,8 @@ export default function RequestJuanTapModal({
     email: "",
     phone_number: "",
     receiver_phone_number: "",
+    first_name: "",
+    last_name: "",
     profile_image: "",
     social_media: "",
   });
@@ -88,7 +113,6 @@ export default function RequestJuanTapModal({
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Portals need the DOM to exist, so only render after mount (avoids SSR mismatch).
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -103,11 +127,6 @@ export default function RequestJuanTapModal({
     { name: "Telegram", icon: MessageCircle, color: "bg-blue-500" },
   ];
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -116,13 +135,10 @@ export default function RequestJuanTapModal({
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, email: value }));
 
-    if (value && !validateEmail(value)) {
-      setErrors((prev) => ({
-        ...prev,
-        email: "Please enter a valid email address",
-      }));
-    } else {
+    if (!value.trim()) {
       setErrors((prev) => ({ ...prev, email: "" }));
+    } else {
+      setErrors((prev) => ({ ...prev, email: getEmailError(value) ?? "" }));
     }
   };
 
@@ -130,15 +146,10 @@ export default function RequestJuanTapModal({
     const value = e.target.value;
     const sanitizedValue = value.replace(/[a-zA-Z]/g, "");
     setFormData((prev) => ({ ...prev, phone_number: sanitizedValue }));
-
-    if (value !== sanitizedValue) {
-      setErrors((prev) => ({
-        ...prev,
-        phone_number: "Phone number cannot contain letters",
-      }));
-    } else {
-      setErrors((prev) => ({ ...prev, phone_number: "" }));
-    }
+    setErrors((prev) => ({
+      ...prev,
+      phone_number: getPhFormatError(sanitizedValue) ?? "",
+    }));
   };
 
   const handleReceiverPhoneChange = (
@@ -149,8 +160,25 @@ export default function RequestJuanTapModal({
     setFormData((prev) => ({ ...prev, receiver_phone_number: sanitized }));
     setErrors((prev) => ({
       ...prev,
-      receiver_phone_number:
-        value !== sanitized ? "Phone number cannot contain letters" : "",
+      receiver_phone_number: getPhFormatError(sanitized) ?? "",
+    }));
+  };
+
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleInputChange("first_name", value);
+    setErrors((prev) => ({
+      ...prev,
+      first_name: getSimpleNameError(value) ?? "",
+    }));
+  };
+
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleInputChange("last_name", value);
+    setErrors((prev) => ({
+      ...prev,
+      last_name: getSimpleNameError(value) ?? "",
     }));
   };
 
@@ -246,6 +274,8 @@ export default function RequestJuanTapModal({
       email: "",
       phone_number: "",
       receiver_phone_number: "",
+      first_name: "",
+      last_name: "",
       profile_image: "",
       social_media: "",
     });
@@ -258,7 +288,6 @@ export default function RequestJuanTapModal({
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset after the close animation would finish so the form is fresh next time it opens.
     setTimeout(resetForm, 200);
   };
 
@@ -268,23 +297,39 @@ export default function RequestJuanTapModal({
       email: "",
       phone_number: "",
       receiver_phone_number: "",
+      first_name: "",
+      last_name: "",
       profile_image: "",
       social_media: "",
     };
 
-    if (formData.email && !validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+    const emailErr = getEmailError(formData.email);
+    if (formData.email && emailErr) {
+      newErrors.email = emailErr;
       hasErrors = true;
     }
-    if (formData.phone_number && /[a-zA-Z]/.test(formData.phone_number)) {
-      newErrors.phone_number = "Phone number cannot contain letters";
+
+    const phoneErr = getPhFormatError(formData.phone_number);
+    if (phoneErr) {
+      newErrors.phone_number = phoneErr;
       hasErrors = true;
     }
-    if (
-      formData.receiver_phone_number &&
-      /[a-zA-Z]/.test(formData.receiver_phone_number)
-    ) {
-      newErrors.receiver_phone_number = "Phone number cannot contain letters";
+
+    const receiverPhoneErr = getPhFormatError(formData.receiver_phone_number);
+    if (receiverPhoneErr) {
+      newErrors.receiver_phone_number = receiverPhoneErr;
+      hasErrors = true;
+    }
+
+    const firstNameErr = getSimpleNameError(formData.first_name);
+    if (firstNameErr) {
+      newErrors.first_name = firstNameErr;
+      hasErrors = true;
+    }
+
+    const lastNameErr = getSimpleNameError(formData.last_name);
+    if (lastNameErr) {
+      newErrors.last_name = lastNameErr;
       hasErrors = true;
     }
 
@@ -329,14 +374,12 @@ export default function RequestJuanTapModal({
         body: submitFormData,
       });
 
-      // Check content type before parsing
       const contentType = response.headers.get("content-type");
       let data;
 
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
-        // Server returned HTML or plain text (likely an error page)
         const text = await response.text();
         console.error("Non-JSON response:", text);
         throw new Error(
@@ -347,7 +390,6 @@ export default function RequestJuanTapModal({
       if (data.success) {
         setSubmitted(true);
       } else {
-        // Handle API error response
         const errorMsg =
           data.message || "Failed to submit survey. Please try again.";
         setSubmitError(errorMsg);
@@ -356,7 +398,6 @@ export default function RequestJuanTapModal({
     } catch (error) {
       console.error("Error submitting survey:", error);
 
-      // Provide user-friendly error messages
       let errorMessage = "An unexpected error occurred. Please try again.";
 
       if (error instanceof Error) {
@@ -390,14 +431,12 @@ export default function RequestJuanTapModal({
     }
   };
 
-  // Scroll the modal body to top whenever we show the success state or an error.
   useEffect(() => {
     if (submitted || submitError) {
       scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [submitted, submitError]);
 
-  // Lock body scroll while the modal is open, and support closing with Escape.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -427,15 +466,12 @@ export default function RequestJuanTapModal({
       aria-modal="true"
       aria-labelledby="juantap-modal-title"
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
         onClick={handleClose}
       />
 
-      {/* Modal panel */}
       <div className="relative w-full max-w-2xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="bg-slate-900/50 backdrop-blur-sm border-b border-blue-500/20 flex-shrink-0">
           <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -467,7 +503,6 @@ export default function RequestJuanTapModal({
           </div>
         </div>
 
-        {/* Scrollable body */}
         <div ref={scrollContainerRef} className="overflow-y-auto flex-1">
           <main className="px-4 sm:px-6 py-8">
             {submitted ? (
@@ -501,7 +536,6 @@ export default function RequestJuanTapModal({
                   </p>
                 </div>
 
-                {/* Error Alert */}
                 {submitError && (
                   <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
                     <div className="flex items-start">
@@ -524,7 +558,6 @@ export default function RequestJuanTapModal({
 
                 <div className="bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-6 lg:p-8">
                   <div className="space-y-5">
-                    {/* Profile Image Upload */}
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-slate-700">
                         Profile Image
@@ -579,7 +612,6 @@ export default function RequestJuanTapModal({
                       </div>
                     </div>
 
-                    {/* Row 1: Email & Username */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label
@@ -637,7 +669,6 @@ export default function RequestJuanTapModal({
                       </div>
                     </div>
 
-                    {/* Row 2: First Name, Last Name, Display Name */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <label
@@ -650,12 +681,19 @@ export default function RequestJuanTapModal({
                           type="text"
                           id="first_name"
                           placeholder="John"
-                          className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                          className={`block w-full px-3 py-2.5 border ${
+                            errors.first_name
+                              ? "border-red-500"
+                              : "border-slate-300"
+                          } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
                           value={formData.first_name}
-                          onChange={(e) =>
-                            handleInputChange("first_name", e.target.value)
-                          }
+                          onChange={handleFirstNameChange}
                         />
+                        {errors.first_name && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.first_name}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <label
@@ -668,12 +706,19 @@ export default function RequestJuanTapModal({
                           type="text"
                           id="last_name"
                           placeholder="Doe"
-                          className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                          className={`block w-full px-3 py-2.5 border ${
+                            errors.last_name
+                              ? "border-red-500"
+                              : "border-slate-300"
+                          } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm`}
                           value={formData.last_name}
-                          onChange={(e) =>
-                            handleInputChange("last_name", e.target.value)
-                          }
+                          onChange={handleLastNameChange}
                         />
+                        {errors.last_name && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.last_name}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2 md:col-span-2 lg:col-span-1">
@@ -696,7 +741,6 @@ export default function RequestJuanTapModal({
                       </div>
                     </div>
 
-                    {/* Row 3: Address */}
                     <div className="space-y-2">
                       <label
                         htmlFor="address"
@@ -721,7 +765,6 @@ export default function RequestJuanTapModal({
                       </div>
                     </div>
 
-                    {/* Row 4: Phone, Position & Website */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <label
@@ -798,7 +841,6 @@ export default function RequestJuanTapModal({
                       </div>
                     </div>
 
-                    {/* Social Media */}
                     <div className="space-y-3">
                       <label className="block text-sm font-medium text-slate-700">
                         Social Media
@@ -891,7 +933,6 @@ export default function RequestJuanTapModal({
                       )}
                     </div>
 
-                    {/* Delivery Information */}
                     <div className="border-t border-slate-200 pt-5 mt-6">
                       <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
                         <Package className="w-5 h-5 text-orange-500" />

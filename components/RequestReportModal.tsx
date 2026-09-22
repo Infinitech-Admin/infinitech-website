@@ -14,6 +14,12 @@ import {
 } from "@heroui/react";
 import { FaSearchDollar } from "react-icons/fa";
 import { GoCheck } from "react-icons/go";
+import {
+  getNameError,
+  getEmailError,
+  getPhoneError,
+  PHONE_ALLOWED_CHARS,
+} from "@/lib/form-validation";
 
 interface RequestReportModalProps {
   isOpen: boolean;
@@ -36,11 +42,6 @@ const initialForm: ReportFormData = {
   details: "",
 };
 
-// Allows digits, spaces, +, -, ( ) — rejects any letters or other symbols.
-const PHONE_ALLOWED_CHARS = /^[0-9+\-()\s]*$/;
-// Final validity check: needs at least 7 digits once formatting chars are stripped.
-const PHONE_VALID = /^[0-9]{7,15}$/;
-
 const RequestReportModal = ({
   isOpen,
   onOpenChange,
@@ -49,36 +50,59 @@ const RequestReportModal = ({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+  });
 
   const handleChange = (field: keyof ReportFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+
+    if (field === "name")
+      setNameError(touched.name ? getNameError(value) : null);
+    if (field === "email")
+      setEmailError(touched.email ? getEmailError(value) : null);
+  };
+
+  const handleBlur = (field: "name" | "email") => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    if (field === "name") setNameError(getNameError(form.name));
+    if (field === "email") setEmailError(getEmailError(form.email));
   };
 
   const handlePhoneChange = (value: string) => {
-    if (!PHONE_ALLOWED_CHARS.test(value)) {
-      return;
-    }
-
+    if (!PHONE_ALLOWED_CHARS.test(value)) return;
     handleChange("phone", value);
-
-    const digitsOnly = value.replace(/[^0-9]/g, "");
-    if (value.trim() === "") {
-      setPhoneError(null);
-    } else if (!PHONE_VALID.test(digitsOnly)) {
-      setPhoneError("Enter a valid phone number (numbers only).");
-    } else {
-      setPhoneError(null);
-    }
+    setPhoneError(touched.phone ? getPhoneError(value) : null);
   };
 
-  const isPhoneValid = form.phone.trim() === "" || phoneError === null;
+  const handlePhoneBlur = () => {
+    setTouched((prev) => ({ ...prev, phone: true }));
+    setPhoneError(getPhoneError(form.phone));
+  };
 
   const isValid =
-    form.name.trim() !== "" && form.email.trim() !== "" && isPhoneValid;
+    getNameError(form.name) === null &&
+    getEmailError(form.email) === null &&
+    getPhoneError(form.phone) === null;
 
   const handleSubmit = async () => {
-    if (!isValid) return;
+    const nErr = getNameError(form.name);
+    const eErr = getEmailError(form.email);
+    const pErr = getPhoneError(form.phone);
+
+    setNameError(nErr);
+    setEmailError(eErr);
+    setPhoneError(pErr);
+    setTouched({ name: true, email: true, phone: true });
+
+    if (nErr || eErr || pErr) return;
+
     setSubmitting(true);
     setErrorMsg(null);
     try {
@@ -103,7 +127,6 @@ const RequestReportModal = ({
     }
   };
 
-  // Reset internal state whenever the modal closes
   const handleOpenChange = (open: boolean) => {
     onOpenChange(open);
     if (!open) {
@@ -112,8 +135,11 @@ const RequestReportModal = ({
         setSubmitted(false);
         setSubmitting(false);
         setErrorMsg(null);
+        setNameError(null);
+        setEmailError(null);
         setPhoneError(null);
-      }, 200); // wait for close animation
+        setTouched({ name: false, email: false, phone: false });
+      }, 200);
     }
   };
 
@@ -165,6 +191,9 @@ const RequestReportModal = ({
                   placeholder="Juan Dela Cruz"
                   value={form.name}
                   onValueChange={(v) => handleChange("name", v)}
+                  onBlur={() => handleBlur("name")}
+                  isInvalid={!!nameError}
+                  errorMessage={nameError ?? undefined}
                   isRequired
                 />
                 <Input
@@ -173,6 +202,9 @@ const RequestReportModal = ({
                   placeholder="juan@company.com"
                   value={form.email}
                   onValueChange={(v) => handleChange("email", v)}
+                  onBlur={() => handleBlur("email")}
+                  isInvalid={!!emailError}
+                  errorMessage={emailError ?? undefined}
                   isRequired
                 />
                 <Input
@@ -182,6 +214,7 @@ const RequestReportModal = ({
                   inputMode="tel"
                   value={form.phone}
                   onValueChange={handlePhoneChange}
+                  onBlur={handlePhoneBlur}
                   isInvalid={!!phoneError}
                   errorMessage={phoneError ?? undefined}
                 />
