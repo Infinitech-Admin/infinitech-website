@@ -1,5 +1,6 @@
 import * as Yup from "yup";
 import disposableDomains from "disposable-email-domains";
+
 // Valid PH mobile prefixes (4-digit, after the leading "0")
 const VALID_PH_PREFIXES = [
   "0905",
@@ -114,11 +115,29 @@ const isLikelyRealName = (value?: string) => {
   return true;
 };
 
-// Reject temp/disposable email domains
+// Reject temp/disposable email domains (uses npm package's list)
 const isNotDisposableEmail = (value?: string) => {
   if (!value) return false;
   const domain = value.split("@")[1]?.toLowerCase();
   return !disposableDomains.includes(domain ?? "");
+};
+
+// Reject obviously gibberish local-parts (before the @)
+const isLikelyRealEmail = (value?: string) => {
+  if (!value) return false;
+  const localPart = value.split("@")[0]?.toLowerCase();
+  if (!localPart) return false;
+
+  // must contain at least one vowel somewhere in the local part
+  if (!/[aeiou]/i.test(localPart)) return false;
+
+  // reject long runs of the same character, e.g. "aaaa" or "1111"
+  if (/(.)\1{3,}/.test(localPart)) return false;
+
+  // reject local parts that are ONLY digits (e.g. "123123123@gmail.com")
+  if (/^\d+$/.test(localPart)) return false;
+
+  return true;
 };
 
 // Reject numbers with an invalid PH prefix or repeating-digit patterns
@@ -167,6 +186,11 @@ export const Inquiry = Yup.object().shape({
       "not-disposable",
       "Please use a permanent email address",
       isNotDisposableEmail,
+    )
+    .test(
+      "is-real-email",
+      "Please enter a valid email address",
+      isLikelyRealEmail,
     )
     .required("Email Address is required"),
 
