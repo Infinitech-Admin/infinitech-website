@@ -1,18 +1,3 @@
-// File: lib/coe/generate-coe-docx.ts
-//
-// Generates the Certificate of Employment .docx entirely in Next.js/TypeScript
-// using the `docx` npm package. Header logo + footer are attached once to the
-// section and repeat across both copies; EMPLOYEE'S COPY and EMPLOYER'S COPY
-// are the same section separated by a page break.
-//
-// ── SPACING (updated) ──────────────────────────────────────────────────
-// Added extra breathing room in four places per request:
-//   1. After the "Certificate No." row (the blank spacer paragraph that
-//      follows buildCertNoRow, before the body text starts).
-//   2. After the first body paragraph ("This is to certify that...").
-//   3. After the second paragraph ("This certification is issued...").
-//   4. After the "Issued this ... day of ... in ..." line.
-
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
@@ -50,40 +35,17 @@ import {
 
 export type { CompanyKey };
 
-// Distance (in twips, 1/1440 inch) from the physical page edge to the
-// header/footer content. Set to 0 so the logo sits flush at the top of the
-// page and the address/phone block sits flush at the bottom — no dead space
-// above the header or below the footer. If a printer ever clips the logo or
-// footer text too close to the edge, nudge these up a little (e.g. 150-200)
-// rather than back to the old default of 720.
-// 0.3cm = 0.3 / 2.54in * 1440 twips/in ≈ 170 twips.
 const HEADER_DISTANCE = 170;
-const FOOTER_DISTANCE = 0;
+const FOOTER_DISTANCE = 141;
 
-// docx's ImageRun transformation width/height are in pixels at 96 DPI;
-// 1440 twips per inch ÷ 96 px per inch = 15 twips per pixel.
 const PIXELS_TO_TWIPS = 15;
-// Breathing room between the bottom of the (trimmed) logo and the first
-// line of body content — not the whole fixed page margin, just a little air.
+
 const HEADER_TOP_MARGIN_BUFFER = 650;
-// Fallback top margin when there's no logo to size against.
+
 const DEFAULT_TOP_MARGIN_NO_LOGO = 1000;
 
-// Word applies its "Normal" style default line spacing (roughly 1.15x /
-// 276 twips) to every paragraph unless a paragraph says otherwise. That
-// extra leading is invisible in the editor but shows up as dead air above
-// and below single-line header/footer content — the exact "big space on
-// top" symptom, since spacing.before/after = 0 only controls space
-// *between* paragraphs, not the line's own height. `line: 240` = exactly
-// single-spaced (240 twips = 1 line at 12pt), which removes it.
 const TIGHT_LINE = { line: 240, lineRule: "auto" as const };
 
-// Most exported logo PNGs carry a chunk of transparent (or white) canvas
-// around the actual mark — normal for a design file, but deadly here
-// because the header height is derived straight from the image's pixel
-// dimensions. Trimming that padding off before we ever measure/embed the
-// image is what actually removes the gap; no page-margin setting can
-// compensate for whitespace that's literally part of the source pixels.
 async function trimLogoPadding(buffer: Buffer): Promise<Buffer> {
   try {
     return await sharp(buffer).trim().png().toBuffer();
@@ -107,10 +69,6 @@ const noBorders = () => ({
   right: NO_BORDER,
 });
 
-// "Certificate No.   CE - 0050" — borderless table so label/value sit flush right,
-// same trick used in the original template. Each cell's own paragraph carries
-// a little top/bottom spacing so the row doesn't sit flush against whatever
-// is directly above/below it (EMPLOYEE'S COPY label above, body text below).
 function buildCertNoRow(certificateNo: string) {
   const spaced = certificateNo.replace("-", " - ");
   return new Table({
@@ -164,8 +122,9 @@ function buildCopy(
   const children: (Paragraph | Table)[] = [];
 
   children.push(
+    // Sa buildCopy — dapat wala nang "before" sa title:
     new Paragraph({
-      spacing: { before: 300, after: 300 },
+      spacing: { after: 300 }, // TINANGGAL ang "before: 300"
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
@@ -379,11 +338,13 @@ export async function generateCoeDocx(
   // header and the body text tracks whatever the logo really measures —
   // a flat 1000-twip margin looked fine only by coincidence when the old,
   // padded logo happened to be about that tall.
+  const TITLE_TOP_SPACING = 300; // dating "before" ng title, inilipat dito
   const topMargin = hasLogo
     ? HEADER_DISTANCE +
       logoTransformation.height * PIXELS_TO_TWIPS +
-      HEADER_TOP_MARGIN_BUFFER
-    : DEFAULT_TOP_MARGIN_NO_LOGO;
+      HEADER_TOP_MARGIN_BUFFER +
+      TITLE_TOP_SPACING
+    : DEFAULT_TOP_MARGIN_NO_LOGO + TITLE_TOP_SPACING;
 
   const doc = new Document({
     sections: [

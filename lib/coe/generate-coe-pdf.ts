@@ -1,43 +1,3 @@
-// File: lib/coe/generate-coe-pdf.ts
-//
-// PDF twin of generate-coe-docx.ts, built with \`pdfmake\` (pure JS, no
-// LibreOffice/native binary required, so it works on serverless runtimes
-// like Vercel).
-//
-// FONT (updated): previously used the standard 14 PDF fonts (Helvetica),
-// which is restricted to WinAnsi encoding and cannot render the \u20b1
-// (Philippine peso, U+20B1) glyph at all -- no font *name* or encoding
-// trick fixes that, since the character simply isn\'t in the font. Then
-// switched to bundled TTF *files* (DejaVu Sans, then Liberation Serif --
-// the free, metrically-identical open-source substitute for Times New
-// Roman, since the real Times New Roman \`.ttf\` is Microsoft-licensed and
-// can\'t legally be redistributed in a repo).
-//
-// This version goes one step further: instead of shipping separate font
-// files alongside this one, the four Liberation Serif styles (Regular,
-// Bold, Italic, BoldItalic) are embedded directly below as base64 strings
-// and decoded into Buffers at import time. pdfmake/pdfkit accept a Buffer
-// anywhere they accept a font file path -- passing a Buffer instead of a
-// string path skips the filesystem entirely (see PDFDocument.js in
-// pdfmake: \`validateLocalFile\` only runs its access-policy check when the
-// value is a string; a non-string value returns immediately and
-// \`this.font(...)\` embeds the Buffer\'s bytes directly). So this single
-// file is the entire font setup: nothing to place under public/fonts, no
-// paths to keep in sync, no localAccessPolicy allow-list to maintain.
-// Trade-off: this file is large (~2MB) because a TTF\'s bytes cost about
-// 33% more space as base64 text.
-//
-// npm install pdfmake sharp
-// (pdfmake ships its own TypeScript types; no @types package needed)
-//
-// -- SPACING --------------------------------------------------------------
-// Kept from the previous revision (values in points, not twips, since
-// pdfmake margins are pt):
-//   1. Space after the "Certificate No." row.
-//   2. Space after the first body paragraph ("This is to certify that...").
-//   3. Space after the second paragraph ("This certification is issued...").
-//   4. Space after the "Issued this ... day of ..." line.
-
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -187,22 +147,6 @@ const FONT_SOURCE = {
   bolditalics: LIBERATION_SERIF_BOLDITALIC_B64,
 } as const;
 
-// pdfmake (0.3.11) does not actually accept a raw Buffer as a font value:
-// its resolveUrls() pass checks `typeof value === 'object'` to decide
-// whether a font entry is a `{url, headers}` descriptor, and a Buffer's
-// typeof is also 'object' -- so it gets misread as a URL descriptor with an
-// undefined `.url`, and crashes. A plain file-path string is the only font
-// value pdfmake handles correctly.
-//
-// So instead of shipping separate .ttf files, the base64 constants above
-// are decoded and written once to the OS temp directory the first time this
-// module runs (memoized -- `fs.existsSync` skips rewriting on every call,
-// and warm serverless instances reuse the same temp dir across
-// invocations). This is *not* a project file: nothing under this repo
-// changes, there's nothing to commit, and nothing for a person to place
-// anywhere -- it is generated automatically, purely from the base64 bytes
-// already embedded in this file, the same way a `require()` call might emit
-// bytecode into a cache directory.
 function materializeFont(filename: string, base64: string): string {
   const dir = path.join(os.tmpdir(), "coe-pdf-fonts");
 
@@ -233,11 +177,9 @@ const FONT_FILES = {
 // pdfmake's fonts/access-policy config lives on the shared module-level
 // instance, so set it once. Calling setFonts again on later requests is
 // harmless (it just overwrites with the same values).
-pdfMake.setFonts({
+pdfMake.addFonts({
   [FONT_FAMILY]: FONT_FILES,
 });
-// This generator never reads remote URLs from the document definition, so
-// that stays locked down entirely.
 pdfMake.setUrlAccessPolicy(() => false);
 // Allow-list exactly the four temp font paths written above, generated from
 // this file's own embedded bytes -- and deny every other local path, so no
@@ -246,28 +188,15 @@ const ALLOWED_FONT_PATHS = new Set(Object.values(FONT_FILES));
 pdfMake.setLocalAccessPolicy((requestedPath) =>
   ALLOWED_FONT_PATHS.has(requestedPath),
 );
-// Same intent as HEADER_DISTANCE/FOOTER_DISTANCE in generate-coe-docx.ts:
-// the header/footer callbacks below carry zero margin of their own, so the
-// logo sits flush at the very top of the page's top margin and the address
-// block sits flush at the very bottom of the page's bottom margin — no dead
-// space above the header or below the footer.
+
 const PAGE_SIDE_MARGIN = 55;
 const PAGE_BOTTOM_MARGIN = 30; // was 46 — footer is now 2 tight lines, doesn't need that much room
 const NO_LOGO_TOP_MARGIN = 24; // was 40
-// Distance kept clear at the very top of the page so the logo doesn't sit
-// in a printer's non-printable edge margin and get clipped — mirrors
-// HEADER_DISTANCE in generate-coe-docx.ts. 0.3cm = 0.3/2.54in * 72pt/in ≈ 8.5pt.
+
 const HEADER_EDGE_CLEARANCE = 8.5;
 // Footer sits flush against the bottom page edge — no clearance.
-const FOOTER_EDGE_CLEARANCE = 0;
+const FOOTER_EDGE_CLEARANCE = 7.1;
 
-// Most exported logo PNGs carry a chunk of transparent (or white) canvas
-// around the actual mark — normal for a design file, but deadly here
-// because the reserved top page margin is sized directly off the image's
-// pixel height (`logoHeight + 14` below). Trimming that padding off before
-// we ever measure/embed the image is what actually removes the gap; no
-// margin number can compensate for whitespace that's literally part of the
-// source pixels.
 async function trimLogoPadding(buffer: Buffer): Promise<Buffer> {
   try {
     return await sharp(buffer).trim().png().toBuffer();
@@ -336,10 +265,7 @@ function buildCopyContent(
   coe: Coe,
   copyLabel: string,
   companyName: string,
-  // Set for the employer's copy so it starts on its own page — built in
-  // directly rather than spreading the returned Content afterward, since
-  // pdfmake's Content type is a union (it includes plain strings) and
-  // TypeScript won't allow `{ ...someContent }` on a union like that.
+
   pageBreakBeforeTitle = false,
 ): Content[] {
   const issuedDateRaw = new Date(coe.issued_at);

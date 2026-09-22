@@ -24,6 +24,13 @@ import {
 // available when this was written — swap to `type.key === "meal"` (or
 // whatever the real key is) if that's more reliable.
 const MEAL_ALLOWANCE_OPTIONS = ["60", "80"];
+// The dropdown shows the DAILY rate (60/80), but the COE must print the
+// MONTHLY TOTAL — `formatCurrency(allowance.amount)` in generate-coe-docx.ts
+// / generate-coe-pdf.ts prints `amount` as-is, with no multiplication
+// downstream. So `amount` stores the total (daily rate x 22 working days),
+// and we divide back by 22 only to figure out which daily-rate option is
+// currently selected.
+const MEAL_ALLOWANCE_WORKING_DAYS = 22;
 
 interface Props {
   data: CoeFormData;
@@ -187,8 +194,9 @@ export function CoeForm({
       {/* Allowance checkboxes — one per EMPLOYEE_ALLOWANCE_TYPES entry, same
           set used on the masterfile's Allowances tab, so a lookup can drop
           the employee's saved allowances straight into these checkboxes.
-          Meal allowance is a fixed-choice dropdown (60 / 80) instead of a
-          free-typed number; every other allowance keeps the numeric input. */}
+          Meal allowance is a fixed-choice dropdown (60 / 80 per day), but
+          what's stored/printed is the MONTHLY TOTAL (daily rate x 22);
+          every other allowance keeps the numeric input as-is. */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">
           Allowances
@@ -219,9 +227,23 @@ export function CoeForm({
                 {state.checked &&
                   (isMealAllowance ? (
                     <Select
-                      value={state.amount}
+                      // `state.amount` holds the monthly TOTAL (daily x 22).
+                      // Divide back by 22 just to re-derive which daily-rate
+                      // option (60/80) is currently selected.
+                      value={
+                        state.amount
+                          ? String(
+                              Number(state.amount) /
+                                MEAL_ALLOWANCE_WORKING_DAYS,
+                            )
+                          : ""
+                      }
                       onValueChange={(v) =>
-                        onAllowanceChange(type.key, { amount: v })
+                        onAllowanceChange(type.key, {
+                          amount: String(
+                            Number(v) * MEAL_ALLOWANCE_WORKING_DAYS,
+                          ),
+                        })
                       }
                     >
                       <SelectTrigger className="w-40">

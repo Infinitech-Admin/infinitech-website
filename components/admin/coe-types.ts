@@ -117,6 +117,37 @@ export const emptyCoeForm = (): CoeFormData => ({
 // need to import from coe-types, not reach into employee-types too.
 export const lookupAllowancesToFormState = allowancesToFormState;
 
+// The employee masterfile stores meal allowance as a DAILY rate (60/80),
+// but a COE always prints/stores the MONTHLY TOTAL (daily rate x 22
+// working days) — see the meal-allowance dropdown in coe-form.tsx, which
+// applies this same conversion when the admin picks 60/80 by hand.
+//
+// That dropdown conversion only fires on manual selection though. Any place
+// that instead pulls allowances straight from an employee's masterfile
+// record into a CoeFormData — e.g. the COE lookup effect in
+// employee-masterfile/page.tsx, or any other lookup that reuses
+// lookupAllowancesToFormState — needs this applied once as a separate step,
+// since allowancesToFormState() alone just carries the masterfile's daily
+// rate straight through unchanged.
+export const MEAL_ALLOWANCE_WORKING_DAYS = 22;
+
+export function applyMealAllowanceMonthlyTotal(
+  allowances: AllowanceFormState,
+): AllowanceFormState {
+  const next = { ...allowances };
+  for (const type of EMPLOYEE_ALLOWANCE_TYPES) {
+    if (!type.label.toLowerCase().includes("meal")) continue;
+    const entry = next[type.key];
+    if (entry?.checked && entry.amount) {
+      next[type.key] = {
+        ...entry,
+        amount: String(Number(entry.amount) * MEAL_ALLOWANCE_WORKING_DAYS),
+      };
+    }
+  }
+  return next;
+}
+
 // Form state -> the array the API expects, called on submit.
 export const buildAllowances = (data: CoeFormData): Allowance[] =>
   buildEmployeeAllowances(data.allowances);

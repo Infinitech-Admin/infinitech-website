@@ -52,6 +52,16 @@
 // buffer) was trimmed throughout to reclaim room, and a manual PageBreak is
 // inserted right after Section C so Section D always starts a fresh page
 // instead of Word deciding where the D/E/F content happens to land.
+//
+// ── LOGO SIZE (updated) ─────────────────────────────────────────────────
+// The header logo width used to be a single hardcoded 140 (px, ~96dpi) for
+// every company. That's fine for a simple mark like ABIC's, but Infinitech's
+// logo carries a two-line subtext ("INFINITECH" / "ADVERTISING
+// CORPORATION") that reads as blurry/compressed at that width — confirmed
+// by rendering it at 140px and comparing against wider previews. The width
+// now comes from CompanyProfile.docxLogoWidth (lib/coe/coe-shared.ts),
+// which Infinitech overrides to 190; companies without an override (ABIC)
+// keep the same 140 default as before, so their output is unchanged.
 
 import fs from "fs";
 import path from "path";
@@ -102,6 +112,11 @@ const HEADER_TOP_MARGIN_BUFFER = 300;
 // Trimmed from 900 -> 600 for the same reason, for the no-logo case.
 const DEFAULT_TOP_MARGIN_NO_LOGO = 600;
 const TIGHT_LINE = { line: 240, lineRule: "auto" as const };
+
+// Fallback header logo width (px, ~96dpi) when a CompanyProfile doesn't set
+// its own docxLogoWidth. Unchanged from the original hardcoded value, so
+// any company without an override renders exactly as before.
+const DEFAULT_DOCX_LOGO_WIDTH = 140;
 
 // ── template look ───────────────────────────────────────────────────────
 
@@ -158,9 +173,29 @@ const DEFAULT_SIGNATORY_TITLE =
 // Same reasoning as the COE generators: exported logos usually carry
 // transparent padding, and the header height is derived from the image's
 // pixel size, so trim it before measuring/embedding.
-async function trimLogoPadding(buffer: Buffer): Promise<Buffer> {
+async function trimLogoPadding(buffer: Buffer, skip = false): Promise<Buffer> {
+  // Skipping trim entirely (previous fix) avoided clipping into
+  // "ADVERTISING CORPORATION", but it also brought back the source PNG's
+  // full original padding — which inflated the measured natural height,
+  // which inflated topMargin, causing the oversized gap before the title.
+  // Trim + pad back a small safety margin instead: tight enough to avoid
+  // a big empty gap, loose enough not to clip the subtext.
+  if (skip) return buffer;
   try {
-    return await sharp(buffer).trim().png().toBuffer();
+    const trimmed = await sharp(buffer)
+      .trim({ threshold: 10 })
+      .png()
+      .toBuffer();
+    return await sharp(trimmed)
+      .extend({
+        top: 6,
+        bottom: 10,
+        left: 4,
+        right: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toBuffer();
   } catch {
     return buffer;
   }
@@ -526,10 +561,13 @@ export async function generateClearanceDocx(
 
   if (hasLogo) {
     const rawLogoBuffer = fs.readFileSync(logoPath);
-    logoBuffer = await trimLogoPadding(rawLogoBuffer);
+    logoBuffer = await trimLogoPadding(rawLogoBuffer, profile.skipLogoTrim);
     const { width: naturalWidth, height: naturalHeight } =
       getPngDimensions(logoBuffer);
-    const targetWidth = 140;
+    // Per-company override (see CompanyProfile.docxLogoWidth) so a dense
+    // mark with fine subtext, like Infinitech's, can be rendered larger
+    // than a simpler mark without affecting every other company.
+    const targetWidth = profile.docxLogoWidth ?? DEFAULT_DOCX_LOGO_WIDTH;
     logoTransformation = {
       width: targetWidth,
       height: Math.round(targetWidth * (naturalHeight / naturalWidth)),

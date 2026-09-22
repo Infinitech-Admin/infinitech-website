@@ -79,6 +79,7 @@ import {
   emptyCoeForm,
   buildAllowances,
   buildCoeFilename,
+  applyMealAllowanceMonthlyTotal,
 } from "@/components/admin/coe-types";
 import { ClearanceDialog } from "@/components/admin/clearance-dialog";
 import { ClearanceCertificateDialog } from "@/components/admin/clearance-certificate-dialog";
@@ -536,7 +537,9 @@ export default function EmployeeMasterfilePage() {
           date_hired: dateHiredFormatted,
           period_from: dateHiredFormatted || "",
           salary: data.salary ?? "",
-          allowances: allowancesToFormState(data.allowances),
+          allowances: applyMealAllowanceMonthlyTotal(
+            allowancesToFormState(data.allowances),
+          ),
         }));
       } catch {
         setCoeLookupStatus("not_found");

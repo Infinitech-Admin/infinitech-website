@@ -3,6 +3,16 @@
 // PDF twin of generate-clearance-docx.ts, built with `pdfmake` — same
 // choice as lib/coe/generate-coe-pdf.ts, so it runs on serverless without a
 // native LibreOffice/Chromium dependency.
+//
+// ── LOGO SIZE (updated) ─────────────────────────────────────────────────
+// The header logo width used to be a single hardcoded 90 (pt, pdfmake's
+// image units) for every company — noticeably smaller than the docx
+// generator's own default, and too small for Infinitech's mark, whose
+// two-line subtext ("INFINITECH" / "ADVERTISING CORPORATION") became
+// blurry/illegible at that size. The width now comes from
+// CompanyProfile.pdfLogoWidth (lib/coe/coe-shared.ts), which Infinitech
+// overrides to 140; companies without an override (ABIC) keep the same 90
+// default as before, so their output is unchanged.
 
 import fs from "fs";
 import path from "path";
@@ -63,6 +73,11 @@ const NO_LOGO_TOP_MARGIN = 24;
 const HEADER_EDGE_CLEARANCE = 8.5;
 const FOOTER_EDGE_CLEARANCE = 0;
 
+// Fallback header logo width (pt) when a CompanyProfile doesn't set its own
+// pdfLogoWidth. Unchanged from the original hardcoded value, so any company
+// without an override renders exactly as before.
+const DEFAULT_PDF_LOGO_WIDTH = 90;
+
 const NAVY = "#17365D";
 const LIGHT_BLUE = "#EDF3F8";
 const BORDER = "#BFBFBF";
@@ -70,9 +85,29 @@ const DEFAULT_SIGNATORY_NAME = "MARIA KRISSA CHAREZ R. BONGON";
 const DEFAULT_SIGNATORY_TITLE =
   "Executive Assistant to the CEO / Human Resource Officer";
 
-async function trimLogoPadding(buffer: Buffer): Promise<Buffer> {
+async function trimLogoPadding(buffer: Buffer, skip = false): Promise<Buffer> {
+  // Skipping trim entirely (previous fix) avoided clipping into
+  // "ADVERTISING CORPORATION", but it also brought back the source PNG's
+  // full original padding — which inflated the measured natural height,
+  // which inflated topMargin, causing the oversized gap before the title.
+  // Trim + pad back a small safety margin instead: tight enough to avoid
+  // a big empty gap, loose enough not to clip the subtext.
+  if (skip) return buffer;
   try {
-    return await sharp(buffer).trim().png().toBuffer();
+    const trimmed = await sharp(buffer)
+      .trim({ threshold: 10 })
+      .png()
+      .toBuffer();
+    return await sharp(trimmed)
+      .extend({
+        top: 6,
+        bottom: 10,
+        left: 4,
+        right: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toBuffer();
   } catch {
     return buffer;
   }
@@ -298,15 +333,17 @@ export async function generateClearancePdf(
   const logoPath = path.join(process.cwd(), "public/images", profile.logoFile);
 
   let logoDataUrl: string | null = null;
-  let logoWidth = 90;
-  let logoHeight = 45;
+  // Per-company override (see CompanyProfile.pdfLogoWidth) so a dense mark
+  // with fine subtext, like Infinitech's, can be rendered larger than a
+  // simpler mark without affecting every other company.
+  let logoWidth = profile.pdfLogoWidth ?? DEFAULT_PDF_LOGO_WIDTH;
+  let logoHeight = Math.round(logoWidth / 2);
 
   if (fs.existsSync(logoPath)) {
     const rawBuffer = fs.readFileSync(logoPath);
     const buffer = await trimLogoPadding(rawBuffer);
     const { width: naturalWidth, height: naturalHeight } =
       getPngDimensions(buffer);
-    logoWidth = 90;
     logoHeight = Math.round(logoWidth * (naturalHeight / naturalWidth));
     logoDataUrl = `data:image/png;base64,${buffer.toString("base64")}`;
   }
