@@ -71,7 +71,7 @@ const PAGE_SIDE_MARGIN = 40;
 const PAGE_BOTTOM_MARGIN = 30;
 const NO_LOGO_TOP_MARGIN = 24;
 const HEADER_EDGE_CLEARANCE = 8.5;
-const FOOTER_EDGE_CLEARANCE = 0;
+const FOOTER_EDGE_CLEARANCE = 7.1;
 
 // Fallback header logo width (pt) when a CompanyProfile doesn't set its own
 // pdfLogoWidth. Unchanged from the original hardcoded value, so any company

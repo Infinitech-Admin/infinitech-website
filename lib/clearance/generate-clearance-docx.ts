@@ -103,7 +103,7 @@ export type { CompanyKey };
 // ── layout constants (mirrors generate-coe-docx.ts) ────────────────────
 
 const HEADER_DISTANCE = 170;
-const FOOTER_DISTANCE = 0;
+const FOOTER_DISTANCE = 141;
 const PIXELS_TO_TWIPS = 15;
 // Trimmed from 500 -> 300: this buffer sat between the logo's bottom edge
 // and the title, purely as breathing room. Shrinking it claws back vertical
@@ -131,7 +131,7 @@ const PAGE_HEIGHT_TWIPS = 16838;
 const MARGIN_LEFT = 900;
 const MARGIN_RIGHT = 900;
 // Trimmed bottom margin from 1000 -> 600 to reclaim vertical space.
-const MARGIN_BOTTOM = 600;
+const MARGIN_BOTTOM = 141;
 
 // Full content width used throughout the template. Previously a literal
 // (10166) tuned for US Letter; now derived from the actual A4 content

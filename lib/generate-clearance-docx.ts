@@ -45,7 +45,7 @@ const ROW_LINE = 270; // 13.5pt rows in the details block (rows grow if a long v
 const PAGE = { width: 11906, height: 16838 }; // A4
 // Top margin: 0.3cm (1cm = 566.93 twips), so the logo almost touches the top
 // of the page — same spacing as the PDF header.
-const MARGIN = { top: 170, left: 1046, right: 1156, bottom: 900 };
+const MARGIN = { top: 170, left: 1046, right: 1156, bottom: 141 };
 const TEXT_WIDTH = PAGE.width - MARGIN.left - MARGIN.right; // 9704
 
 // Details block: label | value | label | value
@@ -183,7 +183,7 @@ export async function generateClearanceDocx(
               left: MARGIN.left,
               right: MARGIN.right,
               bottom: MARGIN.bottom,
-              footer: 440,
+              footer: 141,
             },
           },
         },
