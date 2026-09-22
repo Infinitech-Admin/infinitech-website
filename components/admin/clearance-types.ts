@@ -194,7 +194,7 @@ export const SECTION_C_PRESETS: Record<
       "Hosting / Database / Client Credentials",
       "Social Media / Marketing Accounts",
       "Documents / Records / Uniform",
-      "Other: __________________________",
+      // "Other: __________________________",
     ],
   },
   multimedia: {

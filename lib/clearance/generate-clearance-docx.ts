@@ -402,16 +402,16 @@ function sectionCTable(properties: ClearancePayload["properties"]) {
   });
 
   // "Other:" catch-all row, matching the uploaded template
-  rows.push(
-    new TableRow({
-      children: [
-        dataCell("Other: ____________________", widths[0]),
-        blankCell(widths[1]),
-        blankCell(widths[2]),
-        blankCell(widths[3]),
-      ],
-    }),
-  );
+  // rows.push(
+  //   new TableRow({
+  //     children: [
+  //       dataCell("Other: ____________________", widths[0]),
+  //       blankCell(widths[1]),
+  //       blankCell(widths[2]),
+  //       blankCell(widths[3]),
+  //     ],
+  //   }),
+  // );
 
   return new Table({
     width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
