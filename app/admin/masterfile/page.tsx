@@ -90,6 +90,12 @@ type CoeDownloadFormat = "docx" | "pdf";
 
 const ITEMS_PER_PAGE = 10;
 
+// Single shared gradient for the three "generate a document" actions inside
+// the view dialog — they're all doing the same kind of thing (produce a
+// file for this employee), so they read as one family of actions rather than
+// three different colors competing for attention.
+const DOC_ACTION_GRADIENT = "bg-gradient-to-r from-blue-600 to-purple-600";
+
 const formatDate = (dateString?: string | null) => {
   if (!dateString) return "—";
   const date = new Date(dateString);
@@ -1097,34 +1103,42 @@ export default function EmployeeMasterfilePage() {
                                         )}
                                     </div>
                                   )}
-                                  <DialogFooter className="mt-2 flex-col sm:flex-row sm:flex-wrap gap-2">
+                                  {/*
+                                    Three "generate a document" actions for this
+                                    employee. They're one family of action (not
+                                    three different severities/intents), so they
+                                    share one gradient — and they always stay on
+                                    one row, with shortened labels so the row
+                                    never wraps even on narrow dialogs.
+                                  */}
+                                  <DialogFooter className="mt-2 grid grid-cols-3 gap-2">
                                     <Button
                                       onClick={() =>
                                         viewRecord && openCoeDialog(viewRecord)
                                       }
-                                      className="bg-gradient-to-r from-blue-600 to-purple-600"
+                                      className={`${DOC_ACTION_GRADIENT} h-auto min-h-9 whitespace-normal px-1.5 py-2 text-[11px] leading-tight sm:px-3 sm:text-sm`}
                                     >
-                                      <FilePlus2 className="h-4 w-4 mr-2" />
-                                      Generate COE
+                                      <FilePlus2 className="mr-1 h-4 w-4 shrink-0 sm:mr-2" />
+                                      COE
                                     </Button>
                                     <Button
                                       onClick={() =>
                                         viewRecord &&
                                         openClearanceDialog(viewRecord)
                                       }
-                                      className="bg-gradient-to-r from-purple-600 to-pink-600"
+                                      className={`${DOC_ACTION_GRADIENT} h-auto min-h-9 whitespace-normal px-1.5 py-2 text-[11px] leading-tight sm:px-3 sm:text-sm`}
                                     >
-                                      <ClipboardCheck className="h-4 w-4 mr-2" />
-                                      Generate Clearance Form
+                                      <ClipboardCheck className="mr-1 h-4 w-4 shrink-0 sm:mr-2" />
+                                      Clearance Form
                                     </Button>
                                     <Button
                                       onClick={() =>
                                         viewRecord && openCertDialog(viewRecord)
                                       }
-                                      className="bg-gradient-to-r from-emerald-600 to-teal-600"
+                                      className={`${DOC_ACTION_GRADIENT} h-auto min-h-9 whitespace-normal px-1.5 py-2 text-[11px] leading-tight sm:px-3 sm:text-sm`}
                                     >
-                                      <BadgeCheck className="h-4 w-4 mr-2" />
-                                      Generate Clearance
+                                      <BadgeCheck className="mr-1 h-4 w-4 shrink-0 sm:mr-2" />
+                                      Clearance Cert
                                     </Button>
                                   </DialogFooter>
                                 </DialogContent>
