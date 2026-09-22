@@ -20,6 +20,7 @@ import {
   CERT_INTRO,
   CERT_SALUTATION,
   CERT_TITLE,
+  DEFAULT_LOGO_WIDTH_PT,
   resolveCertificate,
   type ClearanceCertificateData,
   type TextSegment,
@@ -161,10 +162,11 @@ export async function generateClearanceDocx(
 ): Promise<Buffer> {
   const c = await resolveCertificate(data, company);
 
-  // Logo: 187px wide (≈140pt @96dpi), scaled to the *trimmed* logo's real
-  // aspect ratio — not a hardcoded guess, since that only matched one
-  // particular company's logo shape and distorted/mis-sized any other.
-  const LOGO_W = 187;
+  // Logo width comes from the letterhead (points -> px @96dpi), scaled to
+  // the trimmed logo's real aspect ratio — both per-company, since a fixed
+  // size doesn't suit every logo's visual weight or shape.
+  const logoWidthPt = c.letterhead.logoWidthPt ?? DEFAULT_LOGO_WIDTH_PT;
+  const LOGO_W = Math.round(logoWidthPt * (96 / 72));
   const LOGO_H = Math.round((LOGO_W * c.logoHeight) / c.logoWidth);
 
   const doc = new Document({

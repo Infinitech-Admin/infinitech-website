@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getFullName, type Employee } from "@/components/admin/employee-types";
+// Same company list/type the COE and Clearance Form flows already use, so
+// every company dropdown in the app shows the same options and labels.
+import { COMPANY_OPTIONS, type CompanyKey } from "@/components/admin/coe-types";
 
 type CertFormat = "docx" | "pdf";
 
@@ -41,6 +44,7 @@ export function ClearanceCertificateDialog({
 }: ClearanceCertificateDialogProps) {
   const { toast } = useToast();
 
+  const [company, setCompany] = useState<CompanyKey>("abic");
   const [certificateNo, setCertificateNo] = useState("");
   const [lastWorkingDay, setLastWorkingDay] = useState("");
   const [dateIssued, setDateIssued] = useState(todayISO());
@@ -54,6 +58,7 @@ export function ClearanceCertificateDialog({
   // Fresh form every time the dialog opens.
   useEffect(() => {
     if (open) {
+      setCompany("abic");
       setCertificateNo("");
       setLastWorkingDay("");
       setDateIssued(todayISO());
@@ -94,6 +99,7 @@ export function ClearanceCertificateDialog({
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
+          company,
           certificate_no: certificateNo.trim(),
           employee_name: getFullName(employee),
           id_number: employee.id_number,
@@ -177,6 +183,25 @@ export function ClearanceCertificateDialog({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 space-y-4">
+          <Field label="Company" required>
+            <Select
+              value={company}
+              onValueChange={(v) => setCompany(v as CompanyKey)}
+              disabled={generating}
+            >
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COMPANY_OPTIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label="Certificate No." required>
             <Input
               value={certificateNo}

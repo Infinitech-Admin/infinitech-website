@@ -11,6 +11,7 @@ import {
   CERT_INTRO,
   CERT_SALUTATION,
   CERT_TITLE,
+  DEFAULT_LOGO_WIDTH_PT,
   resolveCertificate,
   type ClearanceCertificateData,
   type TextSegment,
@@ -25,9 +26,11 @@ const TEXT_W = RIGHT - LEFT;
 const CENTER = PAGE_W / 2;
 
 // 0.3cm from the top of the page to the top of the logo — the logo should
-// almost touch the top edge, same idea as the docx header.
+// almost touch the top edge, same idea as the docx header. Width is now set
+// per-letterhead (see DEFAULT_LOGO_WIDTH_PT / Letterhead.logoWidthPt) since
+// different logo artwork reads bigger or smaller at the same point size.
 const CM_TO_PT = 28.3465;
-const LOGO = { top: 0.3 * CM_TO_PT, width: 140 };
+const LOGO_TOP = 0.3 * CM_TO_PT;
 
 // The title's baseline is NOT a fixed number anymore. It used to be a hardcoded
 // 111.9pt, which only worked for a logo of one particular height — any logo
@@ -263,19 +266,20 @@ export async function generateClearancePdf(
 
   const logo = await pdf.embedPng(logoBytes);
 
-  const logoH = (LOGO.width * logo.height) / logo.width;
+  const logoWidth = c.letterhead.logoWidthPt ?? DEFAULT_LOGO_WIDTH_PT;
+  const logoH = (logoWidth * logo.height) / logo.width;
 
   page.drawImage(logo, {
-    x: CENTER - LOGO.width / 2,
-    y: PAGE_H - LOGO.top - logoH,
-    width: LOGO.width,
+    x: CENTER - logoWidth / 2,
+    y: PAGE_H - LOGO_TOP - logoH,
+    width: logoWidth,
     height: logoH,
   });
 
   // ── Title ──
   // Anchored below the *actual* bottom of the logo, whatever its real height
   // turns out to be, instead of a baseline tuned for one specific logo shape.
-  const titleBaseline = LOGO.top + logoH + TITLE_GAP;
+  const titleBaseline = LOGO_TOP + logoH + TITLE_GAP;
   drawCentered(ctx, CERT_TITLE, titleBaseline, fonts.bold, TITLE.size);
 
   // Everything below the title keeps the exact spacing it had in the approved

@@ -39,7 +39,19 @@ export interface Letterhead {
   logoFile: string;
   /** Centered footer lines, printed in Times New Roman. */
   footerLines: string[];
+  /**
+   * Rendered logo width in points (both docx and pdf convert this to their
+   * own units). Logos vary a lot in how much "ink" they have relative to
+   * their trimmed bounding box — a bold, dense mark like Infinitech's reads
+   * much bigger than a lighter mark like ABIC's diamond at the same width —
+   * so this is tuned per company rather than shared. Defaults to
+   * DEFAULT_LOGO_WIDTH_PT when omitted.
+   */
+  logoWidthPt?: number;
 }
+
+/** Used by any letterhead that doesn't set its own logoWidthPt. */
+export const DEFAULT_LOGO_WIDTH_PT = 140;
 
 /**
  * Add more companies here (keys = whatever your CompanyKey values are).
@@ -53,6 +65,17 @@ export const LETTERHEADS: Record<string, Letterhead> = {
       "Unit 202 Campos Rueda Bldg., Urban Avenue, Brgy. Pio Del Pilar, Makati City, 1230",
       "(02) 8646-1636",
     ],
+  },
+  infinitech: {
+    companyName: "Infinitech Advertising Corporation",
+    logoFile: "letterheads/infinitech-advertising.png",
+    footerLines: [
+      "Unit 311 Campos Rueda Bldg., Urban Avenue, Brgy. Pio Del Pilar, Makati City, 1230",
+      "(02) 7001-6157",
+    ],
+    // Dense, bold mark — noticeably heavier than ABIC's at the same width,
+    // so it's rendered smaller. Tune this if it's still too big/small.
+    logoWidthPt: 95,
   },
 };
 
