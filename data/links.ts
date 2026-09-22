@@ -19,10 +19,10 @@ export const links = [
     name: "Pricing",
     href: "/pricing",
   },
-  {
-    name: "Portal Demo",
-    href: "/portal-demo",
-  },
+  // {
+  //   name: "Portal Demo",
+  //   href: "/portal-demo",
+  // },
   {
     name: "Contact Us",
     href: "/contact",
