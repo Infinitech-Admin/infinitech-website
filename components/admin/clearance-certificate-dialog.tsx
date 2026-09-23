@@ -37,6 +37,13 @@ interface ClearanceCertificateDialogProps {
 // Local calendar date as YYYY-MM-DD (toISOString would shift it to UTC).
 const todayISO = () => new Date().toLocaleDateString("en-CA");
 
+// Mirrors ClearanceCertificate::START_AT (56) on the Laravel side. Shown as
+// a fallback if the next-number lookup fails, so the admin always sees a
+// concrete number instead of a vague placeholder. The real, authoritative
+// number always comes from Laravel — this is just what it'll be before any
+// certificate has ever been issued.
+const DEFAULT_CERTIFICATE_NO = "CL - 0056";
+
 export function ClearanceCertificateDialog({
   open,
   onOpenChange,
@@ -45,7 +52,14 @@ export function ClearanceCertificateDialog({
   const { toast } = useToast();
 
   const [company, setCompany] = useState<CompanyKey>("abic");
-  const [certificateNo, setCertificateNo] = useState("");
+  // certificate_no is server-assigned (Laravel), never typed by the admin.
+  // This just previews what it WILL be — the real one is only locked in
+  // when Generate is clicked and the record is actually saved.
+  const [nextCertificateNo, setNextCertificateNo] = useState<string>(
+    DEFAULT_CERTIFICATE_NO,
+  );
+  const [certNoIsFallback, setCertNoIsFallback] = useState(false);
+  const [loadingCertNo, setLoadingCertNo] = useState(false);
   const [lastWorkingDay, setLastWorkingDay] = useState("");
   const [dateIssued, setDateIssued] = useState(todayISO());
   // Blank = the server falls back to the default HR signatory.
@@ -55,19 +69,50 @@ export function ClearanceCertificateDialog({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [generating, setGenerating] = useState(false);
 
-  // Fresh form every time the dialog opens.
+  // Fresh form every time the dialog opens, and fetch the next certificate
+  // number so the admin can see it before generating.
   useEffect(() => {
     if (open) {
       setCompany("abic");
-      setCertificateNo("");
+      setNextCertificateNo(DEFAULT_CERTIFICATE_NO);
+      setCertNoIsFallback(false);
       setLastWorkingDay("");
       setDateIssued(todayISO());
       setSignatoryName("");
       setSignatoryTitle("");
       setFormat("pdf");
       setErrors({});
+      fetchNextCertificateNo();
     }
   }, [open, employee]);
+
+  const fetchNextCertificateNo = async () => {
+    setLoadingCertNo(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch(
+        "/api/admin/employee-clearance/next-number",
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        },
+      );
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setNextCertificateNo(data.certificate_no || DEFAULT_CERTIFICATE_NO);
+      setCertNoIsFallback(!data.certificate_no);
+    } catch {
+      setNextCertificateNo(DEFAULT_CERTIFICATE_NO);
+      setCertNoIsFallback(true);
+      toast({
+        title: "Couldn't fetch next certificate number",
+        description:
+          "Showing the default — it will still be assigned automatically when you generate.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCertNo(false);
+    }
+  };
 
   if (!employee) return null;
 
@@ -76,7 +121,6 @@ export function ClearanceCertificateDialog({
 
   const handleGenerate = async () => {
     const found: Record<string, boolean> = {};
-    if (!certificateNo.trim()) found.certificateNo = true;
     if (!lastWorkingDay) found.lastWorkingDay = true;
     if (!dateIssued) found.dateIssued = true;
     setErrors(found);
@@ -100,7 +144,8 @@ export function ClearanceCertificateDialog({
         },
         body: JSON.stringify({
           company,
-          certificate_no: certificateNo.trim(),
+          // No certificate_no sent — Laravel assigns it when the record
+          // is saved, atomically, avoiding any race between two admins.
           employee_name: getFullName(employee),
           id_number: employee.id_number,
           position: employee.position,
@@ -120,7 +165,7 @@ export function ClearanceCertificateDialog({
         );
       }
 
-      // The route names the file (CL_-_0055_-_Full_Name.pdf) in Content-Disposition.
+      // The route names the file (CL_-_0056_-_Full_Name.pdf) in Content-Disposition.
       const disposition = response.headers.get("Content-Disposition") ?? "";
       const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
       const filename = match
@@ -137,7 +182,7 @@ export function ClearanceCertificateDialog({
 
       toast({
         title: "Clearance certificate generated",
-        description: `${certificateNo.trim()} for ${getFullName(employee)} downloaded.`,
+        description: `${filename} downloaded for ${getFullName(employee)}.`,
       });
       onOpenChange(false);
     } catch (error: any) {
@@ -177,12 +222,32 @@ export function ClearanceCertificateDialog({
               {getFullName(employee)} · {employee.id_number}
             </span>
             <br />
-            Name, ID, position, and department come from the masterfile. Use the
-            same number as this employee's clearance form.
+            Name, ID, position, and department come from the masterfile.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 space-y-4">
+          <Field label="Certificate No.">
+            <div className="flex h-10 w-full min-w-0 items-center rounded-md border bg-muted/50 px-3 text-sm">
+              {loadingCertNo ? (
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Loader className="h-3.5 w-3.5 animate-spin" /> Fetching next
+                  number…
+                </span>
+              ) : nextCertificateNo ? (
+                <span className="font-medium">{nextCertificateNo}</span>
+              ) : (
+                <span className="text-muted-foreground">
+                  Will be assigned automatically
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Auto-assigned, sequential — not editable. This is a preview; the
+              final number is locked in when you click Generate.
+            </p>
+          </Field>
+
           <Field label="Company" required>
             <Select
               value={company}
@@ -200,19 +265,6 @@ export function ClearanceCertificateDialog({
                 ))}
               </SelectContent>
             </Select>
-          </Field>
-
-          <Field label="Certificate No." required>
-            <Input
-              value={certificateNo}
-              placeholder="e.g. CL - 0055"
-              disabled={generating}
-              className={inputClass("certificateNo")}
-              onChange={(e) => {
-                setCertificateNo(e.target.value);
-                clearError("certificateNo");
-              }}
-            />
           </Field>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
