@@ -61,6 +61,20 @@ const authHeaders = () => {
   };
 };
 
+// `updated_at` comes back as a UTC timestamp; always render it in PH time
+// (Asia/Manila) regardless of what timezone the admin's browser/device is
+// set to, so "Last saved" doesn't drift for anyone outside PH local time.
+const formatPhTime = (dateString: string) =>
+  new Date(dateString).toLocaleString("en-PH", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
 // Fresh-install seed — same defaults the old per-generation wizard used, so
 // the page opens with something sensible to edit instead of one blank row.
 const defaultUnits = () =>
@@ -264,8 +278,7 @@ export default function EmployeeClearanceFormPage() {
               </h1>
               <p className="text-blue-100">
                 Section B and Section C used every time a clearance form is
-                generated for an employee. No employee info here — this is
-                shared across all of them.
+                generated for an employee.
               </p>
             </div>
             <Link href="/admin/employee-masterfile">
@@ -291,7 +304,7 @@ export default function EmployeeClearanceFormPage() {
         )}
         {isSavedOnServer && lastSavedAt && (
           <p className="text-sm text-muted-foreground">
-            Last saved: {new Date(lastSavedAt).toLocaleString()}
+            Last saved: {formatPhTime(lastSavedAt)}
           </p>
         )}
 

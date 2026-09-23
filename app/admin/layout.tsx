@@ -7,7 +7,9 @@ import {
   X,
   LogOut,
   LayoutDashboard,
-  Inbox,
+  Users,
+  ClipboardCheck,
+  MessageSquare,
   ClipboardList,
   Video,
   IdCard,
@@ -54,15 +56,15 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Lead Generation",
     items: [
-      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Inbox },
+      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
       {
         href: "/admin/employee-clearance-form",
         label: "Clearance Form",
-        icon: Inbox,
+        icon: ClipboardCheck,
       },
 
-      // { href: "/admin/coe", label: "COE", icon: Inbox },
-      { href: "/admin/inquiries", label: "Inquiries", icon: Inbox },
+      // { href: "/admin/coe", label: "COE", icon: FileText },
+      { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
       { href: "/admin/website-audit", label: "Website Audit", icon: Search },
       { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
       {
