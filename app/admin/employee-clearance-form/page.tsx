@@ -46,7 +46,23 @@ import {
   sectionCRows,
 } from "@/components/admin/clearance-types";
 
+// One template per department — keep this list, its labels, and the values
+// stored on each employee's masterfile "department" field all in sync with
+// the backend's DEPARTMENTS constant (ClearanceTemplateController).
+const DEPARTMENTS = [
+  { key: "it", label: "IT" },
+  { key: "multimedia", label: "Multimedia" },
+  { key: "studio", label: "Studio" },
+  { key: "admin", label: "Admin" },
+  { key: "sales", label: "Sales" },
+  { key: "management", label: "Management" },
+  { key: "marketing", label: "Marketing" },
+] as const;
+
+type DepartmentKey = (typeof DEPARTMENTS)[number]["key"];
+
 interface TemplateResponse {
+  department: DepartmentKey;
   units: { unit: string; items: string }[];
   properties: { item: string }[];
   updated_at: string | null;
@@ -76,7 +92,8 @@ const formatPhTime = (dateString: string) =>
   });
 
 // Fresh-install seed — same defaults the old per-generation wizard used, so
-// the page opens with something sensible to edit instead of one blank row.
+// a department with no saved template yet opens with something sensible to
+// edit instead of one blank row.
 const defaultUnits = () =>
   DEFAULT_SECTION_B.map((r) => newUnitRow(r.unit, r.items));
 const defaultProperties = () => sectionCRows("it");
@@ -88,38 +105,47 @@ const STEPS = [
 const LAST_STEP = STEPS.length - 1;
 
 export default function EmployeeClearanceFormPage() {
+  const [department, setDepartment] = useState<DepartmentKey>(
+    DEPARTMENTS[0].key,
+  );
   const [step, setStep] = useState(0);
   const [units, setUnits] = useState<ClearanceUnitRow[]>(defaultUnits);
   const [properties, setProperties] =
     useState<ClearancePropertyRow[]>(defaultProperties);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  // Separate from `loading` so switching department tabs doesn't blank the
+  // whole page — only the very first load ever shows the full-page spinner.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  // True once a save has actually happened on the backend, so we know
-  // whether what's on screen is "the saved template" or just the seeded
-  // defaults waiting for a first save.
+  // True once a save has actually happened on the backend for THIS
+  // department, so we know whether what's on screen is "the saved
+  // template" or just the seeded defaults waiting for a first save.
   const [isSavedOnServer, setIsSavedOnServer] = useState(false);
 
   useEffect(() => {
-    fetchTemplate();
+    fetchTemplate(department);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [department]);
 
-  const fetchTemplate = async () => {
+  const fetchTemplate = async (dept: DepartmentKey) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/clearance-template", {
-        headers: authHeaders(),
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `/api/admin/clearance-template?department=${encodeURIComponent(dept)}`,
+        {
+          headers: authHeaders(),
+          cache: "no-store",
+        },
+      );
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
         throw new Error(json?.message || "Failed to load the template");
       }
       const data: TemplateResponse = json.data;
 
-      // Nothing saved yet (fresh install) — seed with the known-good
+      // Nothing saved yet for this department — seed with the known-good
       // defaults instead of one blank row, so there's something sensible
       // to edit/save right away instead of typing everything from scratch.
       if (data.units.length || data.properties.length) {
@@ -140,11 +166,19 @@ export default function EmployeeClearanceFormPage() {
         setIsSavedOnServer(false);
       }
       setLastSavedAt(data.updated_at);
+      setErrors({});
     } catch (error: any) {
       toast.error(error.message || "Failed to load the clearance template");
     } finally {
       setLoading(false);
+      setHasLoadedOnce(true);
     }
+  };
+
+  const handleDepartmentChange = (dept: DepartmentKey) => {
+    if (dept === department || saving || loading) return;
+    setDepartment(dept);
+    setStep(0);
   };
 
   // ── Section B handlers ──
@@ -235,6 +269,7 @@ export default function EmployeeClearanceFormPage() {
         method: "PUT",
         headers: authHeaders(),
         body: JSON.stringify({
+          department,
           units: cleanUnits,
           properties: cleanProperties,
         }),
@@ -245,7 +280,10 @@ export default function EmployeeClearanceFormPage() {
       }
       setLastSavedAt(json.data.updated_at);
       setIsSavedOnServer(true);
-      toast.success("The clearance form template has been updated.");
+      const deptLabel = DEPARTMENTS.find((d) => d.key === department)?.label;
+      toast.success(
+        `The ${deptLabel} clearance form template has been updated.`,
+      );
     } catch (error: any) {
       toast.error(error.message || "Failed to save the clearance template");
     } finally {
@@ -253,7 +291,7 @@ export default function EmployeeClearanceFormPage() {
     }
   };
 
-  if (loading) {
+  if (loading && !hasLoadedOnce) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -278,7 +316,7 @@ export default function EmployeeClearanceFormPage() {
               </h1>
               <p className="text-blue-100">
                 Section B and Section C used every time a clearance form is
-                generated for an employee.
+                generated for an employee — each department keeps its own.
               </p>
             </div>
             <Link href="/admin/employee-masterfile">
@@ -294,12 +332,37 @@ export default function EmployeeClearanceFormPage() {
       </div>
 
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 max-w-6xl mx-auto">
+        {/* ── Department tabs ── */}
+        <div className="flex flex-wrap items-center gap-2">
+          {DEPARTMENTS.map((d) => (
+            <button
+              key={d.key}
+              onClick={() => handleDepartmentChange(d.key)}
+              disabled={saving || loading}
+              className={`rounded-lg px-4 py-2 text-sm font-medium border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                department === d.key
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-sm"
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              {d.label}
+            </button>
+          ))}
+          {loading && hasLoadedOnce && (
+            <Loader className="h-4 w-4 animate-spin text-muted-foreground ml-1" />
+          )}
+        </div>
+
         {!isSavedOnServer && (
           <div className="rounded-lg border-2 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-            No template has been saved yet — showing the default starting list
-            below. Edit as needed, then click{" "}
-            <span className="font-semibold">Save Template</span> to make it the
-            one used for every clearance form.
+            No template has been saved yet for{" "}
+            <span className="font-semibold">
+              {DEPARTMENTS.find((d) => d.key === department)?.label}
+            </span>{" "}
+            — showing the default starting list below. Edit as needed, then
+            click <span className="font-semibold">Save Template</span> to make
+            it the one used for every clearance form generated for this
+            department.
           </div>
         )}
         {isSavedOnServer && lastSavedAt && (

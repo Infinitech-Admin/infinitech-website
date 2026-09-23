@@ -53,13 +53,21 @@ function authHeaders(request: NextRequest): HeadersInit {
   return headers;
 }
 
-// GET /api/admin/clearance-template
+// GET /api/admin/clearance-template?department=it
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${laravelUrl}/api/admin/clearance-template`, {
-      headers: authHeaders(request),
-      cache: "no-store",
-    });
+    // Forward the query string as-is (department=it/multimedia/studio/admin)
+    // — without this, Laravel never sees which department was asked for and
+    // always rejects the request with "A department is required."
+    const { search } = new URL(request.url);
+
+    const response = await fetch(
+      `${laravelUrl}/api/admin/clearance-template${search}`,
+      {
+        headers: authHeaders(request),
+        cache: "no-store",
+      },
+    );
     return forward(response, "clearance-template GET");
   } catch (error) {
     return failed(error, "GET");
@@ -67,7 +75,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT /api/admin/clearance-template
-// Body: { units: {unit, items}[], properties: {item}[] }
+// Body: { department, units: {unit, items}[], properties: {item}[] }
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();

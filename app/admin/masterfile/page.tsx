@@ -126,6 +126,29 @@ const formatCurrency = (value?: string | null) => {
   })}`;
 };
 
+// The clearance FORM's Section B/C template is saved per department (IT,
+// Multimedia, Studio, Admin — see the Clearance Form Template page). An
+// employee's masterfile "department" free-text field has to match one of
+// those four keys for clearance generation to find the right template, so
+// this normalizes it and flags anything that doesn't map cleanly.
+const CLEARANCE_DEPARTMENT_LABELS: Record<string, string> = {
+  it: "IT",
+  multimedia: "Multimedia",
+  studio: "Studio",
+  admin: "Admin",
+  sales: "Sales",
+  management: "Management",
+  marketing: "Marketing",
+};
+
+const normalizeClearanceDepartment = (
+  department?: string | null,
+): string | null => {
+  if (!department) return null;
+  const key = department.trim().toLowerCase();
+  return key in CLEARANCE_DEPARTMENT_LABELS ? key : null;
+};
+
 export default function EmployeeMasterfilePage() {
   const router = useRouter();
 
@@ -444,6 +467,13 @@ export default function EmployeeMasterfilePage() {
   // ── Clearance FORM generation helper ──
 
   const openClearanceDialog = (employee: Employee) => {
+    const deptKey = normalizeClearanceDepartment(employee.department);
+    if (!deptKey) {
+      toast.error(
+        `No clearance form template for "${employee.department || "—"}". Set this employee's department to IT, Multimedia, Studio, or Admin first.`,
+      );
+      return;
+    }
     setClearanceTargetEmployee(employee);
     setClearanceDialogOpen(true);
   };
@@ -1149,9 +1179,31 @@ export default function EmployeeMasterfilePage() {
                                     onClick={() =>
                                       openClearanceDialog(employee)
                                     }
+                                    className="flex-col items-start gap-0.5 py-2"
                                   >
-                                    <ClipboardCheck className="h-4 w-4 mr-2 text-pink-600" />
-                                    Generate Clearance Form
+                                    <span className="flex items-center">
+                                      <ClipboardCheck className="h-4 w-4 mr-2 text-pink-600" />
+                                      Generate Clearance Form
+                                    </span>
+                                    {(() => {
+                                      const deptKey =
+                                        normalizeClearanceDepartment(
+                                          employee.department,
+                                        );
+                                      return (
+                                        <span
+                                          className={`pl-6 text-[11px] ${
+                                            deptKey
+                                              ? "text-muted-foreground"
+                                              : "text-red-600 dark:text-red-400"
+                                          }`}
+                                        >
+                                          {deptKey
+                                            ? `Uses ${CLEARANCE_DEPARTMENT_LABELS[deptKey]} template`
+                                            : `Unmapped department: "${employee.department || "—"}"`}
+                                        </span>
+                                      );
+                                    })()}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => openCertDialog(employee)}

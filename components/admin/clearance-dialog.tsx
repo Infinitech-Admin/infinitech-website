@@ -96,12 +96,17 @@ export function ClearanceDialog({
   }, [open, employee]);
 
   const fetchTemplate = async () => {
+    if (!employee) return;
     setLoadingTemplate(true);
     try {
-      const res = await fetch("/api/admin/clearance-template", {
-        headers: authHeaders(),
-        cache: "no-store",
-      });
+      const department = employee.department?.trim().toLowerCase();
+      const res = await fetch(
+        `/api/admin/clearance-template?department=${encodeURIComponent(department ?? "")}`,
+        {
+          headers: authHeaders(),
+          cache: "no-store",
+        },
+      );
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
         throw new Error(
