@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import {
   Table,
   TableBody,
@@ -39,12 +39,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   BadgeCheck,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
   Eye,
   FilePlus2,
+  FileStack,
   FileText,
   Loader,
   Search,
@@ -120,7 +128,6 @@ const formatCurrency = (value?: string | null) => {
 
 export default function EmployeeMasterfilePage() {
   const router = useRouter();
-  const { toast } = useToast();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,11 +214,7 @@ export default function EmployeeMasterfilePage() {
       const data = await response.json();
       setEmployees(data?.data ?? []);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load employee records",
-        variant: "destructive",
-      });
+      toast.error("Failed to load employee records");
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -311,11 +314,7 @@ export default function EmployeeMasterfilePage() {
 
   const handleSubmit = async () => {
     if (!validate()) {
-      toast({
-        title: "Missing required fields",
-        description: "Please fill in the highlighted fields.",
-        variant: "destructive",
-      });
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
     setSubmitting(true);
@@ -347,18 +346,11 @@ export default function EmployeeMasterfilePage() {
         throw new Error(data?.message || "Failed to save employee record");
       }
 
-      toast({
-        title: "Success",
-        description: editingId ? "Employee record updated!" : "Employee added!",
-      });
+      toast.success(editingId ? "Employee record updated!" : "Employee added!");
       setFormOpen(false);
       fetchEmployees(searchQuery || undefined);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save employee record",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to save employee record");
     } finally {
       setSubmitting(false);
     }
@@ -398,10 +390,7 @@ export default function EmployeeMasterfilePage() {
         throw new Error(data?.message || "Failed to update status");
       }
 
-      toast({
-        title: "Status updated",
-        description: `${getFullName(employee)} is now ${status}.`,
-      });
+      toast.success(`${getFullName(employee)} is now ${status}.`);
     } catch (error: any) {
       // roll back the optimistic update
       setEmployees((prev) =>
@@ -409,11 +398,7 @@ export default function EmployeeMasterfilePage() {
           e.id === employee.id ? { ...e, status: previousStatus } : e,
         ),
       );
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update status",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to update status");
     } finally {
       setStatusUpdatingId(null);
     }
@@ -432,19 +417,14 @@ export default function EmployeeMasterfilePage() {
         },
       );
       if (!response.ok) throw new Error();
-      toast({
-        title: "Success",
-        description: `${getFullName(recordToDelete)} removed from the masterfile`,
-      });
+      toast.success(
+        `${getFullName(recordToDelete)} removed from the masterfile`,
+      );
       setEmployees((prev) => prev.filter((e) => e.id !== recordToDelete.id));
       setDeleteDialogOpen(false);
       setRecordToDelete(null);
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to delete employee record",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete employee record");
     } finally {
       setDeleting(false);
     }
@@ -585,11 +565,7 @@ export default function EmployeeMasterfilePage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to download the certificate",
-        variant: "destructive",
-      });
+      toast.error("Failed to download the certificate");
     } finally {
       setCoeDownloading(false);
     }
@@ -597,11 +573,7 @@ export default function EmployeeMasterfilePage() {
 
   const handleCoeSubmit = async () => {
     if (!validateCoe()) {
-      toast({
-        title: "Missing required fields",
-        description: "Please fill in the highlighted fields.",
-        variant: "destructive",
-      });
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
     setCoeSubmitting(true);
@@ -627,10 +599,9 @@ export default function EmployeeMasterfilePage() {
         throw new Error(data?.message || "Failed to create certificate");
       }
 
-      toast({
-        title: "Certificate created",
-        description: `${data.data.certificate_no} generated for ${data.data.employee_name}.`,
-      });
+      toast.success(
+        `${data.data.certificate_no} generated for ${data.data.employee_name}.`,
+      );
       setCoeDialogOpen(false);
       downloadCoe(
         data.data.id,
@@ -639,11 +610,7 @@ export default function EmployeeMasterfilePage() {
         coeDownloadFormat,
       );
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create certificate",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create certificate");
     } finally {
       setCoeSubmitting(false);
     }
@@ -1147,38 +1114,53 @@ export default function EmployeeMasterfilePage() {
                                 </DialogContent>
                               </Dialog>
 
-                              {/* Generate COE (shortcut, same action as inside the view dialog) */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openCoeDialog(employee)}
-                                className="border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
-                                title="Generate COE"
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-
-                              {/* Generate Clearance Form (shortcut, right beside Generate COE) */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openClearanceDialog(employee)}
-                                className="border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700"
-                                title="Generate Clearance Form"
-                              >
-                                <ClipboardCheck className="h-4 w-4" />
-                              </Button>
-
-                              {/* Generate Clearance (the certificate, right beside the form) */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openCertDialog(employee)}
-                                className="border-2 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                                title="Generate Clearance"
-                              >
-                                <BadgeCheck className="h-4 w-4" />
-                              </Button>
+                              {/*
+                                Generate actions — was three separate icon
+                                buttons (COE / Clearance Form / Clearance
+                                Cert), now collapsed into one dropdown so the
+                                row stays compact.
+                              */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                                    title="Generate documents"
+                                  >
+                                    <FileStack className="h-4 w-4 sm:mr-1.5" />
+                                    <span className="hidden sm:inline">
+                                      Generate
+                                    </span>
+                                    <ChevronDown className="h-3 w-3 ml-1" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="z-[999] w-56 !bg-white dark:!bg-slate-900 !opacity-100 border-2 border-slate-200 dark:border-slate-700 shadow-xl"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={() => openCoeDialog(employee)}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                                    Generate COE
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      openClearanceDialog(employee)
+                                    }
+                                  >
+                                    <ClipboardCheck className="h-4 w-4 mr-2 text-pink-600" />
+                                    Generate Clearance Form
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => openCertDialog(employee)}
+                                  >
+                                    <BadgeCheck className="h-4 w-4 mr-2 text-emerald-600" />
+                                    Generate Employee Clearance
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
 
                               {/* Edit */}
                               <Button

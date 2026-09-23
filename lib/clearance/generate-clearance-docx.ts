@@ -1,67 +1,4 @@
 // File: lib/clearance/generate-clearance-docx.ts
-//
-// Builds the Employee Clearance Form entirely in code with the `docx`
-// package — same technique as lib/coe/generate-coe-docx.ts — instead of
-// splicing the uploaded template's XML. This is what lets the form carry a
-// per-company letterhead (logo + footer), the same way the COE does, since
-// the original employee-clearance.docx template has no header/footer at all.
-//
-// Sections A–F match the uploaded template 1:1 in content and order; the
-// navy (#17365D) banners and light-blue (#EDF3F8) label cells reproduce its
-// look. Section D and the two blank rows under it, the [ ] Cleared / [ ]
-// Pending / [ ] N/A checkboxes, and the Name/Signature/Date cells are the
-// same as the original — those are meant to be filled in by hand or pen,
-// not by the wizard.
-//
-// Every table sets three properties to match the uploaded template exactly:
-//   - `alignment: AlignmentType.CENTER`, matching the template's per-row
-//     `w:jc="center"`. Without it, a table narrower than the page's content
-//     width sits flush against the left margin instead of being centered,
-//     leaving a lopsided gap on the right.
-//   - `layout: TableLayoutType.FIXED`, matching the template's
-//     `<w:tblLayout w:type="fixed"/>` (present on all 11 of its tables).
-//     Without it, Word falls back to "Autofit to Contents" and
-//     recalculates column widths from each cell's text — which is why the
-//     single-cell navy banners (short text like "A. EMPLOYEE AND
-//     SEPARATION INFORMATION") were shrinking to hug their own text instead
-//     of spanning the full page width like the data table under them.
-//   - `columnWidths`, spelling out the same numbers used for each cell's
-//     `width`. The `docx` package does NOT derive `<w:tblGrid>` (the column
-//     skeleton Word reads for a FIXED-layout table) from per-cell widths on
-//     its own — omit `columnWidths` and it writes a dummy 100-twip grid for
-//     every column instead. Under "auto" layout Word mostly ignored that
-//     bogus grid and used each cell's real `tcW`, so it went unnoticed; the
-//     moment `layout: FIXED` was added (previous fix), Word started trusting
-//     that dummy grid, which is what blew "Responsible Unit" up to a huge
-//     width, squeezed the other columns, and inflated row height. Supplying
-//     `columnWidths` makes the written `<w:tblGrid>` match the real column
-//     widths, exactly like the uploaded template's own `<w:tblGrid>`.
-//
-// ── PAGE SIZE / PAGINATION (updated) ────────────────────────────────────
-// Switched from US Letter to A4 bond paper. The Section B/C/D column-width
-// arrays below were originally hand-tuned twip numbers that summed exactly
-// to the old Letter-based PAGE_WIDTH_DXA (10166), so simply changing
-// PAGE_WIDTH_DXA would have left every table either overflowing the new
-// narrower A4 content width or leaving a gap on the right. `scaleWidths()`
-// rescales each of those original arrays (kept as *_BASE constants,
-// unchanged) proportionally against the new PAGE_WIDTH_DXA, snapping the
-// rounding remainder onto the last column so the row still sums exactly.
-//
-// Sections A–C are also now kept together on page 1: vertical spacing
-// (banner/cell margins, paragraph spacing, spacers, the header top-margin
-// buffer) was trimmed throughout to reclaim room, and a manual PageBreak is
-// inserted right after Section C so Section D always starts a fresh page
-// instead of Word deciding where the D/E/F content happens to land.
-//
-// ── LOGO SIZE (updated) ─────────────────────────────────────────────────
-// The header logo width used to be a single hardcoded 140 (px, ~96dpi) for
-// every company. That's fine for a simple mark like ABIC's, but Infinitech's
-// logo carries a two-line subtext ("INFINITECH" / "ADVERTISING
-// CORPORATION") that reads as blurry/compressed at that width — confirmed
-// by rendering it at 140px and comparing against wider previews. The width
-// now comes from CompanyProfile.docxLogoWidth (lib/coe/coe-shared.ts),
-// which Infinitech overrides to 190; companies without an override (ABIC)
-// keep the same 140 default as before, so their output is unchanged.
 
 import fs from "fs";
 import path from "path";
@@ -100,7 +37,7 @@ import {
 
 export type { CompanyKey };
 
-// ── layout constants (mirrors generate-coe-docx.ts) ────────────────────
+// ── layout constants (mirrors generate-coe-docx.ts) 
 
 const HEADER_DISTANCE = 170;
 const FOOTER_DISTANCE = 141;
@@ -315,11 +252,11 @@ function headerRow(labels: string[], widths: number[]) {
           width: { size: widths[i], type: WidthType.DXA },
           shading: { fill: NAVY, type: ShadingType.CLEAR, color: "auto" },
           verticalAlign: VerticalAlign.CENTER,
-          // Trimmed top/bottom from 70 -> 50.
           margins: { top: 50, bottom: 50, left: 90, right: 90 },
           children: [
             new Paragraph({
               alignment: AlignmentType.CENTER,
+              spacing: { before: 0, after: 0, ...TIGHT_LINE }, // ADDED
               children: [run(label, { bold: true, color: "FFFFFF" })],
             }),
           ],
@@ -334,7 +271,13 @@ function dataCell(text: string, width: number) {
     width: { size: width, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
     margins: { top: 50, bottom: 50, left: 90, right: 90 },
-    children: lines.map((line) => new Paragraph({ children: [run(line)] })),
+    children: lines.map(
+      (line) =>
+        new Paragraph({
+          spacing: { before: 0, after: 0, ...TIGHT_LINE }, // ADDED
+          children: [run(line)],
+        }),
+    ),
   });
 }
 
@@ -342,7 +285,12 @@ function blankCell(width: number) {
   return new TableCell({
     width: { size: width, type: WidthType.DXA },
     margins: { top: 50, bottom: 50, left: 90, right: 90 },
-    children: [new Paragraph({ children: [] })],
+    children: [
+      new Paragraph({
+        spacing: { before: 0, after: 0, ...TIGHT_LINE }, // ADDED
+        children: [],
+      }),
+    ],
   });
 }
 
