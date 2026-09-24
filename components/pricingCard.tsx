@@ -64,6 +64,24 @@ const PricingCard: React.FC<PricingCardProps> = ({
   });
   const isTabletOrMobile = useMediaQuery({ query: "(max-width: 999px)" });
 
+  // Glow sits along the top edge of the card only — a thin bright line plus
+  // a soft blurred haze behind it — rather than an all-around halo.
+  // Stronger/brighter for the popular plan, quieter for the rest.
+  const topGlow = (
+    <>
+      <span
+        className={`pointer-events-none absolute -top-px left-6 w-2/5 h-[2px] rounded-full blur-[2px] ${
+          plan.popular ? "bg-cyan-200" : "bg-cyan-300/80"
+        }`}
+      />
+      <span
+        className={`pointer-events-none absolute -top-6 left-6 w-1/2 h-10 rounded-full blur-2xl ${
+          plan.popular ? "bg-cyan-400/60" : "bg-cyan-400/35"
+        }`}
+      />
+    </>
+  );
+
   // Collapsed state - show only title and price vertically (when another card is clicked)
   if (isSmall) {
     return (
@@ -76,6 +94,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
           }
         w-12 h-[50vh] flex items-center justify-center`}
       >
+        {topGlow}
         <div className="transform -rotate-90 whitespace-nowrap text-center flex items-center gap-3">
           <h3 className="font-bold text-white text-xl">{plan.name}</h3>
           <div className="flex items-baseline gap-0.5">
@@ -99,14 +118,15 @@ const PricingCard: React.FC<PricingCardProps> = ({
         <div
           className={`relative rounded-2xl transition-all duration-500 ease-in-out cursor-pointer ${
             isHovered
-              ? "z-20 shadow-2xl shadow-cyan-500/20 scale-105 w-[85vw] max-w-sm md:w-[26rem] md:mx-5"
+              ? "z-20 scale-105 w-[85vw] max-w-sm md:w-[26rem] md:mx-5"
               : "w-[85vw] max-w-sm md:w-[26rem]"
           } ${
             plan.popular
-              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-500/40"
-              : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70 hover:shadow-lg"
+              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500"
+              : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70"
           }`}
         >
+          {topGlow}
           {plan.popular && (
             <div className="absolute -top-3 left-6 z-20">
               <span className="inline-block px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
@@ -188,10 +208,11 @@ const PricingCard: React.FC<PricingCardProps> = ({
         <div
           className={`relative rounded-2xl transition-all duration-300 h-full flex flex-col ${
             plan.popular
-              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 shadow-2xl shadow-cyan-500/20"
+              ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500"
               : "bg-slate-800/50 border border-slate-700 hover:bg-slate-800/70"
           }`}
         >
+          {topGlow}
           {/* Popular Badge */}
           {plan.popular && (
             <div className="absolute -top-3 left-6">

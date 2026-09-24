@@ -6,11 +6,7 @@ import { Button } from "@heroui/react";
 import { poetsen_one } from "@/config/fonts";
 import { useRouter } from "next/navigation";
 
-const stats = [
-  { value: "2+", label: "Years in Business" },
-  { value: "30+", label: "Services Offered" },
-  { value: "15+", label: "Team Members" },
-];
+const eyebrow = ["Web", "Marketing", "Branding", "Content"];
 
 const Left = () => {
   const router = useRouter();
@@ -18,14 +14,21 @@ const Left = () => {
   return (
     <div className="relative space-y-6 z-10">
       <div className="space-y-4">
+        <p className="text-accent-light text-sm font-semibold tracking-widest uppercase">
+          {eyebrow.join(" · ")}
+        </p>
+
         <h1
-          className={`text-accent text-5xl sm:text-7xl font-bold leading-tight ${poetsen_one.className}`}
+          className={`text-5xl sm:text-7xl font-bold leading-tight ${poetsen_one.className}`}
         >
-          Build a Brand People Remember
+          <span className="text-gray-100">Your Digital Growth</span>
+          <br />
+          <span className="text-accent-light">Partner</span>
         </h1>
 
         <p className="text-lg text-gray-300 max-w-xl">
-          Web, marketing, branding, and content — everything your brand needs.
+          We create modern websites, strategic marketing, strong branding, and
+          engaging content — all designed to help your business grow.
         </p>
       </div>
 
@@ -37,7 +40,7 @@ const Left = () => {
           endContent={<LuArrowRight size={18} />}
           onPress={() => router.push("/contact")}
         >
-          Get Free Consultation
+          Get a Free Consultation
         </Button>
 
         <Button
@@ -48,18 +51,6 @@ const Left = () => {
         >
           View Our Work
         </Button>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-4 text-center"
-          >
-            <div className="text-2xl font-bold text-accent">{stat.value}</div>
-            <div className="text-xs text-gray-400 mt-1">{stat.label}</div>
-          </div>
-        ))}
       </div>
     </div>
   );

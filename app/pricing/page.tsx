@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import PricingCard from "@/components/pricingCard";
+import ToggleSwitch from "@/components/ToggleSwitch";
 import { X, ShoppingCart, Mail, Loader2, Phone } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
 import Link from "next/link";
@@ -330,36 +331,37 @@ const PricingPage = () => {
   });
   const isTabletOrMobile = useMediaQuery({ query: "(max-width: 999px)" });
 
-  // Shared currency toggle buttons (reused in both layouts below)
-  const currencyToggle = (
-    <div className="flex gap-2">
-      <button
-        onClick={() => setCurrency("PHP")}
-        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-          currency === "PHP"
-            ? "bg-cyan-500 text-white"
-            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-        }`}
-      >
-        ₱ PHP
-      </button>
-      <button
-        onClick={() => setCurrency("USD")}
-        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
-          currency === "USD"
-            ? "bg-cyan-500 text-white"
-            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-        }`}
-      >
-        $ USD
-      </button>
+  // Shared billing/currency toggle row (reused in both layouts below).
+  // Now sliding switches instead of button pairs, and pulled in tighter
+  // right above the plan cards.
+  const controlsRow = (
+    <div className="flex justify-start items-center gap-5 flex-wrap">
+      {activeService !== "juantap" && (
+        <>
+          <ToggleSwitch
+            leftLabel="Monthly"
+            rightLabel="Yearly"
+            checked={billingPeriod === "yearly"}
+            onChange={(checked) =>
+              setBillingPeriod(checked ? "yearly" : "monthly")
+            }
+          />
+          <div className="w-px h-6 bg-slate-700" />
+        </>
+      )}
+      <ToggleSwitch
+        leftLabel="PHP"
+        rightLabel="USD"
+        checked={currency === "USD"}
+        onChange={(checked) => setCurrency(checked ? "USD" : "PHP")}
+      />
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16">
       {/* Header Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 lg:mb-12 mt-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-4 lg:mb-6 mt-8">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl text-accent font-bold tracking-tight mb-4 uppercase">
             Our Pricing Plans
@@ -395,43 +397,6 @@ const PricingPage = () => {
                 {key === "socialmedia" && "Social Media"}
               </button>
             ))}
-          </div>
-
-          {/* Billing Period + Currency Selector (combined row) */}
-          <div className="flex justify-center items-center gap-4 mb-4 flex-wrap">
-            {activeService !== "juantap" ? (
-              <>
-                {/* Monthly / Yearly */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setBillingPeriod("monthly")}
-                    className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                      billingPeriod === "monthly"
-                        ? "bg-cyan-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setBillingPeriod("yearly")}
-                    className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                      billingPeriod === "yearly"
-                        ? "bg-cyan-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    Yearly
-                  </button>
-                </div>
-
-                {/* Divider - only shown when billing toggle is present */}
-                <div className="w-px h-6 bg-slate-700" />
-              </>
-            ) : null}
-
-            {/* Currency - always shown, alone for JuanTap */}
-            {currencyToggle}
           </div>
 
           <p className="text-slate-400 text-sm">{currentService.description}</p>
@@ -470,6 +435,9 @@ const PricingPage = () => {
 
       {isTabletOrMobile && activeService !== "socialmedia" && (
         <section className="mx-auto px-6 flex flex-col pb-10 items-center">
+          {/* Controls row now sits directly above the cards, left-aligned */}
+          <div className="w-full mb-5">{controlsRow}</div>
+
           <div className="flex-1">
             <div className="relative">
               <div className="py-8" onClick={() => setSelectedCardIndex(null)}>
@@ -636,20 +604,25 @@ const PricingPage = () => {
       )}
 
       {isDesktopOrLaptop && activeService !== "socialmedia" && (
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-4 gap-6">
-          {currentPlans.map((plan, index) => (
-            <PricingCard
-              key={index}
-              plan={plan}
-              billingPeriod={
-                activeService === "juantap" ? "piece" : billingPeriod
-              }
-              currency={currency}
-              onAddToCart={() => handleAddToCart(plan)}
-              isHovered={false}
-              isSmall={false}
-            />
-          ))}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Controls row now sits directly above the cards */}
+          <div className="mb-6">{controlsRow}</div>
+
+          <div className="grid grid-cols-4 gap-6">
+            {currentPlans.map((plan, index) => (
+              <PricingCard
+                key={index}
+                plan={plan}
+                billingPeriod={
+                  activeService === "juantap" ? "piece" : billingPeriod
+                }
+                currency={currency}
+                onAddToCart={() => handleAddToCart(plan)}
+                isHovered={false}
+                isSmall={false}
+              />
+            ))}
+          </div>
         </section>
       )}
     </div>

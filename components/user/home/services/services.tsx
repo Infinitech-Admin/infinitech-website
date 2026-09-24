@@ -1936,7 +1936,7 @@ function BrandingSection({
                 )}
                 <h3 className="text-primary font-bold text-lg">
                   {activeService.type === "benefits"
-                    ? `${activeService.name} — What You Get`
+                    ? `${activeService.name} — From Strategy to Growth`
                     : activeService.name}
                 </h3>
               </div>
@@ -2018,7 +2018,7 @@ function BrandingSection({
                       </div>
                     </div>
 
-                    {activeService.behindTheScenesImage && (
+                    {/* {activeService.behindTheScenesImage && (
                       <div className="mt-6">
                         <h4 className="text-primary font-semibold text-sm mb-2 text-center lg:text-left">
                           Behind the Scenes
@@ -2032,7 +2032,7 @@ function BrandingSection({
                           />
                         </div>
                       </div>
-                    )}
+                    )} */}
                   </>
                 ) : activeService.thumbnailImage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
