@@ -248,7 +248,7 @@ const websiteTiers: Tier[] = [
 const packages: PricingPackage[] = [
   {
     name: "Standard",
-    price: "6,888",
+    price: "4,644",
     icon: FaGlobe,
     popular: false,
     features: [

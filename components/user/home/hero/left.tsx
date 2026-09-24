@@ -3,21 +3,11 @@
 import React from "react";
 import { LuArrowRight } from "react-icons/lu";
 import { Button } from "@heroui/react";
-import { GoCheck } from "react-icons/go";
 import { poetsen_one } from "@/config/fonts";
 import { useRouter } from "next/navigation";
 
-const whyChooseUs = [
-  "Convenient One-Stop Shop",
-  "Affordable Pricing",
-  "Personalized Support",
-  "Trusted Quality",
-];
-
-// TODO: Replace "__" with your real team member count before deploying
 const stats = [
   { value: "2+", label: "Years in Business" },
-  // { value: "20+", label: "Projects Completed" },
   { value: "30+", label: "Services Offered" },
   { value: "15+", label: "Team Members" },
 ];
@@ -31,20 +21,12 @@ const Left = () => {
         <h1
           className={`text-accent text-5xl sm:text-7xl font-bold leading-tight ${poetsen_one.className}`}
         >
-          Why Choose Us
+          Build a Brand People Remember
         </h1>
 
-        <ul className="space-y-2 pt-2">
-          {whyChooseUs.map((item) => (
-            <li
-              key={item}
-              className="flex items-center gap-2 text-lg text-gray-300"
-            >
-              <GoCheck className="text-accent-light shrink-0" />
-              {item}
-            </li>
-          ))}
-        </ul>
+        <p className="text-lg text-gray-300 max-w-xl">
+          Web, marketing, branding, and content — everything your brand needs.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-4 pt-2">

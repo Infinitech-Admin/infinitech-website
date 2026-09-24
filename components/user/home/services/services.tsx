@@ -160,7 +160,7 @@ function isVideoFile(src: string): boolean {
 const packages = [
   {
     name: "Standard",
-    price: "6,888",
+    price: "4,644",
     icon: FaGlobe,
     popular: false,
     bestFor:
