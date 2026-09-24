@@ -5,10 +5,18 @@ import PricingCard from "@/components/pricingCard";
 import { X, ShoppingCart, Mail, Loader2, Phone } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
 import Link from "next/link";
+import {
+  type Currency,
+  convertPrice,
+  formatPrice,
+  currencySymbol,
+} from "@/lib/currency";
+
 interface CartItem {
   planName: string;
   service: string;
   price: number;
+  currency: Currency;
   billingPeriod: "monthly" | "yearly" | "piece";
 }
 
@@ -17,6 +25,7 @@ const PricingPage = () => {
   const [billingPeriod, setBillingPeriod] = useState<
     "monthly" | "yearly" | "piece"
   >("monthly");
+  const [currency, setCurrency] = useState<Currency>("PHP");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [clientEmail, setClientEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -36,16 +45,15 @@ const PricingPage = () => {
       plans: [
         {
           name: "Standard",
-          monthlyPrice: 6888,
-          yearlyPrice: 82656, // 6888 × 12 ≈ 82,656
+          monthlyPrice: 4643.5, // 55,722 ÷ 12
+          yearlyPrice: 55722, // 888 × 62.75
+          usdMonthlyPrice: 74, // 888 ÷ 12
+          usdYearlyPrice: 888,
           features: [
             "Up to 5 pages",
             "Social Media Links integration",
             "Simple Contact Form",
             "Email Alerts for Form Inquiries",
-            // "Basic Mobile App (iOS/Android)",
-            // "Downloadable APK",
-            // "App Appears on Google Play",
             "1-Year Domain and Hosting",
           ],
           popular: false,
@@ -54,7 +62,7 @@ const PricingPage = () => {
         {
           name: "Premium",
           monthlyPrice: 9999,
-          yearlyPrice: 119988, // 9999 × 12
+          yearlyPrice: 119988,
           features: [
             "Everything in Standard, plus:",
             "Up to 10 Website Pages",
@@ -70,9 +78,8 @@ const PricingPage = () => {
         {
           name: "Business",
           monthlyPrice: 14999,
-          yearlyPrice: 179988, // 14999 × 12
+          yearlyPrice: 179988,
           features: [
-            // "Google Play Store Mobile App",
             "SEO Pro Setup +",
             "Dashboard Reports",
             "eCommerce - Ready Products Catalog",
@@ -87,9 +94,8 @@ const PricingPage = () => {
         {
           name: "Commerce",
           monthlyPrice: 21999,
-          yearlyPrice: 263988, // 21999 × 12
+          yearlyPrice: 263988,
           features: [
-            // "Google Play + Apple App Release",
             "Advanced Conversion Tracking",
             "Full eCommerce System",
             "Booking Calendar & Tools",
@@ -172,7 +178,7 @@ const PricingPage = () => {
         {
           name: "Standard",
           monthlyPrice: 4950,
-          yearlyPrice: 59400, // 4950 × 12
+          yearlyPrice: 59400,
           features: [
             "Product or Corporate Photo Shoot (up to 10 items or 5 pax)",
             "1 Short Promo Video (30–60s)",
@@ -187,7 +193,7 @@ const PricingPage = () => {
         {
           name: "Business Growth",
           monthlyPrice: 14750,
-          yearlyPrice: 177000, // 14750 × 12
+          yearlyPrice: 177000,
           features: [
             "Product + Lifestyle + Corporate Photography (up to 30 items / 8 pax)",
             "1 Full Promo Video (1–3 mins) + 3 Social Media Shorts",
@@ -203,7 +209,7 @@ const PricingPage = () => {
         {
           name: "Business",
           monthlyPrice: 29500,
-          yearlyPrice: 354000, // 29500 × 12
+          yearlyPrice: 354000,
           features: [
             "Full Product + Corporate + Lifestyle Coverage (unlimited products/team)",
             "Full Event Coverage (up to 8 hrs)",
@@ -226,7 +232,7 @@ const PricingPage = () => {
         {
           name: "Starter",
           monthlyPrice: 5999,
-          yearlyPrice: 71988, // 5999 × 12
+          yearlyPrice: 71988,
           features: [
             "1-2 Social Media Platforms",
             "4 Posts per Month",
@@ -241,7 +247,7 @@ const PricingPage = () => {
         {
           name: "Growth",
           monthlyPrice: 12999,
-          yearlyPrice: 155988, // 12999 × 12
+          yearlyPrice: 155988,
           features: [
             "2-3 Social Media Platforms",
             "8 Posts per Month",
@@ -257,7 +263,7 @@ const PricingPage = () => {
         {
           name: "Premium",
           monthlyPrice: 24999,
-          yearlyPrice: 299988, // 24999 × 12
+          yearlyPrice: 299988,
           features: [
             "4+ Social Media Platforms",
             "20 Posts per Month",
@@ -297,28 +303,58 @@ const PricingPage = () => {
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+  const cartHasMixedCurrencies = cart.some(
+    (item) => item.currency !== currency,
+  );
 
   const handleAddToCart = (plan: any) => {
-    const price =
-      billingPeriod === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
+    const isYearly = billingPeriod === "yearly";
+    const phpAmount = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+    const usdOverride = isYearly ? plan.usdYearlyPrice : plan.usdMonthlyPrice;
+    const price = convertPrice(phpAmount, usdOverride, currency);
 
-    if (price !== undefined) {
-      setCart([
-        ...cart,
-        {
-          planName: plan.name,
-          service: activeService,
-          price,
-          billingPeriod: activeService === "juantap" ? "piece" : billingPeriod,
-        },
-      ]);
-    }
+    setCart([
+      ...cart,
+      {
+        planName: plan.name,
+        service: activeService,
+        price,
+        currency,
+        billingPeriod: activeService === "juantap" ? "piece" : billingPeriod,
+      },
+    ]);
   };
 
   const isDesktopOrLaptop = useMediaQuery({
     query: "(min-width: 1000px)",
   });
   const isTabletOrMobile = useMediaQuery({ query: "(max-width: 999px)" });
+
+  // Shared currency toggle buttons (reused in both layouts below)
+  const currencyToggle = (
+    <div className="flex gap-2">
+      <button
+        onClick={() => setCurrency("PHP")}
+        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+          currency === "PHP"
+            ? "bg-cyan-500 text-white"
+            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+        }`}
+      >
+        ₱ PHP
+      </button>
+      <button
+        onClick={() => setCurrency("USD")}
+        className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+          currency === "USD"
+            ? "bg-cyan-500 text-white"
+            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+        }`}
+      >
+        $ USD
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16">
@@ -341,7 +377,6 @@ const PricingPage = () => {
                 onClick={() => {
                   setActiveService(key);
                   setSelectedCardIndex(null);
-                  // Reset billing period when switching to/from JuanTap
                   if (key === "juantap") {
                     setBillingPeriod("piece");
                   } else if (billingPeriod === "piece") {
@@ -362,31 +397,42 @@ const PricingPage = () => {
             ))}
           </div>
 
-          {/* Billing Period Selector - Only show for non-JuanTap services */}
-          {activeService !== "juantap" && (
-            <div className="flex justify-center gap-2 mb-4">
-              <button
-                onClick={() => setBillingPeriod("monthly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "monthly"
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingPeriod("yearly")}
-                className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
-                  billingPeriod === "yearly"
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Yearly
-              </button>
-            </div>
-          )}
+          {/* Billing Period + Currency Selector (combined row) */}
+          <div className="flex justify-center items-center gap-4 mb-4 flex-wrap">
+            {activeService !== "juantap" ? (
+              <>
+                {/* Monthly / Yearly */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setBillingPeriod("monthly")}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      billingPeriod === "monthly"
+                        ? "bg-cyan-500 text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setBillingPeriod("yearly")}
+                    className={`px-5 py-2 rounded-lg font-semibold transition-all text-sm ${
+                      billingPeriod === "yearly"
+                        ? "bg-cyan-500 text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+
+                {/* Divider - only shown when billing toggle is present */}
+                <div className="w-px h-6 bg-slate-700" />
+              </>
+            ) : null}
+
+            {/* Currency - always shown, alone for JuanTap */}
+            {currencyToggle}
+          </div>
 
           <p className="text-slate-400 text-sm">{currentService.description}</p>
         </div>
@@ -413,7 +459,10 @@ const PricingPage = () => {
               Schedule Consultation
             </Link>
             <p className="text-slate-400 text-sm mt-4">
-              <strong>Price Range:</strong> ₱10,000 - ₱150,000+
+              <strong>Price Range:</strong>{" "}
+              {currency === "USD"
+                ? `$${formatPrice(convertPrice(10000, undefined, "USD"), "USD")} - $${formatPrice(convertPrice(150000, undefined, "USD"), "USD")}+`
+                : "₱10,000 - ₱150,000+"}
             </p>
           </div>
         </section>
@@ -421,7 +470,6 @@ const PricingPage = () => {
 
       {isTabletOrMobile && activeService !== "socialmedia" && (
         <section className="mx-auto px-6 flex flex-col pb-10 items-center">
-          {/* Pricing Cards Container */}
           <div className="flex-1">
             <div className="relative">
               <div className="py-8" onClick={() => setSelectedCardIndex(null)}>
@@ -457,6 +505,7 @@ const PricingPage = () => {
                               ? "piece"
                               : billingPeriod
                           }
+                          currency={currency}
                           onAddToCart={() => handleAddToCart(plan)}
                           isHovered={isSelected}
                           isSmall={isCollapsed}
@@ -504,7 +553,8 @@ const PricingPage = () => {
                             {getServiceTitle(item.service)}
                           </p>
                           <p className="text-cyan-400 text-xs font-semibold">
-                            ₱{item.price.toLocaleString()}
+                            {currencySymbol(item.currency)}
+                            {formatPrice(item.price, item.currency)}
                             {item.billingPeriod === "piece"
                               ? " / piece"
                               : ` / ${item.billingPeriod === "yearly" ? "year" : "mo"}`}
@@ -523,12 +573,19 @@ const PricingPage = () => {
                   </div>
 
                   <div className="border-t border-slate-600 pt-4">
+                    {cartHasMixedCurrencies && (
+                      <p className="text-amber-400 text-xs mb-2">
+                        Cart has items in different currencies — total below
+                        mixes them.
+                      </p>
+                    )}
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-slate-300 font-semibold">
                         Total:
                       </span>
                       <span className="text-2xl font-bold text-cyan-400">
-                        ₱{cartTotal.toLocaleString()}
+                        {currencySymbol(currency)}
+                        {formatPrice(cartTotal, currency)}
                       </span>
                     </div>
 
@@ -587,6 +644,7 @@ const PricingPage = () => {
               billingPeriod={
                 activeService === "juantap" ? "piece" : billingPeriod
               }
+              currency={currency}
               onAddToCart={() => handleAddToCart(plan)}
               isHovered={false}
               isSmall={false}

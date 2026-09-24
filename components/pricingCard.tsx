@@ -3,6 +3,12 @@
 import type React from "react";
 import { Check } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
+import {
+  type Currency,
+  convertPrice,
+  formatPrice,
+  currencySymbol,
+} from "@/lib/currency";
 
 interface Plan {
   name: string;
@@ -11,13 +17,18 @@ interface Plan {
   features: string[];
   cta: string;
   badge?: string;
-  monthlyPrice?: number;
-  yearlyPrice?: number;
+  monthlyPrice?: number; // PHP
+  yearlyPrice?: number; // PHP
+  usdMonthlyPrice?: number; // optional fixed USD price (overrides conversion)
+  usdYearlyPrice?: number; // optional fixed USD price (overrides conversion)
 }
 
 interface PricingCardProps {
   plan: Plan;
   billingPeriod: "monthly" | "yearly" | "piece";
+  currency: Currency;
+  /** Current USD->PHP rate to convert with. Defaults to the fixed fallback rate. */
+  rate?: number;
   onAddToCart?: () => void;
   isHovered?: boolean;
   isSmall?: boolean;
@@ -26,18 +37,22 @@ interface PricingCardProps {
 const PricingCard: React.FC<PricingCardProps> = ({
   plan,
   billingPeriod,
+  currency,
+  rate,
   onAddToCart,
   isHovered = false,
   isSmall = false,
 }) => {
   const getPrice = () => {
-    if (billingPeriod === "yearly") {
-      return plan.yearlyPrice || 0;
-    }
-    return plan.monthlyPrice || 0;
+    const isYearly = billingPeriod === "yearly";
+    const phpAmount = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+    const usdOverride = isYearly ? plan.usdYearlyPrice : plan.usdMonthlyPrice;
+    return convertPrice(phpAmount, usdOverride, currency, rate);
   };
 
   const price = getPrice();
+  const symbol = currencySymbol(currency);
+  const formattedPrice = formatPrice(price, currency);
 
   const getBillingText = () => {
     if (billingPeriod === "piece") return "/piece";
@@ -64,12 +79,9 @@ const PricingCard: React.FC<PricingCardProps> = ({
         <div className="transform -rotate-90 whitespace-nowrap text-center flex items-center gap-3">
           <h3 className="font-bold text-white text-xl">{plan.name}</h3>
           <div className="flex items-baseline gap-0.5">
-            <span className="font-semibold text-white text-lg">₱</span>
+            <span className="font-semibold text-white text-lg">{symbol}</span>
             <span className="font-medium text-white text-xl">
-              {price.toLocaleString("en-PH", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
+              {formattedPrice}
             </span>
           </div>
           <span className="text-slate-300 font-medium text-sm">
@@ -155,15 +167,12 @@ const PricingCard: React.FC<PricingCardProps> = ({
                   <span
                     className={`font-black text-white transition-all duration-500 ${isHovered ? "text-2xl" : "text-xl"}`}
                   >
-                    ₱
+                    {symbol}
                   </span>
                   <span
                     className={`font-black text-white transition-all duration-500 ${isHovered ? "text-3xl" : "text-2xl"}`}
                   >
-                    {price.toLocaleString("en-PH", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
+                    {formattedPrice}
                   </span>
                 </div>
                 <span className="text-slate-300 font-medium text-sm block truncate">
@@ -206,12 +215,9 @@ const PricingCard: React.FC<PricingCardProps> = ({
             {/* Price */}
             <div className="mb-5 pb-5 border-b border-slate-700">
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-white">₱</span>
+                <span className="text-2xl font-black text-white">{symbol}</span>
                 <span className="text-3xl font-black text-white">
-                  {price.toLocaleString("en-PH", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
+                  {formattedPrice}
                 </span>
                 <span className="text-slate-300 font-medium text-sm ml-1">
                   {getBillingText()}
