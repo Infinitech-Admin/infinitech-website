@@ -19,7 +19,17 @@ interface CartItem {
   price: number;
   currency: Currency;
   billingPeriod: "monthly" | "yearly" | "piece";
+  storageLabel?: string;
 }
+
+// Storage add-on tiers for Website plans. Base plan includes 7GB;
+// upgrading adds a flat PHP amount that gets converted like any other price.
+type StorageTier = "7" | "50" | "100";
+const STORAGE_ADDON_PRICE_PHP: Record<StorageTier, number> = {
+  "7": 0,
+  "50": 2500,
+  "100": 3500,
+};
 
 const PricingPage = () => {
   const [activeService, setActiveService] = useState("website");
@@ -38,6 +48,12 @@ const PricingPage = () => {
     null,
   );
 
+  // Per-plan storage selection, keyed by plan name (Website service only).
+  // Defaults to "7" (the included 7GB) when a plan has no entry yet.
+  const [storageSelections, setStorageSelections] = useState<
+    Record<string, StorageTier>
+  >({});
+
   const services = {
     website: {
       title: "Website / Web App With Mobile App",
@@ -46,16 +62,21 @@ const PricingPage = () => {
       plans: [
         {
           name: "Standard",
-          monthlyPrice: 4643.5, // 55,722 ÷ 12
-          yearlyPrice: 55722, // 888 × 62.75
-          usdMonthlyPrice: 74, // 888 ÷ 12
-          usdYearlyPrice: 888,
+          monthlyPrice: 5522.88,
+          yearlyPrice: 55722,
+          usdMonthlyPrice: 88,
+          usdYearlyPrice: 1056,
           features: [
             "Up to 5 pages",
             "Social Media Links integration",
             "Simple Contact Form",
             "Email Alerts for Form Inquiries",
             "1-Year Domain and Hosting",
+            "7GB Storage (Upgradeable to 50GB or 100GB)",
+            "Mobile-Responsive Design",
+            "Basic On-Page SEO Setup",
+            "Free SSL Security Certificate",
+            "30 Days of Free Minor Revisions",
           ],
           popular: false,
           cta: "Get Started",
@@ -312,7 +333,18 @@ const PricingPage = () => {
     const isYearly = billingPeriod === "yearly";
     const phpAmount = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     const usdOverride = isYearly ? plan.usdYearlyPrice : plan.usdMonthlyPrice;
-    const price = convertPrice(phpAmount, usdOverride, currency);
+    const basePrice = convertPrice(phpAmount, usdOverride, currency);
+
+    // Storage add-on only applies to Website plans.
+    const storageTier: StorageTier =
+      activeService === "website" ? (storageSelections[plan.name] ?? "7") : "7";
+    const storageAddonPhp = STORAGE_ADDON_PRICE_PHP[storageTier];
+    const storageAddonPrice =
+      storageAddonPhp > 0
+        ? convertPrice(storageAddonPhp, undefined, currency)
+        : 0;
+
+    const price = basePrice + storageAddonPrice;
 
     setCart([
       ...cart,
@@ -322,6 +354,8 @@ const PricingPage = () => {
         price,
         currency,
         billingPeriod: activeService === "juantap" ? "piece" : billingPeriod,
+        storageLabel:
+          activeService === "website" ? `${storageTier}GB Storage` : undefined,
       },
     ]);
   };
@@ -357,6 +391,62 @@ const PricingPage = () => {
       />
     </div>
   );
+
+  // Storage upgrade selector, rendered under each Website plan card.
+  // Clicks stop propagation so they don't trigger the card-select handler
+  // that wraps cards on the tablet/mobile layout.
+  const renderStorageSelector = (planName: string) => {
+    const selected = storageSelections[planName] ?? "7";
+
+    const tierButtonClass = (tier: StorageTier) =>
+      `px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors ${
+        selected === tier
+          ? "bg-gradient-to-r from-cyan-500 to-blue-500 border-cyan-400 text-white"
+          : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
+      }`;
+
+    return (
+      <div className="mt-3 flex flex-col gap-2">
+        <p className="text-xs text-slate-400">
+          Storage:{" "}
+          <span className="text-slate-200 font-medium">{selected}GB</span>
+          {selected === "7" ? " (included)" : " (upgraded)"}
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setStorageSelections((prev) => ({ ...prev, [planName]: "7" }));
+            }}
+            className={tierButtonClass("7")}
+          >
+            7GB (included)
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setStorageSelections((prev) => ({ ...prev, [planName]: "50" }));
+            }}
+            className={tierButtonClass("50")}
+          >
+            +50GB (₱2,500)
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setStorageSelections((prev) => ({ ...prev, [planName]: "100" }));
+            }}
+            className={tierButtonClass("100")}
+          >
+            +100GB (₱3,500)
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white py-16">
@@ -478,6 +568,9 @@ const PricingPage = () => {
                           isHovered={isSelected}
                           isSmall={isCollapsed}
                         />
+                        {activeService === "website" &&
+                          !isCollapsed &&
+                          renderStorageSelector(plan.name)}
                       </div>
                     );
                   })}
@@ -519,6 +612,7 @@ const PricingPage = () => {
                           </p>
                           <p className="text-slate-400 text-xs">
                             {getServiceTitle(item.service)}
+                            {item.storageLabel ? ` · ${item.storageLabel}` : ""}
                           </p>
                           <p className="text-cyan-400 text-xs font-semibold">
                             {currencySymbol(item.currency)}
@@ -610,17 +704,20 @@ const PricingPage = () => {
 
           <div className="grid grid-cols-4 gap-6">
             {currentPlans.map((plan, index) => (
-              <PricingCard
-                key={index}
-                plan={plan}
-                billingPeriod={
-                  activeService === "juantap" ? "piece" : billingPeriod
-                }
-                currency={currency}
-                onAddToCart={() => handleAddToCart(plan)}
-                isHovered={false}
-                isSmall={false}
-              />
+              <div key={index} className="flex flex-col">
+                <PricingCard
+                  plan={plan}
+                  billingPeriod={
+                    activeService === "juantap" ? "piece" : billingPeriod
+                  }
+                  currency={currency}
+                  onAddToCart={() => handleAddToCart(plan)}
+                  isHovered={false}
+                  isSmall={false}
+                />
+                {activeService === "website" &&
+                  renderStorageSelector(plan.name)}
+              </div>
             ))}
           </div>
         </section>
