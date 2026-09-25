@@ -105,6 +105,25 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  // Canonical host redirect: infinitechphil.com and www.infinitechphil.com
+  // were being treated as two separate origins by the browser (separate
+  // cookie jars, separate localStorage). That split caused the admin's
+  // adminToken cookie (set on www) and localStorage token to go missing
+  // whenever they landed on the bare domain, producing 401s on protected
+  // API routes even though they were "logged in." Forcing everything onto
+  // one host keeps auth state consistent no matter which URL someone types
+  // or follows in.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "infinitechphil.com" }],
+        destination: "https://www.infinitechphil.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers for caching and security
   async headers() {
     return [
