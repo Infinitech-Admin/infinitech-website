@@ -3,13 +3,14 @@ import Hero from "@/components/user/home/hero/hero";
 // import PortfolioShowcase from "@/components/user/home/portfolio/portfolio-showcase";
 import About from "@/components/user/home/about";
 import Services from "@/components/user/home/services/services";
-
 import Testimonials from "@/components/user/home/testimonials/testimonials";
 import Contact from "@/components/user/contact/contact";
+import UpgradeModal from "@/components/user/home/upgrade-modal";
 
 const Page = () => {
   return (
     <>
+      <UpgradeModal />
       <Hero />
       {/* <PortfolioShowcase /> */}
 
