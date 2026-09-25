@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useMediaQuery } from "react-responsive";
 import {
   type Currency,
@@ -33,6 +33,13 @@ interface PricingCardProps {
   isHovered?: boolean;
   isSmall?: boolean;
 }
+
+// A feature line like "Everything in Standard, plus:" signals inherited
+// features from a lower tier. These get a Plus icon + a glowing bordered
+// pill instead of the regular checkmark row, so they stand out as "carried
+// over from the plan below" rather than just another bullet.
+const isInheritedLine = (feature: string) =>
+  /^everything in/i.test(feature.trim());
 
 const PricingCard: React.FC<PricingCardProps> = ({
   plan,
@@ -81,6 +88,38 @@ const PricingCard: React.FC<PricingCardProps> = ({
       />
     </>
   );
+
+  // Renders one feature row. Inherited-tier lines ("Everything in X, plus:")
+  // get a Plus icon and a glowing bordered pill; everything else keeps the
+  // normal checkmark row.
+  const renderFeature = (feature: string, idx: number) => {
+    if (isInheritedLine(feature)) {
+      return (
+        <div
+          key={idx}
+          className="flex items-start gap-2.5 rounded-lg border border-cyan-400/60 bg-cyan-500/10 px-3 py-2 shadow-[0_0_14px_rgba(34,211,238,0.45)]"
+        >
+          <Plus className="flex-shrink-0 mt-0.5 w-4 h-4 text-cyan-300" />
+          <span className="text-cyan-100 text-sm leading-relaxed font-semibold">
+            {feature}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div key={idx} className="flex items-start gap-2.5">
+        <Check
+          className={`flex-shrink-0 mt-0.5 w-4 h-4 ${
+            plan.popular ? "text-cyan-400" : "text-slate-400"
+          }`}
+        />
+        <span className="text-slate-100 text-sm leading-relaxed">
+          {feature}
+        </span>
+      </div>
+    );
+  };
 
   // Collapsed state - show only title and price vertically (when another card is clicked)
   if (isSmall) {
@@ -159,18 +198,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 className={`transition-all duration-500 ${isHovered ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-2.5"}`}
               >
                 {(isHovered ? plan.features : plan.features.slice(0, 8)).map(
-                  (feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5">
-                      <Check
-                        className={`flex-shrink-0 mt-0.5 w-4 h-4 ${
-                          plan.popular ? "text-cyan-400" : "text-slate-400"
-                        }`}
-                      />
-                      <span className="text-slate-100 text-sm leading-relaxed">
-                        {feature}
-                      </span>
-                    </div>
-                  ),
+                  (feature, idx) => renderFeature(feature, idx),
                 )}
                 {!isHovered && plan.features.length > 8 && (
                   <span className="text-slate-400 text-sm italic pl-6">
@@ -248,16 +276,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
 
             {/* Features List - single column, full width for readability */}
             <div className="flex flex-col gap-2.5 flex-1">
-              {plan.features.map((feature, idx) => (
-                <div key={idx} className="flex items-start gap-2.5">
-                  <Check
-                    className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.popular ? "text-cyan-400" : "text-slate-400"}`}
-                  />
-                  <span className="text-slate-100 text-sm leading-relaxed">
-                    {feature}
-                  </span>
-                </div>
-              ))}
+              {plan.features.map((feature, idx) => renderFeature(feature, idx))}
             </div>
           </div>
         </div>
