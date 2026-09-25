@@ -8,7 +8,7 @@ const Right = () => {
     <div className="relative hidden lg:flex justify-center items-center">
       <Image
         alt="Infinitech team at work"
-        src="/images/hero-laptop.png"
+        src="/images/rigtimage.png"
         className="w-full h-auto object-contain"
       />
     </div>

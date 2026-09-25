@@ -160,7 +160,7 @@ function isVideoFile(src: string): boolean {
 const packages = [
   {
     name: "Standard",
-    price: "4,644",
+    price: "5,523",
     icon: FaGlobe,
     popular: false,
     bestFor:
@@ -171,6 +171,11 @@ const packages = [
       "Simple Contact Form",
       "Email Alerts for Form Inquiries",
       "1-Year Domain and Hosting",
+      "5GB Storage (Upgradeable to 50GB or 100GB",
+      "Mobile-Responsive Design",
+      "Basic On-Page SEO Setup",
+      "Free SSL Security Certificate",
+      "30 Days of Free Minor Revisions",
     ],
   },
   {
