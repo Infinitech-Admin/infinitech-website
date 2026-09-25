@@ -72,7 +72,7 @@ const PricingPage = () => {
             "Simple Contact Form",
             "Email Alerts for Form Inquiries",
             "1-Year Domain and Hosting",
-            "7GB Storage (Upgradeable to 50GB or 100GB)",
+            "5GB Storage (Upgradeable to 50GB or 100GB)",
             "Mobile-Responsive Design",
             "Basic On-Page SEO Setup",
             "Free SSL Security Certificate",
@@ -471,7 +471,8 @@ const PricingPage = () => {
     return (
       <div className="mt-3 flex flex-col gap-2">
         <p className="text-xs text-slate-400">
-          Storage: <span className="text-slate-200 font-medium">{selected}GB</span>
+          Storage:{" "}
+          <span className="text-slate-200 font-medium">{selected}GB</span>
           {selected === "7" ? " (included)" : " (upgraded)"}
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -483,7 +484,7 @@ const PricingPage = () => {
             }}
             className={tierButtonClass("7")}
           >
-            7GB (included)
+            5GB (included)
           </button>
           <button
             type="button"

@@ -750,30 +750,27 @@ export default function EmployeeMasterfilePage() {
         </div>
       </div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* ── STAT CARD ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          <Card className="border-2 border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-4 sm:p-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
-                  Total Employees
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                  {employees.length}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
-                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
+      <div className="w-full py-8 space-y-6">
         {/* ── TABLE + LEFT STATUS FILTER ── */}
         <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur overflow-hidden">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10 px-4 sm:px-6 lg:px-8">
+            {/*
+              Matches the blue header above: title block and the action on
+              the other side (there, the buttons; here, the search box) both
+              pin to the top via items-start, instead of items-center, so the
+              search input sits level with "All Records" the same way "Add
+              Employee" sits level with "Employee Masterfile" up top.
+
+              The Card's outer wrapper no longer carries "px-4 sm:px-6
+              lg:px-8" (see the div right above <Card>) so the card box
+              itself spans the same width as the blue header block above it
+              — their left/right edges now line up. That padding moved here
+              instead, so CardHeader's own text still sits inset by the same
+              amount as the header's text, keeping "All Records" aligned
+              under "Employee Masterfile" and the search box aligned under
+              "Back to Dashboard".
+            */}
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
                   <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
