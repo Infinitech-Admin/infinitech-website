@@ -329,22 +329,81 @@ const PricingPage = () => {
     (item) => item.currency !== currency,
   );
 
-  const handleAddToCart = (plan: any) => {
+  // Storage add-on price is a MONTHLY rate. When billing is yearly, it needs
+  // to be scaled ×12 so the yearly total reflects 12 months of the upgrade
+  // (otherwise a yearly plan would only be charged one month's worth of it).
+  const getStorageAddonPhp = (
+    tier: StorageTier,
+    period: "monthly" | "yearly" | "piece",
+  ) => {
+    const monthlyAddon = STORAGE_ADDON_PRICE_PHP[tier];
+    if (monthlyAddon === 0) return 0;
+    return period === "yearly" ? monthlyAddon * 12 : monthlyAddon;
+  };
+
+  // PricingCard computes its own displayed price straight from
+  // plan.monthlyPrice/yearlyPrice (and plan.usdMonthlyPrice/usdYearlyPrice
+  // when set, e.g. Standard). To make the price shown ON the card reflect
+  // the chosen storage tier, we pass PricingCard a copy of the plan with
+  // the add-on already folded into every price field it might read from —
+  // including the USD overrides, since those otherwise bypass the PHP
+  // add-on entirely when currency is USD.
+  const getDisplayPlan = (plan: any) => {
+    if (activeService !== "website") return plan;
+    const tier: StorageTier = storageSelections[plan.name] ?? "7";
+    if (tier === "7") return plan;
+
+    const monthlyAddonPhp = STORAGE_ADDON_PRICE_PHP[tier];
+    const yearlyAddonPhp = monthlyAddonPhp * 12;
+    const monthlyAddonUsd = convertPrice(monthlyAddonPhp, undefined, "USD");
+    const yearlyAddonUsd = convertPrice(yearlyAddonPhp, undefined, "USD");
+
+    return {
+      ...plan,
+      monthlyPrice: plan.monthlyPrice + monthlyAddonPhp,
+      yearlyPrice: plan.yearlyPrice + yearlyAddonPhp,
+      usdMonthlyPrice:
+        plan.usdMonthlyPrice !== undefined
+          ? plan.usdMonthlyPrice + monthlyAddonUsd
+          : undefined,
+      usdYearlyPrice:
+        plan.usdYearlyPrice !== undefined
+          ? plan.usdYearlyPrice + yearlyAddonUsd
+          : undefined,
+    };
+  };
+
+  // Computes the effective price used for the cart: base plan price plus
+  // the storage add-on (Website plans only), converted into the active
+  // currency.
+  const computeEffectivePrice = (plan: any) => {
     const isYearly = billingPeriod === "yearly";
     const phpAmount = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     const usdOverride = isYearly ? plan.usdYearlyPrice : plan.usdMonthlyPrice;
     const basePrice = convertPrice(phpAmount, usdOverride, currency);
 
-    // Storage add-on only applies to Website plans.
     const storageTier: StorageTier =
-      activeService === "website" ? (storageSelections[plan.name] ?? "7") : "7";
-    const storageAddonPhp = STORAGE_ADDON_PRICE_PHP[storageTier];
+      activeService === "website"
+        ? (storageSelections[plan.name] ?? "7")
+        : "7";
+    const storageAddonPhp = getStorageAddonPhp(
+      storageTier,
+      activeService === "juantap" ? "piece" : billingPeriod,
+    );
     const storageAddonPrice =
       storageAddonPhp > 0
         ? convertPrice(storageAddonPhp, undefined, currency)
         : 0;
 
-    const price = basePrice + storageAddonPrice;
+    return {
+      price: basePrice + storageAddonPrice,
+      storageTier,
+      hasStorageAddon: storageAddonPrice > 0,
+    };
+  };
+
+  const handleAddToCart = (plan: any) => {
+    const { price, storageTier } = computeEffectivePrice(plan);
 
     setCart([
       ...cart,
@@ -394,7 +453,8 @@ const PricingPage = () => {
 
   // Storage upgrade selector, rendered under each Website plan card.
   // Clicks stop propagation so they don't trigger the card-select handler
-  // that wraps cards on the tablet/mobile layout.
+  // that wraps cards on the tablet/mobile layout. The price on the card
+  // above updates on its own via getDisplayPlan — no need to repeat it here.
   const renderStorageSelector = (planName: string) => {
     const selected = storageSelections[planName] ?? "7";
 
@@ -408,8 +468,7 @@ const PricingPage = () => {
     return (
       <div className="mt-3 flex flex-col gap-2">
         <p className="text-xs text-slate-400">
-          Storage:{" "}
-          <span className="text-slate-200 font-medium">{selected}GB</span>
+          Storage: <span className="text-slate-200 font-medium">{selected}GB</span>
           {selected === "7" ? " (included)" : " (upgraded)"}
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -431,7 +490,7 @@ const PricingPage = () => {
             }}
             className={tierButtonClass("50")}
           >
-            +50GB (₱2,500)
+            +50GB (₱2,500/mo)
           </button>
           <button
             type="button"
@@ -441,7 +500,7 @@ const PricingPage = () => {
             }}
             className={tierButtonClass("100")}
           >
-            +100GB (₱3,500)
+            +100GB (₱3,500/mo)
           </button>
         </div>
       </div>
@@ -557,7 +616,7 @@ const PricingPage = () => {
                         }}
                       >
                         <PricingCard
-                          plan={plan}
+                          plan={getDisplayPlan(plan)}
                           billingPeriod={
                             activeService === "juantap"
                               ? "piece"
@@ -706,7 +765,7 @@ const PricingPage = () => {
             {currentPlans.map((plan, index) => (
               <div key={index} className="flex flex-col">
                 <PricingCard
-                  plan={plan}
+                  plan={getDisplayPlan(plan)}
                   billingPeriod={
                     activeService === "juantap" ? "piece" : billingPeriod
                   }
