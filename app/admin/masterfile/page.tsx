@@ -115,7 +115,20 @@ const formatDate = (dateString?: string | null) => {
     year: "numeric",
   });
 };
-
+// Short display name for the table row only — full first name, middle name
+// collapsed to just its initial, full last name. Keeps getFullName() (used
+// in dialogs/toasts) untouched.
+const getShortName = (employee: Employee) => {
+  const parts = [
+    (employee as any).first_name,
+    (employee as any).middle_name
+      ? `${(employee as any).middle_name.trim().charAt(0).toUpperCase()}.`
+      : null,
+    (employee as any).last_name,
+    (employee as any).suffix,
+  ].filter(Boolean);
+  return parts.join(" ") || getFullName(employee);
+};
 const formatCurrency = (value?: string | null) => {
   if (!value) return "—";
   const num = Number(value);
@@ -754,22 +767,6 @@ export default function EmployeeMasterfilePage() {
         {/* ── TABLE + LEFT STATUS FILTER ── */}
         <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur overflow-hidden">
           <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10 px-4 sm:px-6 lg:px-8">
-            {/*
-              Matches the blue header above: title block and the action on
-              the other side (there, the buttons; here, the search box) both
-              pin to the top via items-start, instead of items-center, so the
-              search input sits level with "All Records" the same way "Add
-              Employee" sits level with "Employee Masterfile" up top.
-
-              The Card's outer wrapper no longer carries "px-4 sm:px-6
-              lg:px-8" (see the div right above <Card>) so the card box
-              itself spans the same width as the blue header block above it
-              — their left/right edges now line up. That padding moved here
-              instead, so CardHeader's own text still sits inset by the same
-              amount as the header's text, keeping "All Records" aligned
-              under "Employee Masterfile" and the search box aligned under
-              "Back to Dashboard".
-            */}
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
@@ -824,22 +821,30 @@ export default function EmployeeMasterfilePage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                      <TableHead className="font-semibold">ID Number</TableHead>
-                      <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold hidden md:table-cell">
+                      <TableHead className="font-semibold whitespace-nowrap">
+                        ID Number
+                      </TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap">
+                        Name
+                      </TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell whitespace-nowrap">
                         Department
                       </TableHead>
-                      <TableHead className="font-semibold hidden md:table-cell">
+                      <TableHead className="font-semibold hidden md:table-cell whitespace-nowrap">
                         Position
                       </TableHead>
-                      <TableHead className="font-semibold hidden lg:table-cell">
+                      <TableHead className="font-semibold hidden lg:table-cell whitespace-nowrap">
                         Date Hired
                       </TableHead>
-                      <TableHead className="font-semibold hidden xl:table-cell">
+                      <TableHead className="font-semibold hidden xl:table-cell whitespace-nowrap">
                         Contact
                       </TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Actions</TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap">
+                        Status
+                      </TableHead>
+                      <TableHead className="font-semibold whitespace-nowrap">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -860,43 +865,43 @@ export default function EmployeeMasterfilePage() {
                           key={employee.id}
                           className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                         >
-                          <TableCell className="font-mono text-sm">
+                          <TableCell className="font-mono text-sm whitespace-nowrap">
                             {employee.id_number}
                           </TableCell>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                                 {employee.first_name
                                   ?.charAt(0)
                                   ?.toUpperCase() || "?"}
                               </div>
-                              <span className="truncate">
-                                {getFullName(employee)}
+                              <span className="truncate max-w-[180px] inline-block align-middle">
+                                {getShortName(employee)}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm">
+                          <TableCell className="hidden md:table-cell text-sm whitespace-nowrap">
                             {employee.department}
                           </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm">
+                          <TableCell className="hidden md:table-cell text-sm whitespace-nowrap">
                             <span className="flex items-center gap-1">
-                              <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                              <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               {employee.position}
                             </span>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell text-sm">
+                          <TableCell className="hidden lg:table-cell text-sm whitespace-nowrap">
                             {formatDate(employee.date_hired)}
                           </TableCell>
-                          <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
+                          <TableCell className="hidden xl:table-cell text-xs text-muted-foreground whitespace-nowrap">
                             {employee.mobile_number && (
                               <div className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
+                                <Phone className="h-3 w-3 shrink-0" />
                                 {employee.mobile_number}
                               </div>
                             )}
                             {employee.email_address && (
                               <div className="flex items-center gap-1">
-                                <Mail className="h-3 w-3" />
+                                <Mail className="h-3 w-3 shrink-0" />
                                 {employee.email_address}
                               </div>
                             )}
@@ -904,7 +909,7 @@ export default function EmployeeMasterfilePage() {
                               !employee.email_address &&
                               "—"}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <Select
                               value={employee.status}
                               onValueChange={(v) =>
@@ -944,7 +949,7 @@ export default function EmployeeMasterfilePage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               {/* View */}
                               <Dialog>
@@ -1100,14 +1105,6 @@ export default function EmployeeMasterfilePage() {
                                         )}
                                     </div>
                                   )}
-                                  {/*
-                                    Three "generate a document" actions for this
-                                    employee. They're one family of action (not
-                                    three different severities/intents), so they
-                                    share one gradient — and they always stay on
-                                    one row, with shortened labels so the row
-                                    never wraps even on narrow dialogs.
-                                  */}
                                   <DialogFooter className="mt-2 grid grid-cols-3 gap-2">
                                     <Button
                                       onClick={() =>
@@ -1141,12 +1138,6 @@ export default function EmployeeMasterfilePage() {
                                 </DialogContent>
                               </Dialog>
 
-                              {/*
-                                Generate actions — was three separate icon
-                                buttons (COE / Clearance Form / Clearance
-                                Cert), now collapsed into one dropdown so the
-                                row stays compact.
-                              */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
