@@ -387,7 +387,7 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
         <div key={problem.label} className="group h-44 [perspective:1200px]">
           <div className="relative h-full w-full transition-transform duration-500 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
             {/* Front face — icon + copy, same layout as before */}
-            <div className="absolute inset-0 flex items-start gap-3.5 rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden]">
+            <div className="absolute inset-0 flex items-start gap-3.5 rounded-lg bg-white border border-gray-200 p-4 [backface-visibility:hidden]">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
                 {problem.image ? (
                   <img
@@ -417,7 +417,7 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
             </div>
 
             {/* Back face — the actual image, revealed when the card flips on hover */}
-            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white border border-gray-200 p-4 [backface-visibility:hidden] [transform:rotateY(180deg)]">
               {problem.image ? (
                 <img
                   src={problem.image}
@@ -1482,13 +1482,7 @@ function PlanFaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div
-      className="rounded-2xl p-5 sm:p-6"
-      style={{
-        background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
-        boxShadow: "0 8px 30px rgba(13,27,62,0.35)",
-      }}
-    >
+    <div className="rounded-xl bg-slate-900 border border-slate-700 p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
         <FaSearchDollar className="h-4 w-4" style={{ color: "#f5a623" }} />
         <p className="text-white font-bold text-sm sm:text-base">
@@ -1502,7 +1496,7 @@ function PlanFaqAccordion() {
           return (
             <div
               key={item.question}
-              className="rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden"
+              className="rounded-lg bg-slate-800 border border-slate-700 overflow-hidden"
             >
               <button
                 type="button"
@@ -2302,6 +2296,132 @@ function BrandingSection({
 }
 
 /* ============================================================================
+ * COMPONENT — Ambient "network" background animation for the services
+ * section. Slow-drifting nodes connected by lines that fade in as they get
+ * close; a single deliberate ambient motion, not per-card decoration. Skips
+ * the animation loop (renders one static frame) when the visitor has
+ * prefers-reduced-motion set. Resizes with the section itself (via
+ * ResizeObserver), since switching tabs changes the section's height.
+ * ========================================================================== */
+
+function TechBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    type Node = { x: number; y: number; vx: number; vy: number };
+    let nodes: Node[] = [];
+    let width = 0;
+    let height = 0;
+    let rafId = 0;
+
+    const SPACING = 130;
+    const LINK_DISTANCE = 150;
+
+    function resize() {
+      width = parent!.clientWidth;
+      height = parent!.clientHeight;
+      canvas!.width = width * dpr;
+      canvas!.height = height * dpr;
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cols = Math.max(4, Math.round(width / SPACING));
+      const rows = Math.max(3, Math.round(height / SPACING));
+      nodes = [];
+      for (let i = 0; i <= cols; i++) {
+        for (let j = 0; j <= rows; j++) {
+          nodes.push({
+            x: (i / cols) * width + (Math.random() - 0.5) * 36,
+            y: (j / rows) * height + (Math.random() - 0.5) * 36,
+            vx: (Math.random() - 0.5) * 0.12,
+            vy: (Math.random() - 0.5) * 0.12,
+          });
+        }
+      }
+    }
+
+    function tick() {
+      if (!prefersReducedMotion) {
+        for (const n of nodes) {
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0 || n.x > width) n.vx *= -1;
+          if (n.y < 0 || n.y > height) n.vy *= -1;
+        }
+      }
+
+      ctx!.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < LINK_DISTANCE) {
+            const alpha = (1 - dist / LINK_DISTANCE) * 0.14;
+            ctx!.strokeStyle = `rgba(37, 99, 235, ${alpha})`;
+            ctx!.lineWidth = 1;
+            ctx!.beginPath();
+            ctx!.moveTo(a.x, a.y);
+            ctx!.lineTo(b.x, b.y);
+            ctx!.stroke();
+          }
+        }
+      }
+
+      for (const n of nodes) {
+        ctx!.fillStyle = "rgba(37, 99, 235, 0.35)";
+        ctx!.beginPath();
+        ctx!.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
+        ctx!.fill();
+      }
+
+      if (!prefersReducedMotion) {
+        rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    resize();
+    tick();
+
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      if (prefersReducedMotion) tick();
+    });
+    resizeObserver.observe(parent);
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    />
+  );
+}
+
+/* ============================================================================
  * SECTION: All page modals
  * ========================================================================== */
 
@@ -2440,11 +2560,11 @@ function ServiceTabNav({
   onChange: (title: string) => void;
 }) {
   return (
-    <div className="sticky top-0 z-20 mb-10 bg-white/90 backdrop-blur-md border-b border-gray-200">
+    <div className="sticky top-0 z-20 mb-10 -mx-4 px-4 bg-white backdrop-blur-md border-b border-gray-200">
       <div
         role="tablist"
         aria-label="Service categories"
-        className="flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="container mx-auto flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {tabs.map((tab) => {
           const isActive = tab.title === active;
@@ -2552,16 +2672,18 @@ export default function Services() {
   };
 
   return (
-    <section className="container mx-auto px-4 py-12 lg:py-16">
-      {/* Header */}
-      <div className="max-w-xl mx-auto text-center mb-10">
-        <h1 className="font-bold text-accent text-4xl">OUR SERVICES</h1>
-        <p className="text-gray-500 mt-2">
-          Solutions built to grow your business.
-        </p>
-      </div>
+    <section className="relative w-full px-4 py-12 lg:py-16">
+      <TechBackground />
+      <div className="container relative z-10 mx-auto">
+        {/* Header */}
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <h1 className="font-bold text-accent text-4xl">OUR SERVICES</h1>
+          <p className="text-gray-500 mt-2">
+            Solutions built to grow your business.
+          </p>
+        </div>
 
-      <ServiceTabNav
+        <ServiceTabNav
         tabs={mainSectionCards}
         active={activeTab}
         onChange={setActiveTab}
@@ -2604,6 +2726,7 @@ export default function Services() {
         paidAdsOpen={paidAdsOpen}
         onPaidAdsOpenChange={onPaidAdsOpenChange}
       />
+      </div>
     </section>
   );
 }
