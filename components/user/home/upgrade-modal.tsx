@@ -40,10 +40,40 @@ const UpgradeModal = () => {
         <h2 className="mb-2 text-xl font-bold text-white">
           Website Under <span style={{ color: "#22d3ee" }}>Upgrade</span>
         </h2>
-        <p className="mb-6 text-sm leading-relaxed text-gray-300">
-          We&apos;re currently rolling out improvements to bring you a better
-          experience. Some sections may look a little different or be
-          temporarily unavailable. Thanks for your patience!
+
+        <p className="mb-4 text-sm leading-relaxed text-gray-300">
+          We&apos;re currently improving the website&apos;s design and user
+          experience to make everything cleaner, smoother, and more enjoyable
+          to use.
+        </p>
+
+        <p className="mb-4 text-sm leading-relaxed text-gray-300">
+          <span className="font-semibold text-cyan-300">
+            The website is still fully functional.
+          </span>{" "}
+          You can continue using the available features as usual while we work
+          behind the scenes on the improvements.
+        </p>
+
+        <div
+          className="mb-6 rounded-lg border p-3"
+          style={{
+            borderColor: "rgba(34,211,238,0.2)",
+            backgroundColor: "rgba(34,211,238,0.05)",
+          }}
+        >
+          <p className="text-xs uppercase tracking-wide text-cyan-300">
+            Target Completion
+          </p>
+          <p className="mt-1 text-sm font-semibold text-white">
+            September 28, 2026 at 1:00 PM
+          </p>
+        </div>
+
+        <p className="mb-6 text-xs leading-relaxed text-gray-400">
+          During this upgrade, you may notice changes to the appearance,
+          layout, or some sections of the website. We appreciate your patience
+          while we make these improvements.
         </p>
 
         <button
@@ -69,3 +99,4 @@ const UpgradeModal = () => {
 };
 
 export default UpgradeModal;
+
