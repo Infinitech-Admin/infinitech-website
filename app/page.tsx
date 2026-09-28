@@ -5,12 +5,12 @@ import About from "@/components/user/home/about";
 import Services from "@/components/user/home/services/services";
 import Testimonials from "@/components/user/home/testimonials/testimonials";
 import Contact from "@/components/user/contact/contact";
-import UpgradeModal from "@/components/user/home/upgrade-modal";
+// import UpgradeModal from "@/components/user/home/upgrade-modal";
 
 const Page = () => {
   return (
     <>
-      <UpgradeModal />
+      {/* <UpgradeModal /> */}
       <Hero />
       {/* <PortfolioShowcase /> */}
 

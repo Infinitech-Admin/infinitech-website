@@ -2607,7 +2607,9 @@ function ServiceTabNav({
               </span>
               <span
                 className="absolute inset-x-3 -bottom-px h-[2px] rounded-full transition-colors"
-                style={{ backgroundColor: isActive ? tab.color : "transparent" }}
+                style={{
+                  backgroundColor: isActive ? tab.color : "transparent",
+                }}
               />
             </button>
           );
@@ -2684,48 +2686,48 @@ export default function Services() {
         </div>
 
         <ServiceTabNav
-        tabs={mainSectionCards}
-        active={activeTab}
-        onChange={setActiveTab}
-      />
-
-      {activeTab === "Website Solutions" && (
-        <WebsiteSolutionsSection
-          onVideoSurvey={() => setVideoSurveyOpen(true)}
-          onWebsiteAudit={openAudit}
+          tabs={mainSectionCards}
+          active={activeTab}
+          onChange={setActiveTab}
         />
-      )}
 
-      {activeTab === "Marketing Research" && (
-        <MarketResearchSection onRequestReport={openReport} />
-      )}
+        {activeTab === "Website Solutions" && (
+          <WebsiteSolutionsSection
+            onVideoSurvey={() => setVideoSurveyOpen(true)}
+            onWebsiteAudit={openAudit}
+          />
+        )}
 
-      {activeTab === "Branding" && (
-        <BrandingSection
-          onVideoSurvey={() => setVideoSurveyOpen(true)}
-          onWebsiteAudit={openAudit}
-          onRequestButtonClick={handleRequestButtonClick}
+        {activeTab === "Marketing Research" && (
+          <MarketResearchSection onRequestReport={openReport} />
+        )}
+
+        {activeTab === "Branding" && (
+          <BrandingSection
+            onVideoSurvey={() => setVideoSurveyOpen(true)}
+            onWebsiteAudit={openAudit}
+            onRequestButtonClick={handleRequestButtonClick}
+          />
+        )}
+
+        <ServiceModals
+          videoSurveyOpen={videoSurveyOpen}
+          onVideoSurveyOpenChange={setVideoSurveyOpen}
+          reportOpen={reportOpen}
+          onReportOpenChange={onReportOpenChange}
+          auditOpen={auditOpen}
+          onAuditOpenChange={onAuditOpenChange}
+          socialMediaOpen={socialMediaOpen}
+          onSocialMediaOpenChange={onSocialMediaOpenChange}
+          tiktokShopOpen={tiktokShopOpen}
+          onTiktokShopOpenChange={onTiktokShopOpenChange}
+          juantapOpen={juantapOpen}
+          onJuantapOpenChange={onJuantapOpenChange}
+          graphicDesignOpen={graphicDesignOpen}
+          onGraphicDesignOpenChange={onGraphicDesignOpenChange}
+          paidAdsOpen={paidAdsOpen}
+          onPaidAdsOpenChange={onPaidAdsOpenChange}
         />
-      )}
-
-      <ServiceModals
-        videoSurveyOpen={videoSurveyOpen}
-        onVideoSurveyOpenChange={setVideoSurveyOpen}
-        reportOpen={reportOpen}
-        onReportOpenChange={onReportOpenChange}
-        auditOpen={auditOpen}
-        onAuditOpenChange={onAuditOpenChange}
-        socialMediaOpen={socialMediaOpen}
-        onSocialMediaOpenChange={onSocialMediaOpenChange}
-        tiktokShopOpen={tiktokShopOpen}
-        onTiktokShopOpenChange={onTiktokShopOpenChange}
-        juantapOpen={juantapOpen}
-        onJuantapOpenChange={onJuantapOpenChange}
-        graphicDesignOpen={graphicDesignOpen}
-        onGraphicDesignOpenChange={onGraphicDesignOpenChange}
-        paidAdsOpen={paidAdsOpen}
-        onPaidAdsOpenChange={onPaidAdsOpenChange}
-      />
       </div>
     </section>
   );
