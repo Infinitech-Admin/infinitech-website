@@ -6,7 +6,7 @@ import { Button } from "@heroui/react";
 import { poetsen_one } from "@/config/fonts";
 import { useRouter } from "next/navigation";
 
-const eyebrow = ["Web", "Marketing", "Branding", "Content"];
+const eyebrow = ["Website Development", "Marketing", "Branding", "Content"];
 
 const LINE_1 = "Your Digital Growth";
 const LINE_2 = "Partner";
