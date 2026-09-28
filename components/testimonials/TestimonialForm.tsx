@@ -272,7 +272,8 @@ export default function TestimonialForm({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ backgroundColor: "#FAC56E" }}
+            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

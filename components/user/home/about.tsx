@@ -71,7 +71,8 @@ const AboutHero = () => {
               <Button
                 endContent={<LuArrowRight />}
                 size="lg"
-                className="bg-primary text-gray-100"
+                style={{ backgroundColor: "#FAC56E" }}
+                className="text-white"
                 onPress={() => router.push("/contact")}
               >
                 Learn More

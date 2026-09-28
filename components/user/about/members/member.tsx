@@ -18,17 +18,33 @@ import { toast } from "sonner";
 const Member = ({ id }: { id: number }) => {
   const member = members[id];
 
+  const telegram = member?.telegram as
+    | string
+    | { title?: string; href?: string }
+    | undefined;
+
+  const telegramHref =
+    typeof telegram === "string"
+      ? `https://web.telegram.org/a/#${telegram}`
+      : telegram?.href;
+
+  const telegramTitle =
+    typeof telegram === "string" ? telegram : telegram?.title;
+
   const handleSaveContact = () => {
     if (!member) return;
 
     // Basic vCard fields
-    let vcard = `
-BEGIN:VCARD
+    let vcard = `BEGIN:VCARD
 VERSION:3.0
 FN:${member.name || ""}
-TEL;TYPE=CELL:${member.phone || ""}
-ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila;;;
 `;
+
+    if (member.phone) {
+      vcard += `TEL;TYPE=CELL:${member.phone}\n`;
+    }
+
+    vcard += `ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Manila;;;\n`;
 
     // Handle websites (array or from company field)
     if (member.websites && Array.isArray(member.websites)) {
@@ -54,18 +70,17 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
         if (fb.href) vcard += `X-SOCIALPROFILE;TYPE=facebook:${fb.href}\n`;
       });
     } else {
-      if (member.facebookname)
-        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.href || ""}\n`;
-      if (member.facebooknames)
-        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.hrefs || ""}\n`;
+      if (member.facebookname && member.href)
+        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.href}\n`;
+      if (member.facebooknames && member.hrefs)
+        vcard += `X-SOCIALPROFILE;TYPE=facebook:${member.hrefs}\n`;
     }
-    if (member.telegram)
-      vcard += `X-SOCIALPROFILE;TYPE=telegram:${
-        typeof member.telegram === "string"
-          ? member.telegram
-          : member.telegram.href
-      }\n`;
-    if (member.viber)
+
+    if (telegramHref) {
+      vcard += `X-SOCIALPROFILE;TYPE=telegram:${telegramHref}\n`;
+    }
+
+    if (member.viber?.href)
       vcard += `X-SOCIALPROFILE;TYPE=viber:${member.viber.href}\n`;
 
     vcard += "END:VCARD";
@@ -90,6 +105,10 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
   };
 
   const positions = member ? parsePositions(member.position) : [];
+
+  const hasEmail =
+    !!member?.email || (!!member?.emails && member.emails.length > 0);
+  const hasViber = !!member?.viber?.href;
 
   return (
     <section className="flex justify-center px-4 sm:px-8 md:px-12 lg:px-24 xl:px-64 2xl:px-[20rem] mt-12 sm:mt-24 mb-12">
@@ -117,13 +136,13 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                       {positions.length > 1 ? (
                         <div className="flex flex-col gap-1 text-xs sm:text-sm leading-tight">
                           {positions.map((pos, index) => (
-                            <div key={index}>
-                              {pos.trim()}
-                            </div>
+                            <div key={index}>{pos.trim()}</div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-sm sm:text-base uppercase leading-tight">{member.position}</div>
+                        <div className="text-sm sm:text-base uppercase leading-tight">
+                          {member.position}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -150,44 +169,51 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                           ))}
                         </div>
                       </>
-                    ) : (member.company?.includes("abicrealtyph.com") ||
-                      member.company?.includes("Infinitech Advertising")) && (
-                      <>
-                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                          <LuGlobe size={18} className="sm:w-5 sm:h-5" />
-                        </div>
-                        <div className="flex flex-wrap gap-2 min-w-0">
-                          {member.company.includes("abicrealtyph.com") && (
-                            <a
-                              href="https://abicrealtyph.com"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline"
-                            >
-                              www.abicrealtyph.com
-                            </a>
-                          )}
-                          {member.company.includes("abicrealtyph.com") &&
-                            member.company.includes("Infinitech Advertising") && (
-                              <span className="text-gray-400">|</span>
+                    ) : (
+                      (member.company?.includes("abicrealtyph.com") ||
+                        member.company?.includes("Infinitech Advertising")) && (
+                        <>
+                          <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                            <LuGlobe size={18} className="sm:w-5 sm:h-5" />
+                          </div>
+                          <div className="flex flex-wrap gap-2 min-w-0">
+                            {member.company.includes("abicrealtyph.com") && (
+                              <a
+                                href="https://abicrealtyph.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                www.abicrealtyph.com
+                              </a>
                             )}
-                          {member.company.includes("Infinitech Advertising") && (
-                            <a
-                              href="https://infinitechphil.com"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline"
-                            >
-                              www.infinitechphil.com
-                            </a>
-                          )}
-                        </div>
-                      </>
+                            {member.company.includes("abicrealtyph.com") &&
+                              member.company.includes(
+                                "Infinitech Advertising",
+                              ) && <span className="text-gray-400">|</span>}
+                            {member.company.includes(
+                              "Infinitech Advertising",
+                            ) && (
+                              <a
+                                href="https://infinitechphil.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                www.infinitechphil.com
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      )
                     )}
 
                     {/* Address */}
                     <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                      <LuBriefcaseBusiness size={18} className="sm:w-5 sm:h-5" />
+                      <LuBriefcaseBusiness
+                        size={18}
+                        className="sm:w-5 sm:h-5"
+                      />
                     </div>
                     <div className="break-words min-w-0">
                       <a
@@ -202,98 +228,93 @@ ADR;TYPE=WORK:;;Unit 311, Campos Rueda Building, 101 Urban Ave, Makati, Metro Ma
                     </div>
 
                     {/* Email */}
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                      <LuMail size={18} className="sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="flex flex-col gap-1 break-words min-w-0">
-                      {member.emails && Array.isArray(member.emails) ? (
-                        member.emails.map((email, index) => (
-                          <a
-                            key={index}
-                            href={`mailto:${email}`}
-                            className="hover:underline"
-                          >
-                            {email}
-                          </a>
-                        ))
-                      ) : (
-                        <a
-                          href={`mailto:${member.email}`}
-                          className="hover:underline"
-                        >
-                          {member.email}
-                        </a>
-                      )}
-                    </div>
+                    {hasEmail && (
+                      <>
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <LuMail size={18} className="sm:w-5 sm:h-5" />
+                        </div>
+                        <div className="flex flex-col gap-1 break-words min-w-0">
+                          {member.emails && Array.isArray(member.emails) ? (
+                            member.emails.map((email, index) => (
+                              <a
+                                key={index}
+                                href={`mailto:${email}`}
+                                className="hover:underline"
+                              >
+                                {email}
+                              </a>
+                            ))
+                          ) : (
+                            <a
+                              href={`mailto:${member.email}`}
+                              className="hover:underline"
+                            >
+                              {member.email}
+                            </a>
+                          )}
+                        </div>
+                      </>
+                    )}
 
                     {/* Phone */}
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                      <LuPhone size={18} className="sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <a
-                        href={`tel:${removeSpaces(member.phone)}`}
-                        className="hover:underline"
-                      >
-                        {member.phone}
-                      </a>
-                    </div>
+                    {member.phone && (
+                      <>
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
+                          <LuPhone size={18} className="sm:w-5 sm:h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <a
+                            href={`tel:${removeSpaces(member.phone)}`}
+                            className="hover:underline"
+                          >
+                            {member.phone}
+                          </a>
+                        </div>
+                      </>
+                    )}
 
                     {/* Telegram */}
-                    {member.telegram && typeof member.telegram !== "string" ? (
+                    {telegramHref && (
                       <>
                         <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                          <RiTelegram2Line size={18} className="sm:w-5 sm:h-5" />
+                          <RiTelegram2Line
+                            size={18}
+                            className="sm:w-5 sm:h-5"
+                          />
                         </div>
                         <div className="min-w-0">
                           <a
-                            href={member.telegram.href}
+                            href={telegramHref}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline"
                           >
-                            {member.telegram.title}
+                            {telegramTitle}
                           </a>
                         </div>
                       </>
-                    ) : member.telegram ? (
-                      <>
-                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
-                          <RiTelegram2Line size={18} className="sm:w-5 sm:h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <a
-                            href={`https://web.telegram.org/a/#${member.telegram}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            {member.telegram}
-                          </a>
-                        </div>
-                      </>
-                    ) : null}
+                    )}
 
                     {/* Viber */}
-                    {member.viber && (
+                    {hasViber && (
                       <>
                         <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
                           <FaViber size={18} className="sm:w-5 sm:h-5" />
                         </div>
                         <div className="min-w-0">
                           <a
-                            href={member.viber.href}
+                            href={member.viber?.href}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline"
                           >
-                            {member.viber.title}
+                            {member.viber?.title}
                           </a>
                         </div>
                       </>
                     )}
 
-                    {/* Facebook - New Array Structure (for Zoe Li) */}
+                    {/* Facebook - Array Structure (for Zoe Li) */}
                     {member.facebook && Array.isArray(member.facebook) ? (
                       <>
                         <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center flex-shrink-0">
