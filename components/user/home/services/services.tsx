@@ -387,7 +387,7 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
         <div key={problem.label} className="group h-44 [perspective:1200px]">
           <div className="relative h-full w-full transition-transform duration-500 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
             {/* Front face — icon + copy, same layout as before */}
-            <div className="absolute inset-0 flex items-start gap-3.5 rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden]">
+            <div className="absolute inset-0 flex items-start gap-3.5 rounded-lg bg-white border border-gray-200 p-4 [backface-visibility:hidden]">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
                 {problem.image ? (
                   <img
@@ -409,7 +409,7 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
                   </p>
                 )}
                 {problem.stat && (
-                  <span className="inline-block rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700">
+                  <span className="inline-block rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-red-700">
                     {problem.stat}
                   </span>
                 )}
@@ -417,7 +417,7 @@ function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
             </div>
 
             {/* Back face — the actual image, revealed when the card flips on hover */}
-            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white ring-1 ring-red-100 p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white border border-gray-200 p-4 [backface-visibility:hidden] [transform:rotateY(180deg)]">
               {problem.image ? (
                 <img
                   src={problem.image}
@@ -1412,15 +1412,15 @@ function SEOAuditBanner() {
 function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
   return (
     <div
-      className={`relative rounded-2xl p-4 flex flex-col transition-all hover:-translate-y-1
+      className={`relative rounded-xl p-4 flex flex-col transition-colors
         ${
           pkg.popular
-            ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-accent shadow-xl shadow-accent/20"
-            : "bg-slate-800 border border-slate-700 hover:bg-slate-700"
+            ? "bg-slate-900 border border-accent"
+            : "bg-slate-800 border border-slate-700 hover:border-slate-500"
         }`}
     >
       {pkg.popular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+        <span className="absolute -top-3 left-4 bg-accent text-white text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
           Most Popular
         </span>
       )}
@@ -1430,12 +1430,14 @@ function PricingCard({ pkg }: { pkg: (typeof packages)[number] }) {
         <h3 className="text-white font-bold text-sm">{pkg.name}</h3>
       </div>
 
-      <p className="text-lg font-black text-white mt-0.5 mb-1.5">
+      <p className="font-mono text-lg font-bold text-white mt-0.5 mb-1.5">
         ₱{pkg.price}
-        <span className="text-[10px] font-medium text-slate-300">/month</span>
+        <span className="font-sans text-[10px] font-medium text-slate-400">
+          /month
+        </span>
       </p>
 
-      <p className="text-slate-300 text-[11px] leading-relaxed">
+      <p className="text-slate-400 text-[11px] leading-relaxed">
         {pkg.bestFor}
       </p>
     </div>
@@ -1480,13 +1482,7 @@ function PlanFaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div
-      className="rounded-2xl p-5 sm:p-6"
-      style={{
-        background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
-        boxShadow: "0 8px 30px rgba(13,27,62,0.35)",
-      }}
-    >
+    <div className="rounded-xl bg-slate-900 border border-slate-700 p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
         <FaSearchDollar className="h-4 w-4" style={{ color: "#f5a623" }} />
         <p className="text-white font-bold text-sm sm:text-base">
@@ -1500,7 +1496,7 @@ function PlanFaqAccordion() {
           return (
             <div
               key={item.question}
-              className="rounded-xl bg-white/5 ring-1 ring-white/10 overflow-hidden"
+              className="rounded-lg bg-slate-800 border border-slate-700 overflow-hidden"
             >
               <button
                 type="button"
@@ -2022,22 +2018,6 @@ function BrandingSection({
                         )}
                       </div>
                     </div>
-
-                    {/* {activeService.behindTheScenesImage && (
-                      <div className="mt-6">
-                        <h4 className="text-primary font-semibold text-sm mb-2 text-center lg:text-left">
-                          Behind the Scenes
-                        </h4>
-                        <div className="mx-auto lg:mx-0 max-w-md">
-                          <ZoomableImage
-                            src={activeService.behindTheScenesImage}
-                            alt={`${activeService.name} — behind the scenes`}
-                            className="h-48 w-full object-cover rounded-xl"
-                            onZoom={openLightbox}
-                          />
-                        </div>
-                      </div>
-                    )} */}
                   </>
                 ) : activeService.thumbnailImage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-2">
@@ -2316,74 +2296,128 @@ function BrandingSection({
 }
 
 /* ============================================================================
- * SECTION: Category card + its details, side-by-side (card is sticky on the
- * left, its own section content sits directly beside it on the right — not
- * stacked below a separate row of cards).
+ * COMPONENT — Ambient "network" background animation for the services
+ * section. Slow-drifting nodes connected by lines that fade in as they get
+ * close; a single deliberate ambient motion, not per-card decoration. Skips
+ * the animation loop (renders one static frame) when the visitor has
+ * prefers-reduced-motion set. Resizes with the section itself (via
+ * ResizeObserver), since switching tabs changes the section's height.
  * ========================================================================== */
 
-interface MainSectionCardData {
-  title: string;
-  description: string;
-  icon: React.ComponentType<IconProps>;
-  color: string;
-}
+function TechBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-const mainSectionCards: MainSectionCardData[] = [
-  {
-    title: "Website Solutions",
-    description: "Custom websites & ready-made plans",
-    icon: FaGlobe,
-    color: "#10b981",
-  },
-  {
-    title: "Marketing Research",
-    description: "Data-backed insights for smarter decisions",
-    icon: FaSearchDollar,
-    color: "#0ea5e9",
-  },
-  {
-    title: "Branding",
-    description: "Grow your brand across every channel",
-    icon: FaPalette,
-    color: "#8b5cf6",
-  },
-];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-function CategoryCard({ card }: { card: MainSectionCardData }) {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    type Node = { x: number; y: number; vx: number; vy: number };
+    let nodes: Node[] = [];
+    let width = 0;
+    let height = 0;
+    let rafId = 0;
+
+    const SPACING = 130;
+    const LINK_DISTANCE = 150;
+
+    function resize() {
+      width = parent!.clientWidth;
+      height = parent!.clientHeight;
+      canvas!.width = width * dpr;
+      canvas!.height = height * dpr;
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cols = Math.max(4, Math.round(width / SPACING));
+      const rows = Math.max(3, Math.round(height / SPACING));
+      nodes = [];
+      for (let i = 0; i <= cols; i++) {
+        for (let j = 0; j <= rows; j++) {
+          nodes.push({
+            x: (i / cols) * width + (Math.random() - 0.5) * 36,
+            y: (j / rows) * height + (Math.random() - 0.5) * 36,
+            vx: (Math.random() - 0.5) * 0.12,
+            vy: (Math.random() - 0.5) * 0.12,
+          });
+        }
+      }
+    }
+
+    function tick() {
+      if (!prefersReducedMotion) {
+        for (const n of nodes) {
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0 || n.x > width) n.vx *= -1;
+          if (n.y < 0 || n.y > height) n.vy *= -1;
+        }
+      }
+
+      ctx!.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < LINK_DISTANCE) {
+            const alpha = (1 - dist / LINK_DISTANCE) * 0.14;
+            ctx!.strokeStyle = `rgba(37, 99, 235, ${alpha})`;
+            ctx!.lineWidth = 1;
+            ctx!.beginPath();
+            ctx!.moveTo(a.x, a.y);
+            ctx!.lineTo(b.x, b.y);
+            ctx!.stroke();
+          }
+        }
+      }
+
+      for (const n of nodes) {
+        ctx!.fillStyle = "rgba(37, 99, 235, 0.35)";
+        ctx!.beginPath();
+        ctx!.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
+        ctx!.fill();
+      }
+
+      if (!prefersReducedMotion) {
+        rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    resize();
+    tick();
+
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      if (prefersReducedMotion) tick();
+    });
+    resizeObserver.observe(parent);
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col items-center text-center rounded-2xl bg-white p-10 shadow-md ring-1 ring-gray-100 md:sticky md:top-24">
-      <div
-        className="flex h-24 w-24 items-center justify-center rounded-3xl mb-6"
-        style={{
-          background: `linear-gradient(135deg, ${card.color}, ${card.color}cc)`,
-        }}
-      >
-        <card.icon className="h-10 w-10 text-white" />
-      </div>
-      <h3 className="text-primary font-bold text-2xl">{card.title}</h3>
-      <p className="text-gray-500 text-sm mt-3 leading-relaxed">
-        {card.description}
-      </p>
-      <span
-        className="mt-6 h-1.5 w-full max-w-[160px] rounded-full opacity-60"
-        style={{ backgroundColor: card.color }}
-      />
-    </div>
-  );
-}
-
-function CategoryBlock({
-  card,
-  children,
-}: {
-  card: MainSectionCardData;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6 md:gap-10 items-start mb-16 last:mb-0">
-      <CategoryCard card={card} />
-      <div className="min-w-0">{children}</div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    />
   );
 }
 
@@ -2478,11 +2512,120 @@ function ServiceModals({
 }
 
 /* ============================================================================
- * MAIN PAGE — renders Website, Market Research, and Branding (advanced
- * carousel/gallery/lightbox version) sections one after another.
+ * SECTION: Service tab navigation
+ *
+ * Replaces the old sticky "category card" (one big card per section,
+ * stacked vertically down the page) with a single sticky tab bar. All three
+ * service groups now live in the same viewport slot — switching tabs swaps
+ * the panel below instead of scrolling past two other sections to get
+ * there. This is the "modern / technical" structural change: fewer nested
+ * cards, one clear current-state indicator, content-dense panels.
+ * ========================================================================== */
+
+interface MainSectionCardData {
+  title: string;
+  description: string;
+  icon: React.ComponentType<IconProps>;
+  color: string;
+}
+
+const mainSectionCards: MainSectionCardData[] = [
+  {
+    title: "Website Solutions",
+    description: "Custom websites & ready-made plans",
+    icon: FaGlobe,
+    color: "#10b981",
+  },
+  {
+    title: "Marketing Research",
+    description: "Data-backed insights for smarter decisions",
+    icon: FaSearchDollar,
+    color: "#0ea5e9",
+  },
+  {
+    title: "Branding",
+    description: "Grow your brand across every channel",
+    icon: FaPalette,
+    color: "#8b5cf6",
+  },
+];
+
+function ServiceTabNav({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: MainSectionCardData[];
+  active: string;
+  onChange: (title: string) => void;
+}) {
+  return (
+    <div className="sticky top-0 z-20 mb-10 -mx-4 px-4 bg-white backdrop-blur-md border-b border-gray-200">
+      <div
+        role="tablist"
+        aria-label="Service categories"
+        className="container mx-auto flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        {tabs.map((tab) => {
+          const isActive = tab.title === active;
+          return (
+            <button
+              key={tab.title}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onChange(tab.title)}
+              className="group relative flex shrink-0 items-center gap-2.5 px-5 py-4 text-left transition-colors"
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                style={{
+                  backgroundColor: isActive ? `${tab.color}1a` : "transparent",
+                }}
+              >
+                <tab.icon
+                  className="h-4 w-4 transition-colors"
+                  style={{ color: isActive ? tab.color : "#9ca3af" }}
+                />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span
+                  className={`text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "text-primary"
+                      : "text-gray-400 group-hover:text-gray-600"
+                  }`}
+                >
+                  {tab.title}
+                </span>
+                <span
+                  className={`hidden sm:block text-[11px] transition-colors ${
+                    isActive ? "text-gray-500" : "text-gray-300"
+                  }`}
+                >
+                  {tab.description}
+                </span>
+              </span>
+              <span
+                className="absolute inset-x-3 -bottom-px h-[2px] rounded-full transition-colors"
+                style={{ backgroundColor: isActive ? tab.color : "transparent" }}
+              />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+ * MAIN PAGE — a single sticky tab bar controls which of the three service
+ * panels (Website, Market Research, Branding) is shown; only the active
+ * panel is mounted below the fold.
  * ========================================================================== */
 
 export default function Services() {
+  const [activeTab, setActiveTab] = useState(mainSectionCards[0].title);
+
   const [videoSurveyOpen, setVideoSurveyOpen] = useState(false);
   const {
     isOpen: reportOpen,
@@ -2529,33 +2672,41 @@ export default function Services() {
   };
 
   return (
-    <section className="container mx-auto px-4 py-12 lg:py-16">
-      {/* Header */}
-      <div className="max-w-xl mx-auto text-center mb-12">
-        <h1 className="font-bold text-accent text-4xl">OUR SERVICES</h1>
-        <p className="text-gray-500 mt-2">
-          Solutions built to grow your business.
-        </p>
-      </div>
+    <section className="relative w-full px-4 py-12 lg:py-16">
+      <TechBackground />
+      <div className="container relative z-10 mx-auto">
+        {/* Header */}
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <h1 className="font-bold text-accent text-4xl">OUR SERVICES</h1>
+          <p className="text-gray-500 mt-2">
+            Solutions built to grow your business.
+          </p>
+        </div>
 
-      <CategoryBlock card={mainSectionCards[0]}>
+        <ServiceTabNav
+        tabs={mainSectionCards}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {activeTab === "Website Solutions" && (
         <WebsiteSolutionsSection
           onVideoSurvey={() => setVideoSurveyOpen(true)}
           onWebsiteAudit={openAudit}
         />
-      </CategoryBlock>
+      )}
 
-      <CategoryBlock card={mainSectionCards[1]}>
+      {activeTab === "Marketing Research" && (
         <MarketResearchSection onRequestReport={openReport} />
-      </CategoryBlock>
+      )}
 
-      <CategoryBlock card={mainSectionCards[2]}>
+      {activeTab === "Branding" && (
         <BrandingSection
           onVideoSurvey={() => setVideoSurveyOpen(true)}
           onWebsiteAudit={openAudit}
           onRequestButtonClick={handleRequestButtonClick}
         />
-      </CategoryBlock>
+      )}
 
       <ServiceModals
         videoSurveyOpen={videoSurveyOpen}
@@ -2575,6 +2726,7 @@ export default function Services() {
         paidAdsOpen={paidAdsOpen}
         onPaidAdsOpenChange={onPaidAdsOpenChange}
       />
+      </div>
     </section>
   );
 }
