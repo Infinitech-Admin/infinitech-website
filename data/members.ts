@@ -119,7 +119,7 @@ export const members = [
   {
     name: "Dharlene Jane Sadsad",
     position: "Accounting",
-    image: "dharlene.png",
+    image: "Dharlene.png",
     email: "",
     phone: "",
     telegram: {
@@ -131,7 +131,7 @@ export const members = [
   {
     name: "Roline Cabantoc",
     position: "Administrative Assistant",
-    image: "roline.png",
+    image: "Roline.png",
     email: "infinitech.roline@gmail.com",
     phone: "09946656121",
     telegram: {
