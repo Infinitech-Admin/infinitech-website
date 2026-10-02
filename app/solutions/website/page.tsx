@@ -7,13 +7,29 @@ import {
   FaEye,
   FaSlidersH,
   FaExternalLinkAlt,
-  FaGlobe,
-  FaCalendarCheck,
-  FaBriefcase,
-  FaShoppingCart,
+  FaPlus,
 } from "react-icons/fa";
 import { GoCheck } from "react-icons/go";
 import RequestWebsiteAuditModal from "@/components/RequestWebsiteAuditModal";
+
+/* ============================================================================
+ * THEME TOKENS (dark / techy)
+ * base #070d1f · surface #0d1630 · raised #121e40 · line #1f2d57
+ * amber #f5a623 (brand) · cyan #38bdf8 (secondary) · text #e6ecff · muted #8a97bd
+ * ========================================================================== */
+const GRID_BG: React.CSSProperties = {
+  backgroundImage:
+    "linear-gradient(rgba(56,189,248,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.06) 1px, transparent 1px)",
+  backgroundSize: "40px 40px",
+  maskImage: "radial-gradient(ellipse at 50% 0%, black 30%, transparent 75%)",
+  WebkitMaskImage:
+    "radial-gradient(ellipse at 50% 0%, black 30%, transparent 75%)",
+};
+
+/* ---- Pricing assumptions (change to your real values) ---- */
+const USD_RATE = 58; // PHP per 1 USD
+const YEARLY_DISCOUNT = 0.2; // 20% off when billed yearly
+const STORAGE = "7GB";
 
 /* ============================================================================
  * TYPES
@@ -26,13 +42,11 @@ interface ProblemItem {
   icon: React.ComponentType<IconProps>;
   label: string;
 }
-
 interface ExampleSite {
   name: string;
   url: string;
   image: string;
 }
-
 interface Tier {
   key: string;
   name: string;
@@ -42,12 +56,11 @@ interface Tier {
   purpose: string;
   examples: ExampleSite[];
 }
-
 interface PricingPackage {
   name: string;
-  price: string;
-  icon: React.ComponentType<IconProps>;
+  price: number;
   popular: boolean;
+  extendsFrom?: string;
   features: string[];
 }
 
@@ -243,13 +256,12 @@ const websiteTiers: Tier[] = [
 ];
 
 /* ============================================================================
- * DATA — Ready-made pricing packages (Option D: equal height + 2-col features)
+ * DATA — Ready-made pricing packages
  * ========================================================================== */
 const packages: PricingPackage[] = [
   {
     name: "Standard",
-    price: "4,644",
-    icon: FaGlobe,
+    price: 5523,
     popular: false,
     features: [
       "Up to 5 pages",
@@ -257,42 +269,49 @@ const packages: PricingPackage[] = [
       "Simple Contact Form",
       "Email Alerts for Form Inquiries",
       "1-Year Domain and Hosting",
+      "5GB Storage (Upgradeable to 50GB or 100GB)",
+      "Mobile-Responsive Design",
+      "Basic On-Page SEO Setup",
+      "Free SSL Security Certificate",
+      "30 Days of Free Minor Revisions",
     ],
   },
   {
     name: "Premium",
-    price: "9,999",
-    icon: FaCalendarCheck,
+    price: 9999,
     popular: true,
+    extendsFrom: "Standard",
     features: [
-      "Everything in Standard, plus:",
       "Up to 10 Website Pages",
       "Dashboard Login for Clients",
       "Traffic Insights & Analytics",
       "Enhanced Site Customization",
       "Smart Chat System",
       "Design Upgrade",
+      "Free Maintenance (while your contract is active)",
     ],
   },
   {
     name: "Business",
-    price: "14,999",
-    icon: FaBriefcase,
+    price: 14999,
     popular: false,
+    extendsFrom: "Premium",
     features: [
-      "SEO Pro Setup + Dashboard Reports",
-      "eCommerce-Ready Products Catalog",
+      "SEO Pro Setup +",
+      "Dashboard Reports",
+      "eCommerce - Ready Products Catalog",
       "Admin Staff & Client Management",
       "Upgraded Motion & Animation Website",
       "Lead Form With Dashboard Tracking",
       "Video Testimonials Section",
+      "Free Maintenance (while your contract is active)",
     ],
   },
   {
     name: "Commerce",
-    price: "21,999",
-    icon: FaShoppingCart,
+    price: 21999,
     popular: false,
+    extendsFrom: "Business",
     features: [
       "Advanced Conversion Tracking",
       "Full eCommerce System",
@@ -300,264 +319,507 @@ const packages: PricingPackage[] = [
       "Real-Time Notifications System",
       "VIP Priority Support (Phone, Chat, Email)",
       "Dashboard for Clients",
+      "Free Maintenance (while your contract is active)",
     ],
   },
 ];
 
 /* ============================================================================
- * CONFIG — CTA button referenced by services[].ctas above.
+ * UI — rich dark theme: glow, glass, motion (marquee + scan line only)
  * ========================================================================== */
-type ServiceCtaKey = "websiteAudit";
+const mono = "font-mono";
+const allSites = websiteTiers.flatMap((t) =>
+  t.examples.map((e) => ({ ...e, tier: t.name })),
+);
 
-interface ServiceCtaConfigEntry {
-  label: string;
-  kind: "primary" | "secondary";
+const css = `
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+@keyframes floaty { 50% { transform: translateY(-8px); } }
+.wd-marquee { animation: marquee 70s linear infinite; }
+.wd-marquee:hover { animation-play-state: paused; }
+.wd-scan { animation: scan 4s ease-in-out infinite; }
+.wd-float { animation: floaty 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .wd-marquee, .wd-scan, .wd-float { animation: none; } }
+`;
+
+const grad = (dir: string, ...stops: string[]): React.CSSProperties => ({
+  backgroundImage: `linear-gradient(${dir}, ${stops.join(", ")})`,
+});
+
+const glass = "border border-white/10 bg-white/[0.04] backdrop-blur-md";
+
+function Dots() {
+  return (
+    <span className="flex gap-1.5">
+      <i className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+      <i className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+      <i className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+    </span>
+  );
 }
 
-const serviceCtaConfig: Record<ServiceCtaKey, ServiceCtaConfigEntry> = {
-  websiteAudit: {
-    label: "Get a Free Website Audit",
-    kind: "secondary",
-  },
-};
+function domain(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
 
-function ServiceCtaButtons({
-  ctas,
-  onWebsiteAudit,
-  className = "mt-6 flex flex-wrap gap-3",
+function AuditButton({
+  onClick,
+  label = "Get a Free Website Audit",
 }: {
-  ctas: readonly ServiceCtaKey[] | undefined;
-  onWebsiteAudit: () => void;
-  className?: string;
+  onClick: () => void;
+  label?: string;
 }) {
-  if (!ctas || ctas.length === 0) return null;
-
   return (
-    <div className={className}>
-      {ctas.map((ctaKey) => {
-        const cta = serviceCtaConfig[ctaKey];
-        return (
-          <button
-            key={ctaKey}
-            onClick={onWebsiteAudit}
-            className="flex items-center gap-2 rounded-full bg-[#0d1b3e] border-2 border-[#f5a623] px-5 py-2.5 text-sm font-bold text-[#f5a623] transition-all duration-300 hover:bg-[#f5a623] hover:text-[#0d1b3e] hover:shadow-lg"
-          >
-            {cta.label}
-          </button>
-        );
-      })}
+    <button
+      onClick={onClick}
+      className="rounded-lg bg-[#f5a623] px-6 py-3 text-sm font-bold text-[#070d1f] shadow-[0_0_30px_rgba(245,166,35,0.45)] transition hover:bg-[#ffb93f] hover:shadow-[0_0_44px_rgba(245,166,35,0.7)] hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38bdf8]"
+    >
+      {label}
+    </button>
+  );
+}
+
+function SectionHead({
+  tag,
+  title,
+  text,
+}: {
+  tag: string;
+  title: string;
+  text?: string;
+}) {
+  return (
+    <div className="mx-auto mb-12 max-w-2xl text-center">
+      <span
+        className={`${mono} inline-block rounded-full border border-[#38bdf8]/30 bg-[#38bdf8]/10 px-3 py-1 text-xs text-[#38bdf8]`}
+      >
+        {tag}
+      </span>
+      <h2 className="mt-4 text-3xl font-bold text-white font-['Poetsen_One'] sm:text-4xl">
+        {title}
+      </h2>
+      {text && <p className="mt-4 text-[#8a97bd]">{text}</p>}
     </div>
   );
 }
 
-/* ============================================================================
- * COMPONENT — Problem list
- * ========================================================================== */
-function ServiceProblemList({ problems }: { problems?: ProblemItem[] }) {
-  if (!problems || problems.length === 0) return null;
+/* ---- HERO ---- */
+const chipPos = [
+  "left-0 top-6 md:-left-6",
+  "right-0 top-16 md:-right-6",
+  "left-2 bottom-20 md:-left-10",
+  "right-2 bottom-6 md:-right-4",
+];
 
+function Hero({ onAudit }: { onAudit: () => void }) {
+  const s = services[0];
+  const stats = [
+    { v: String(allSites.length), l: "live sites built" },
+    { v: String(websiteTiers.length), l: "tiers to choose from" },
+    {
+      v: `₱${packages[0].price.toLocaleString("en-US")}`,
+      l: "starting monthly price",
+    },
+  ];
   return (
-    <div className="mt-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-        {problems.map((problem) => (
-          <div
-            key={problem.label}
-            className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-red-100"
+    <div className="mb-8 w-full">
+      <div className="grid items-center gap-14 lg:grid-cols-2">
+        <div>
+          <span
+            className={`${mono} inline-flex items-center gap-2 rounded-full border border-[#f5a623]/30 bg-[#f5a623]/10 px-3 py-1 text-xs text-[#f5a623]`}
           >
-            <problem.icon className="h-4 w-4 text-red-500 shrink-0" />
-            <span>{problem.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================================
- * COMPONENT — Tier info panel (Best For / Business Purpose)
- * ========================================================================== */
-function TierInfoPanel({ tier }: { tier: Tier }) {
-  return (
-    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="rounded-xl bg-slate-50 ring-1 ring-gray-200 p-5">
-        <span className="text-xs font-bold uppercase tracking-wide text-accent">
-          Best For
-        </span>
-        <p className="mt-2 text-sm font-semibold text-primary">
-          {tier.bestForHeading}
-        </p>
-        <ul className="mt-3 space-y-1.5">
-          {tier.bestFor.map((item) => (
-            <li
-              key={item}
-              className="flex items-start gap-2 text-sm text-gray-600"
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#f5a623]" />
+            {s.title}
+          </span>
+          <h1 className="mt-5 whitespace-pre-line text-4xl font-bold leading-[1.1] text-white font-['Poetsen_One'] sm:text-5xl lg:text-[3.4rem]">
+            {s.subtitle}
+          </h1>
+          <p className="mt-5 max-w-md text-[#8a97bd]">
+            Most slow, dated sites quietly turn visitors away. Find out what is
+            holding yours back, then fix it with a build that fits your
+            business.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <AuditButton onClick={onAudit} />
+            <a
+              href="#work"
+              className={`${glass} rounded-lg px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10`}
             >
-              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="rounded-xl bg-[#0d1b3e] p-5">
-        <span className="text-xs font-bold uppercase tracking-wide text-[#f5a623]">
-          Business Purpose
-        </span>
-        <p className="mt-2 text-sm text-gray-200 leading-relaxed">
-          {tier.purpose}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================================
- * SECTION — Website tier tabs + example sites
- * ========================================================================== */
-function WebsiteTiersSection() {
-  const [activeTier, setActiveTier] = useState(websiteTiers[0].key);
-  const tier = websiteTiers.find((t) => t.key === activeTier)!;
-
-  return (
-    <div className="w-full mb-16">
-      <div className="max-w-xl mx-auto text-center mb-8">
-        <span className="text-xl text-accent font-bold">PACKAGES</span>
-        <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One']">
-          Find Your Perfect Fit Among Our 4 Tiers
-        </h1>
-        <p className="text-lg text-gray-600 mt-4">
-          Browse real examples of websites we've built at each tier.
-        </p>
-      </div>
-
-      {/* Tier buttons */}
-      <div className="flex gap-3 mb-8 justify-center flex-wrap">
-        {websiteTiers.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTier(t.key)}
-            className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300
-              ${
-                activeTier === t.key
-                  ? "bg-[#0d1b3e] text-[#f5a623] ring-2 ring-[#f5a623] shadow-md"
-                  : "bg-slate-50 text-gray-600 ring-1 ring-gray-200 hover:bg-slate-100"
-              }`}
-          >
-            {t.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Active tier content */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-gray-100">
-        <div className="h-1.5 w-full bg-accent" />
-        <div className="p-5 sm:p-8">
-          <div className="mb-6 text-center">
-            <h3 className="text-primary font-bold text-xl mb-1">{tier.name}</h3>
-            <p className="text-gray-500 text-sm">{tier.description}</p>
+              See our work
+            </a>
           </div>
+        </div>
 
-          <TierInfoPanel tier={tier} />
-
-          {tier.examples.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 italic py-8">
-              Example websites coming soon.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
-              {tier.examples.map((site) => (
-                <a
-                  key={site.url}
-                  href={site.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block rounded-xl overflow-hidden ring-1 ring-gray-200 hover:ring-accent hover:shadow-lg transition-all"
-                >
-                  <div className="relative aspect-video overflow-hidden bg-slate-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={site.image}
-                      alt={site.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm font-semibold text-primary">
-                      {site.name}
-                    </span>
-                    <FaExternalLinkAlt className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent transition-colors" />
-                  </div>
-                </a>
-              ))}
+        <div className="relative mx-auto w-full max-w-lg">
+          <div
+            aria-hidden
+            className="absolute -inset-10 rounded-full"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(56,189,248,0.28), transparent 65%)",
+            }}
+          />
+          <div
+            className={`${glass} relative overflow-hidden rounded-2xl shadow-[0_0_80px_rgba(56,189,248,0.15)]`}
+          >
+            <div className="relative p-6">
+              <img
+                className="h-72 w-full object-contain"
+                alt={s.title}
+                src={`/images/services/${s.image}`}
+              />
+              <div
+                aria-hidden
+                className="wd-scan pointer-events-none absolute inset-x-0 h-16"
+                style={grad(
+                  "to bottom",
+                  "transparent",
+                  "rgba(56,189,248,0.25)",
+                  "transparent",
+                )}
+              />
             </div>
-          )}
+          </div>
+          {s.problems.map((p, i) => (
+            <div
+              key={p.label}
+              className={`wd-float absolute ${chipPos[i]} flex items-center gap-2 rounded-lg border border-[#ef4444]/50 bg-[#2a1020] px-3 py-2 text-xs font-semibold text-[#ffe4e6] shadow-lg`}
+              style={{ animationDelay: `${i * 0.8}s` }}
+            >
+              <p.icon className="h-3.5 w-3.5 text-[#f87171]" />
+              {p.label}
+            </div>
+          ))}
         </div>
       </div>
+
+      <div
+        className={`${glass} mt-16 grid grid-cols-3 divide-x divide-white/10 rounded-2xl`}
+      >
+        {stats.map((x) => (
+          <div key={x.l} className="px-3 py-6 text-center">
+            <p
+              className={`${mono} text-2xl font-bold text-[#f5a623] sm:text-4xl`}
+            >
+              {x.v}
+            </p>
+            <p className="mt-1 text-xs text-[#b8c3e6] sm:text-sm">{x.l}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ============================================================================
- * SECTION — Ready-made pricing packages (Option D layout)
- * ========================================================================== */
-function PricingPackagesSection() {
+/* ---- MARQUEE of real sites ---- */
+function Marquee() {
+  const row = [...allSites, ...allSites];
   return (
-    <div className="w-full mb-16">
-      <div className="max-w-xl mx-auto text-center mb-8">
-        <h4 className="text-3xl text-primary font-bold font-['Poetsen_One']">
-          Or Choose a Ready-Made Plan
-        </h4>
-        <p className="text-lg text-gray-600 mt-4">
-          Prefer a straightforward monthly plan instead? Pick the tier that
-          matches your business size.
-        </p>
+    <div
+      className="relative -mx-4 mb-24 overflow-hidden py-4 sm:-mx-6 lg:-mx-8"
+      style={{
+        maskImage:
+          "linear-gradient(90deg, transparent, black 10%, black 90%, transparent)",
+        WebkitMaskImage:
+          "linear-gradient(90deg, transparent, black 10%, black 90%, transparent)",
+      }}
+    >
+      <div className="wd-marquee flex w-max gap-5">
+        {row.map((site, i) => (
+          <a
+            key={`${site.url}-${i}`}
+            href={site.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-hidden={i >= allSites.length}
+            tabIndex={i >= allSites.length ? -1 : 0}
+            className="group relative block w-72 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#0a1226]"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={site.image}
+              alt={site.name}
+              className="aspect-video w-full object-cover object-top opacity-80 transition group-hover:opacity-100"
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8 text-sm font-semibold text-white"
+              style={grad("to top", "#070d1f", "transparent")}
+            >
+              {site.name}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- PRICING TOGGLE ---- */
+function Toggle({
+  left,
+  right,
+  value,
+  onChange,
+}: {
+  left: string;
+  right: string;
+  value: "left" | "right";
+  onChange: (v: "left" | "right") => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-sm font-semibold">
+      <span className={value === "left" ? "text-white" : "text-[#8a97bd]"}>
+        {left}
+      </span>
+      <button
+        role="switch"
+        aria-checked={value === "right"}
+        aria-label={`${left} / ${right}`}
+        onClick={() => onChange(value === "left" ? "right" : "left")}
+        className="relative h-6 w-11 rounded-full bg-gradient-to-r from-[#38bdf8] to-[#2563eb] shadow-[0_0_16px_rgba(56,189,248,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#38bdf8]"
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${value === "right" ? "left-[22px]" : "left-0.5"}`}
+        />
+      </button>
+      <span className={value === "right" ? "text-white" : "text-[#8a97bd]"}>
+        {right}
+      </span>
+    </div>
+  );
+}
+
+/* ---- PRICING ---- */
+function Pricing() {
+  const [billing, setBilling] = useState<"left" | "right">("left"); // left = monthly
+  const [currency, setCurrency] = useState<"left" | "right">("left"); // left = PHP
+
+  const formatPrice = (php: number) => {
+    const monthly = billing === "right" ? php * (1 - YEARLY_DISCOUNT) : php;
+    if (currency === "left")
+      return `₱${Math.round(monthly).toLocaleString("en-US")}`;
+    return `$${Math.round(monthly / USD_RATE).toLocaleString("en-US")}`;
+  };
+
+  return (
+    <div className="mb-28 w-full">
+      <SectionHead
+        tag="PACKAGES"
+        title="Four tiers. One that fits your business."
+        text="Plans that grow with you, from a simple online presence to a full online store."
+      />
+
+      <div className="mb-12 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+        <Toggle
+          left="Monthly"
+          right="Yearly"
+          value={billing}
+          onChange={setBilling}
+        />
+        <Toggle
+          left="PHP"
+          right="USD"
+          value={currency}
+          onChange={setCurrency}
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        {packages.map((pkg) => {
-          const useTwoCols = pkg.features.length > 5;
-          return (
+      <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {packages.map((pkg) => (
+          <div key={pkg.name} className="flex flex-col">
             <div
-              key={pkg.name}
-              className={`relative rounded-2xl p-5 flex flex-col h-full transition-all hover:-translate-y-1
-                ${
-                  pkg.popular
-                    ? "bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-accent shadow-xl shadow-accent/20"
-                    : "bg-slate-800 border border-slate-700 hover:bg-slate-700"
-                }`}
+              className={`relative flex flex-1 flex-col rounded-2xl p-6 transition duration-300 hover:-translate-y-1 ${
+                pkg.popular
+                  ? "border-2 border-[#38bdf8] bg-[#0b1530] shadow-[0_0_45px_rgba(56,189,248,0.35),inset_0_0_30px_rgba(56,189,248,0.08)]"
+                  : "border border-white/10 bg-[#0b1530]/80 hover:border-[#38bdf8]/40 hover:shadow-[0_0_35px_rgba(56,189,248,0.15)]"
+              }`}
             >
+              {/* glowing top line */}
+              <span
+                aria-hidden
+                className="absolute -top-px left-8 h-[2px] w-36 rounded-full bg-gradient-to-r from-transparent via-[#38bdf8] to-transparent opacity-70 shadow-[0_0_14px_rgba(56,189,248,0.9)]"
+              />
+
               {pkg.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                <span className="absolute -top-3.5 left-4 rounded-full bg-[#38bdf8] px-3 py-1 text-xs font-bold text-[#070d1f] shadow-[0_0_20px_rgba(56,189,248,0.8)]">
                   Most Popular
                 </span>
               )}
 
-              <pkg.icon className="h-7 w-7 text-accent-light mb-2.5 mt-2" />
-              <h3 className="text-white font-bold text-base">{pkg.name}</h3>
-              <p className="text-xl font-black text-white mt-1 mb-3">
-                ₱{pkg.price}
-                <span className="text-xs font-medium text-slate-400">
-                  /month
+              <h3 className="mt-2 text-xl font-bold text-white">{pkg.name}</h3>
+
+              <p className="mt-6 flex items-baseline gap-2 text-white">
+                <span className="text-4xl font-extrabold">
+                  {formatPrice(pkg.price)}
                 </span>
+                <span className="text-sm text-[#b8c3e6]">/month</span>
               </p>
 
-              <div
-                className={`flex-1 gap-x-3 gap-y-1.5 ${
-                  useTwoCols ? "grid grid-cols-2" : "flex flex-col gap-2"
-                }`}
-              >
+              <div className="my-5 h-px bg-white/10" />
+
+              {pkg.extendsFrom ? (
+                <div className="mb-4 flex min-h-[3.5rem] items-center gap-3 rounded-lg border border-[#38bdf8]/60 bg-[#38bdf8]/5 px-3 py-2 text-sm font-bold text-white shadow-[0_0_18px_rgba(56,189,248,0.15)]">
+                  <FaPlus className="h-3 w-3 shrink-0 text-[#38bdf8]" />
+                  Everything in {pkg.extendsFrom}, plus:
+                </div>
+              ) : (
+                <div
+                  aria-hidden
+                  className="mb-4 hidden min-h-[3.5rem] lg:block"
+                />
+              )}
+
+              <ul className="space-y-3">
                 {pkg.features.map((f) => (
-                  <div key={f} className="flex items-start gap-1.5">
-                    <GoCheck className="text-accent-light shrink-0 mt-0.5 h-3.5 w-3.5" />
-                    <span className="text-slate-300 text-xs leading-snug">
-                      {f}
-                    </span>
-                  </div>
+                  <li
+                    key={f}
+                    className="flex items-start gap-3 text-sm leading-snug text-[#e6ecff]"
+                  >
+                    <GoCheck
+                      className={`mt-0.5 h-4 w-4 shrink-0 ${pkg.popular ? "text-[#38bdf8]" : "text-[#8a97bd]"}`}
+                    />
+                    {f}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-          );
-        })}
+
+            <p className="mt-3 px-1 text-xs text-[#8a97bd]">
+              Storage:{" "}
+              <span className="font-semibold text-[#b8c3e6]">{STORAGE}</span>{" "}
+              (included)
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- WORK BY TIER ---- */
+function Work() {
+  const [active, setActive] = useState(websiteTiers[0].key);
+  const tier = websiteTiers.find((t) => t.key === active)!;
+  return (
+    <div id="work" className="mb-28 w-full scroll-mt-24">
+      <SectionHead
+        tag="OUR WORK"
+        title="Real sites, built at every tier"
+        text="Pick a tier to see who it is for and the websites we have launched on it."
+      />
+      <div
+        role="tablist"
+        className={`${glass} mx-auto mb-8 flex w-fit max-w-full flex-wrap justify-center gap-1 rounded-xl p-1.5`}
+      >
+        {websiteTiers.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={active === t.key}
+            onClick={() => setActive(t.key)}
+            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#38bdf8] ${active === t.key ? "bg-[#f5a623] text-[#070d1f] shadow-[0_0_22px_rgba(245,166,35,0.4)]" : "text-[#b8c3e6] hover:text-white"}`}
+          >
+            {t.name}
+            <span
+              className={`${mono} rounded-full px-1.5 text-[10px] ${active === t.key ? "bg-[#070d1f]/20" : "bg-white/10"}`}
+            >
+              {t.examples.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div
+        className={`${glass} mb-6 grid gap-6 rounded-2xl p-6 md:grid-cols-[1fr_1fr_1.4fr]`}
+      >
+        <div>
+          <p className={`${mono} text-xs text-[#38bdf8]`}>best for</p>
+          <p className="mt-1 font-semibold text-white">{tier.bestForHeading}</p>
+        </div>
+        <ul className="flex flex-wrap content-start gap-1.5">
+          {tier.bestFor.map((b) => (
+            <li
+              key={b}
+              className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-[#c5cff0]"
+            >
+              {b}
+            </li>
+          ))}
+        </ul>
+        <p className="border-l-2 border-[#f5a623] pl-4 text-sm leading-relaxed text-[#c5cff0]">
+          {tier.purpose}
+        </p>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {tier.examples.map((site) => (
+          <a
+            key={site.url}
+            href={site.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a1226] transition hover:-translate-y-1 hover:border-[#38bdf8]/60 hover:shadow-[0_0_40px_rgba(56,189,248,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#38bdf8]"
+          >
+            <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
+              <Dots />
+              <span className={`${mono} truncate text-[11px] text-[#8a97bd]`}>
+                {domain(site.url)}
+              </span>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={site.image}
+              alt={site.name}
+              className="aspect-video w-full object-cover object-top transition duration-500 group-hover:scale-105"
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 flex items-center justify-between px-4 pb-3 pt-10"
+              style={grad(
+                "to top",
+                "#070d1f",
+                "rgba(7,13,31,0.8)",
+                "transparent",
+              )}
+            >
+              <span className="text-sm font-semibold text-white">
+                {site.name}
+              </span>
+              <FaExternalLinkAlt className="h-3.5 w-3.5 text-[#8a97bd] transition group-hover:text-[#38bdf8]" />
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- CLOSING CTA ---- */
+function ClosingCta({ onAudit }: { onAudit: () => void }) {
+  return (
+    <div
+      className="relative mb-8 overflow-hidden rounded-3xl border border-[#f5a623]/30 px-6 py-14 text-center"
+      style={grad("135deg", "#16204a", "#0d1630", "#1a1630")}
+    >
+      <div
+        aria-hidden
+        className="absolute -top-24 left-1/2 h-64 w-96 -translate-x-1/2 rounded-full bg-[#f5a623]/20 blur-3xl"
+      />
+      <div className="relative">
+        <h2 className="text-3xl font-bold text-white font-['Poetsen_One'] sm:text-4xl">
+          Not sure which tier fits?
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-[#c5cff0]">
+          Start with a free audit of your current website and we will point you
+          to the right build.
+        </p>
+        <div className="mt-7">
+          <AuditButton onClick={onAudit} />
+        </div>
       </div>
     </div>
   );
@@ -574,62 +836,29 @@ export default function WebsiteDevelopment() {
   } = useDisclosure();
 
   return (
-    <div className="w-full bg-white flex flex-col justify-center items-center">
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 bg-white">
-        <div className="flex flex-col justify-center items-center">
-          <div className="w-full xl:py-8">
-            <div className="flex flex-col justify-center items-center">
-              {services.map((service, serviceIndex) => (
-                <div
-                  key={`${service.title}-${serviceIndex}`}
-                  className="w-full"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 mb-8">
-                    <div
-                      className={
-                        serviceIndex % 2 === 0 ? "md:order-2" : "md:order-1"
-                      }
-                    >
-                      <img
-                        className="w-full h-[28rem] object-contain"
-                        alt={service.title}
-                        src={`/images/services/${service.image}`}
-                      />
-                    </div>
-
-                    <div
-                      className={
-                        serviceIndex % 2 === 0 ? "md:order-1" : "md:order-2"
-                      }
-                    >
-                      <div className="max-w-lg">
-                        <span className="text-xl text-accent font-bold">
-                          {service.title}
-                        </span>
-                        <h1 className="text-3xl text-primary font-bold mt-2 font-['Poetsen_One'] whitespace-pre-line">
-                          {service.subtitle}
-                        </h1>
-
-                        <ServiceProblemList problems={service.problems} />
-
-                        <ServiceCtaButtons
-                          ctas={service.ctas}
-                          onWebsiteAudit={openAudit}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <WebsiteTiersSection />
-
-              <PricingPackagesSection />
-            </div>
-          </div>
-        </div>
+    <div className="relative flex w-full flex-col items-center overflow-hidden bg-[#070d1f]">
+      <style>{css}</style>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[44rem]"
+        style={GRID_BG}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-[#38bdf8]/15 blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-40 top-[60rem] h-96 w-96 rounded-full bg-[#f5a623]/10 blur-[120px]"
+      />
+      <section className="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+        <Hero onAudit={openAudit} />
+        <div className="h-16" />
+        <Marquee />
+        <Pricing />
+        <Work />
+        <ClosingCta onAudit={openAudit} />
       </section>
-
       <RequestWebsiteAuditModal
         isOpen={auditOpen}
         onOpenChange={onAuditOpenChange}

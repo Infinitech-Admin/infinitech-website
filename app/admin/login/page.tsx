@@ -1,53 +1,66 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminLoginPage() {
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid password")
-        return
+        setError(data.message || "Invalid password");
+        setLoading(false);
+        return;
       }
 
-      localStorage.setItem("adminToken", data.token)
-      router.push("/admin/dashboard")
+      localStorage.setItem("adminToken", data.token);
+
+      // Keep loading = true hanggang makalipat ng page
+      setSuccess(true);
+      router.push("/admin/dashboard");
     } catch (err) {
-      setError("Login failed. Please try again.")
-    } finally {
-      setLoading(false)
+      setError("Login failed. Please try again.");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>Enter your password to access the support dashboard</CardDescription>
+          <CardDescription>
+            Enter your password to access the support dashboard
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -72,12 +85,23 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {success ? "Redirecting..." : "Logging in..."}
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
