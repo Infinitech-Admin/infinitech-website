@@ -194,7 +194,7 @@ export const members = [
   },
   // 9. Multimedia Editors
   {
-    name: "Margel Elodovice",
+    name: "Margelle Lodovice",
     position: "Multimedia Editor",
     image: "margel.jpg",
     email: "infinitechmargellelodovice@gmail.com",
