@@ -57,6 +57,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Lead Generation",
     items: [
       { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
+      { href: "/admin/leave-requests", label: "Leave Requests", icon: ClipboardList },
       {
         href: "/admin/employee-clearance-form",
         label: "Clearance Form",

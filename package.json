@@ -94,6 +94,7 @@
   "devDependencies": {
     "@next/eslint-plugin-next": "15.0.4",
     "@react-types/shared": "3.25.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.4",
     "@types/nodemailer": "^6.4.17",
     "@types/pdfmake": "^0.3.3",
