@@ -14,6 +14,7 @@ interface ProxyJsonOptions {
   path: string; // e.g. "/api/admin/portal-demos/12/roles"
   query?: URLSearchParams;
   body?: unknown; // JSON-serializable; omit for GET/DELETE with no body
+  serviceToken?: string;
 }
 
 export async function proxyJson({
@@ -21,6 +22,7 @@ export async function proxyJson({
   path,
   query,
   body,
+  serviceToken,
 }: ProxyJsonOptions): Promise<NextResponse> {
   const qs = query && query.toString() ? `?${query.toString()}` : "";
   const url = `${laravelUrl}${path}${qs}`;
@@ -30,6 +32,9 @@ export async function proxyJson({
       method,
       headers: {
         Accept: "application/json",
+        ...(serviceToken
+          ? { Authorization: `Bearer ${serviceToken}` }
+          : {}),
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -47,16 +52,21 @@ export async function proxyJson({
 export async function proxyFormData({
   path,
   formData,
+  serviceToken,
 }: {
   path: string;
   formData: FormData;
+  serviceToken?: string;
 }): Promise<NextResponse> {
   const url = `${laravelUrl}${path}`;
 
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(serviceToken ? { Authorization: `Bearer ${serviceToken}` } : {}),
+      },
       body: formData,
       cache: "no-store",
     });

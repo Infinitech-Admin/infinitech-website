@@ -1,8 +1,9 @@
 // File: lib/api.ts
 
-// Base URL of the Laravel backend. Set NEXT_PUBLIC_API_URL in .env.local.
-// Everything here talks DIRECTLY to Laravel -- no Next.js API route in
-// between, so Next's 4MB body limit is irrelevant to any of these calls.
+// Public blog reads use Laravel directly; admin mutations go through the
+// authenticated Next.js proxy.
+import { apiFetch } from "./api-client";
+
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -64,7 +65,7 @@ export async function fetchBlogPost(id: number): Promise<BlogPostRecord> {
 export async function createBlogPost(
   payload: Partial<BlogPostRecord>,
 ): Promise<BlogPostRecord> {
-  const res = await fetch(`${API_URL}/api/blog-posts`, {
+  const res = await apiFetch("/api/admin/blog-posts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -77,7 +78,7 @@ export async function updateBlogPost(
   id: number,
   payload: Partial<BlogPostRecord>,
 ): Promise<BlogPostRecord> {
-  const res = await fetch(`${API_URL}/api/blog-posts/${id}`, {
+  const res = await apiFetch(`/api/admin/blog-posts/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -87,7 +88,7 @@ export async function updateBlogPost(
 }
 
 export async function deleteBlogPost(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}/api/blog-posts/${id}`, {
+  const res = await apiFetch(`/api/admin/blog-posts/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Failed to delete blog post: ${res.status}`);

@@ -1,13 +1,36 @@
-// 📁 Place this file at: app/api/blog-posts/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+const FIELDS = [
+  "title",
+  "description",
+  "content",
+  "thumbnail",
+  "images",
+  "video_path",
+  "category",
+  "author",
+  "is_published",
+  "published_at",
+] as const;
+
+function laravelHeaders(req: NextRequest, json = false) {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (json) headers["Content-Type"] = "application/json";
+  const auth = req.headers.get("authorization");
+  if (auth) headers["Authorization"] = auth;
+  return headers;
+}
+
+export async function GET(req: NextRequest) {
   try {
     const apiUrl = process.env.LARAVEL_API_URL;
     if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
 
-    const res = await fetch(`${apiUrl}/api/blog-posts`, {
-      headers: { Accept: "application/json" },
+    // Forward search / page / per_page / category / is_published
+    const qs = req.nextUrl.searchParams.toString();
+    const res = await fetch(`${apiUrl}/api/blog-posts${qs ? `?${qs}` : ""}`, {
+      headers: laravelHeaders(req),
+      cache: "no-store",
     });
 
     const data = await res.json();
@@ -30,38 +53,22 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { title, description, content, imageUrl, videoUrl, category, author } =
-    await req.json();
-
-  console.log("📩 New Blog Post Received:", {
-    title,
-    description,
-    content,
-    imageUrl,
-    videoUrl,
-    category,
-    author,
-  });
-
   try {
     const apiUrl = process.env.LARAVEL_API_URL;
     if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
 
+    const body = await req.json();
+
+    // Only forward fields Laravel's validator knows about
+    const payload: Record<string, unknown> = {};
+    for (const key of FIELDS) {
+      if (key in body) payload[key] = body[key];
+    }
+
     const res = await fetch(`${apiUrl}/api/blog-posts`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        description,
-        content,
-        imageUrl,
-        videoUrl,
-        category,
-        author,
-      }),
+      headers: laravelHeaders(req, true),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
@@ -78,15 +85,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("✅ Blog post forwarded to Laravel successfully!");
-
     return NextResponse.json(
       {
-        code: 200,
+        code: 201,
         message: "Blog Post Created Successfully!",
         data: data?.data ?? data,
       },
-      { status: 200 },
+      { status: 201 },
     );
   } catch (error) {
     console.error("❌ Send Blog Post Error:", error);

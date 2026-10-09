@@ -1,9 +1,15 @@
 // File: lib/chunkedUpload.ts
 
-import { API_URL } from "./api";
+const getAuthHeaders = (): HeadersInit => {
+  if (typeof window === "undefined") {
+    return {};
+  }
 
-// 2MB chunks: comfortably under any default PHP/webserver limit, so no
-// server config is required no matter how large the source video is.
+  const token = localStorage.getItem("adminToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Keep each chunk below the Next.js request-body limit before proxying to Laravel.
 const CHUNK_SIZE = 2 * 1024 * 1024;
 
 export interface UploadResult {
@@ -12,16 +18,15 @@ export interface UploadResult {
 }
 
 /**
- * Uploads a large file (e.g. video) to the Laravel backend in small chunks.
- * Posts straight to Laravel -- never touches a Next.js API route -- so
- * Next's 4MB request body limit doesn't apply no matter how large the file is.
+ * Uploads a large file (e.g. video) to Laravel in small chunks through the
+ * authenticated Next.js proxy.
  */
 export async function uploadFileInChunks(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<UploadResult> {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  const identifier = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/\s+/g, "_")}`;
+  const identifier = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   let lastResult: { status: string; path?: string; url?: string } | null = null;
 
@@ -37,8 +42,9 @@ export async function uploadFileInChunks(
     formData.append("identifier", identifier);
     formData.append("filename", file.name);
 
-    const response = await fetch(`${API_URL}/api/uploads/chunk`, {
+    const response = await fetch("/api/admin/blog/uploads/chunk", {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData,
     });
 
@@ -80,7 +86,12 @@ export function uploadImageDirect(
     formData.append("file", file);
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API_URL}/api/uploads/image`);
+    xhr.open("POST", "/api/admin/blog/uploads/image");
+
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
