@@ -1,9 +1,17 @@
 // File: components/admin/employee-form.tsx
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -16,11 +24,17 @@ import {
   EMPLOYEE_ALLOWANCE_TYPES,
   EMPLOYEE_STATUSES,
   type EmployeeFormData,
+  type PositionHistoryEntry,
 } from "./employee-types";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   data: EmployeeFormData;
-  onChange: (field: keyof EmployeeFormData, value: string) => void;
+  onChange: (
+    field: keyof EmployeeFormData,
+    value: string | PositionHistoryEntry[],
+  ) => void;
+  showPositionChangeSection?: boolean;
   /** Toggling / amount-typing for one allowance type at a time. */
   onAllowanceChange: (
     key: string,
@@ -194,6 +208,136 @@ function Row({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PositionChangeSection({
+  data,
+  onChange,
+}: {
+  data: EmployeeFormData;
+  onChange: Props["onChange"];
+}) {
+  const action = data.position_action || "";
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const positionHistory = [...(data.position_history ?? [])].sort((a, b) =>
+    b.effective_date.localeCompare(a.effective_date),
+  );
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-purple-600">
+            Position Change
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={action === "Promote" ? "default" : "outline"}
+              onClick={() => onChange("position_action", "Promote")}
+            >
+              Promote
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={action === "Demote" ? "default" : "outline"}
+              onClick={() => onChange("position_action", "Demote")}
+            >
+              Demote
+            </Button>
+          </div>
+        </div>
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setHistoryOpen(true)}
+          >
+            Position History
+            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">
+              {positionHistory.length}
+            </span>
+          </Button>
+          
+          <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Position History Log</DialogTitle>
+                <DialogDescription>
+                  Previous promotions and demotions for this employee.
+                </DialogDescription>
+              </DialogHeader>
+              {positionHistory.length ? (
+                <div className="space-y-3">
+                  {positionHistory.map((entry, index) => (
+                    <div
+                      key={`${entry.action}-${entry.new_position}-${entry.effective_date}-${index}`}
+                      className="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-950"
+                    >
+                      <div className="min-w-0">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            entry.action === "Promote"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                              : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                          }`}
+                        >
+                          {entry.action}
+                        </span>
+                        <p className="mt-1 break-words font-medium text-slate-800 dark:text-slate-100">
+                          {entry.old_position || "Unknown position"}
+                          <span className="mx-2 text-slate-400" aria-hidden="true">
+                            →
+                          </span>
+                          {entry.new_position}
+                        </p>
+                      </div>
+                      <time
+                        dateTime={entry.effective_date}
+                        className="shrink-0 text-sm text-slate-500 dark:text-slate-400"
+                      >
+                        {new Date(
+                          `${entry.effective_date}T00:00:00`,
+                        ).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </time>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  No position history has been recorded yet.
+                </p>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <Row>
+        <Field
+          label="New Position"
+          field="new_position"
+          data={data}
+          onChange={onChange}
+        />
+        <Field
+          label={action ? `${action} Date` : "Date Promoted / Demoted"}
+          field="position_effective_date"
+          data={data}
+          onChange={onChange}
+          type="date"
+        />
+      </Row>
+
+    </div>
+  );
+}
+
 /**
  * Employee Masterfile form, split into tabs so each section (Employee Info,
  * Allowances, Government IDs, Family Info, Contact Info) is viewed on its own
@@ -204,7 +348,8 @@ export function EmployeeForm({
   onChange,
   onAllowanceChange,
   errors = {},
-}: Props) {
+  showPositionChangeSection = false,
+}: Props & { showPositionChangeSection?: boolean }) {
   const invalid = (f: keyof EmployeeFormData) => !!errors[f];
   const sectionHasError = (section: string) =>
     SECTION_FIELDS[section].some((f) => errors[f]);
@@ -224,9 +369,8 @@ export function EmployeeForm({
       <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 p-1">
         <TabsTrigger
           value="employee"
-          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
-            sectionHasError("employee") ? "text-red-500" : ""
-          }`}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${sectionHasError("employee") ? "text-red-500" : ""
+            }`}
         >
           Employee Info
         </TabsTrigger>
@@ -238,25 +382,22 @@ export function EmployeeForm({
         </TabsTrigger>
         <TabsTrigger
           value="government"
-          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
-            sectionHasError("government") ? "text-red-500" : ""
-          }`}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${sectionHasError("government") ? "text-red-500" : ""
+            }`}
         >
           Government IDs
         </TabsTrigger>
         <TabsTrigger
           value="family"
-          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
-            sectionHasError("family") ? "text-red-500" : ""
-          }`}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${sectionHasError("family") ? "text-red-500" : ""
+            }`}
         >
           Family Info
         </TabsTrigger>
         <TabsTrigger
           value="contact"
-          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${
-            sectionHasError("contact") ? "text-red-500" : ""
-          }`}
+          className={`flex-1 whitespace-nowrap text-xs sm:text-sm ${sectionHasError("contact") ? "text-red-500" : ""
+            }`}
         >
           Contact Info
         </TabsTrigger>
@@ -301,6 +442,11 @@ export function EmployeeForm({
             type="date"
           />
         </Row>
+
+        {showPositionChangeSection && (
+          <PositionChangeSection data={data} onChange={onChange} />
+        )}
+
         <Row>
           <SelectField
             label="Status"
@@ -483,7 +629,7 @@ export function EmployeeForm({
           All fields in this section are optional.
         </p>
 
-        <SubHeading>Mother's Maiden Name</SubHeading>
+        <SubHeading>Mother&apos;s Maiden Name</SubHeading>
         <Row>
           <Field
             label="Last Name"
@@ -513,7 +659,7 @@ export function EmployeeForm({
           />
         </Row>
 
-        <SubHeading>Father's Name</SubHeading>
+        <SubHeading>Father&apos;s Name</SubHeading>
         <Row>
           <Field
             label="Last Name"

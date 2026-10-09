@@ -38,6 +38,13 @@ export const EMPLOYEE_ALLOWANCE_TYPES: { key: string; label: string }[] = [
   // { key: "transportation", label: "Transportation Allowance" },
 ];
 
+export interface PositionHistoryEntry {
+  action: "Promote" | "Demote";
+  old_position: string;
+  new_position: string;
+  effective_date: string; // YYYY-MM-DD
+}
+
 export interface Employee {
   id: number;
 
@@ -45,6 +52,10 @@ export interface Employee {
   id_number: string;
   department: string;
   position: string;
+  position_action?: "Promote" | "Demote";
+  new_position?: string | null;
+  position_effective_date?: string | null;
+  position_history?: PositionHistoryEntry[] | null;
   date_hired: string; // YYYY-MM-DD
   status: EmployeeStatus;
   salary: string; // Laravel's decimal:2 cast serializes as a string, e.g. "45000.00"
@@ -106,9 +117,20 @@ export type AllowanceFormState = Record<
 
 export type EmployeeFormData = Omit<
   Employee,
-  "id" | "created_at" | "updated_at" | "allowances"
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "allowances"
+  | "position_action"
+  | "new_position"
+  | "position_effective_date"
+  | "position_history"
 > & {
   allowances: AllowanceFormState;
+  position_action: "Promote" | "Demote" | "";
+  new_position: string;
+  position_effective_date: string;
+  position_history: PositionHistoryEntry[];
 };
 
 export const emptyAllowancesState = (): AllowanceFormState =>
@@ -143,6 +165,10 @@ export const emptyEmployee = (): EmployeeFormData => ({
   id_number: "",
   department: "",
   position: "",
+  position_action: "",
+  new_position: "",
+  position_effective_date: "",
+  position_history: [],
   date_hired: "",
   status: "Active",
   salary: "",

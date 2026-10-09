@@ -55,6 +55,7 @@ type LeaveRecord = {
     start_date: string;
     end_date: string;
     number_of_days: number;
+    half_day_period: "AM" | "PM" | null;
     reason: string;
     approved_by: number | null;
     approver_name: string | null;
@@ -83,6 +84,7 @@ type LeaveForm = {
     other_leave_type: string;
     start_date: string;
     end_date: string;
+    half_day_period: "AM" | "PM" | "";
     reason: string;
     approved_by: string;
     proof: File | null;
@@ -101,6 +103,7 @@ const EMPTY_FORM: LeaveForm = {
     other_leave_type: "",
     start_date: "",
     end_date: "",
+    half_day_period: "",
     reason: "",
     approved_by: "",
     proof: null,
@@ -275,7 +278,16 @@ function initials(name: string) {
 }
 
 function pluralDays(count: number) {
+    if (count === 0.5) return "0.5 day";
     return `${count} ${count === 1 ? "day" : "days"}`;
+}
+
+function leaveDurationLabel(
+    leave: Pick<LeaveRecord, "number_of_days" | "half_day_period">,
+) {
+    return leave.half_day_period
+        ? `Half day (${leave.half_day_period})`
+        : pluralDays(leave.number_of_days);
 }
 
 function StatusBadge({ status }: { status: LeaveStatus }) {
@@ -366,7 +378,8 @@ function LeaveRow({
                     {leave.employee_name}
                 </span>
                 <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                    {leaveTypeLabel(leave)}, {formatRange(leave.start_date, leave.end_date)}
+                    {leaveTypeLabel(leave)}, {formatRange(leave.start_date, leave.end_date)} ·{" "}
+                    {leaveDurationLabel(leave)}
                 </span>
             </span>
             <StatusBadge status={leave.status} />
@@ -743,6 +756,7 @@ export default function LeaveRequestsPage() {
             other_leave_type: leave.other_leave_type || "",
             start_date: leave.start_date,
             end_date: leave.end_date,
+            half_day_period: leave.half_day_period || "",
             reason: leave.reason,
             approved_by: leave.approved_by ? String(leave.approved_by) : "",
             proof: null,
@@ -789,6 +803,13 @@ export default function LeaveRequestsPage() {
             toast.error("End date cannot be before start date.");
             return;
         }
+        if (
+            form.half_day_period &&
+            form.start_date !== form.end_date
+        ) {
+            toast.error("Half-day leave must be requested for a single date.");
+            return;
+        }
         const body = new FormData();
         body.set("employee_id", form.employee_id);
         body.set("leave_type", form.leave_type);
@@ -798,6 +819,7 @@ export default function LeaveRequestsPage() {
         );
         body.set("start_date", form.start_date);
         body.set("end_date", form.end_date);
+        body.set("half_day_period", form.half_day_period);
         body.set("reason", form.reason.trim());
         body.set("approved_by", form.approved_by);
         if (form.proof) body.set("proof", form.proof);
@@ -904,12 +926,14 @@ export default function LeaveRequestsPage() {
     };
 
     const dayCount =
-        form.start_date && form.end_date && form.start_date <= form.end_date
-            ? differenceInCalendarDays(
-                parseDay(form.end_date),
-                parseDay(form.start_date),
-            ) + 1
-            : 0;
+        form.half_day_period
+            ? 0.5
+            : form.start_date && form.end_date && form.start_date <= form.end_date
+              ? differenceInCalendarDays(
+                    parseDay(form.end_date),
+                    parseDay(form.start_date),
+                ) + 1
+              : 0;
 
     const downloadProof = async (leave: LeaveRecord) => {
         try {
@@ -1445,8 +1469,8 @@ export default function LeaveRequestsPage() {
                                                             <button
                                                                 key={`${segment.leave.id}-${segment.startCol}`}
                                                                 onClick={() => setSelectedRecord(segment.leave)}
-                                                                aria-label={`${segment.leave.employee_number}, ${segment.leave.employee_name}, ${leaveTypeLabel(segment.leave)}, ${segment.leave.status}`}
-                                                                title={`${segment.leave.employee_number}, ${segment.leave.employee_name}, ${leaveTypeLabel(segment.leave)} (${segment.leave.status})`}
+                                                                aria-label={`${segment.leave.employee_number}, ${segment.leave.employee_name}, ${leaveTypeLabel(segment.leave)}, ${leaveDurationLabel(segment.leave)}, ${segment.leave.status}`}
+                                                                title={`${segment.leave.employee_number}, ${segment.leave.employee_name}, ${leaveTypeLabel(segment.leave)} (${leaveDurationLabel(segment.leave)}; ${segment.leave.status})`}
                                                                 style={{
                                                                     gridColumn: `${segment.startCol + 1} / ${segment.endCol + 2}`,
                                                                     gridRow: segment.lane + 1,
@@ -1630,7 +1654,7 @@ export default function LeaveRequestsPage() {
                                                             {formatRange(leave.start_date, leave.end_date)}
                                                         </p>
                                                         <p className="text-xs text-slate-500">
-                                                            {pluralDays(leave.number_of_days)}
+                                                            {leaveDurationLabel(leave)}
                                                         </p>
                                                     </td>
                                                     <td className="hidden truncate px-3 py-3 xl:table-cell">
@@ -1695,7 +1719,7 @@ export default function LeaveRequestsPage() {
                                                     </span>
                                                     <span className="block text-xs text-slate-500">
                                                         {formatRange(leave.start_date, leave.end_date)} (
-                                                        {pluralDays(leave.number_of_days)})
+                                                        {leaveDurationLabel(leave)})
                                                     </span>
                                                 </span>
                                             </button>
@@ -1908,25 +1932,62 @@ export default function LeaveRequestsPage() {
                                         />
                                     </Field>
                                 )}
+                                <Field label="Leave duration">
+                                    <select
+                                        value={form.half_day_period}
+                                        onChange={(event) => {
+                                            const halfDayPeriod = event.target.value as
+                                                | "AM"
+                                                | "PM"
+                                                | "";
+                                            setForm({
+                                                ...form,
+                                                half_day_period: halfDayPeriod,
+                                                end_date: halfDayPeriod
+                                                    ? form.start_date
+                                                    : form.end_date,
+                                            });
+                                        }}
+                                        className={selectClass}
+                                    >
+                                        <option value="">Full day</option>
+                                        <option value="AM">Half day — AM</option>
+                                        <option value="PM">Half day — PM</option>
+                                    </select>
+                                </Field>
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <Field label="Start date">
                                         <Input
                                             type="date"
                                             value={form.start_date}
-                                            onChange={(event) =>
-                                                setForm({ ...form, start_date: event.target.value })
-                                            }
+                                            onChange={(event) => {
+                                                const startDate = event.target.value;
+                                                setForm({
+                                                    ...form,
+                                                    start_date: startDate,
+                                                    end_date: form.half_day_period
+                                                        ? startDate
+                                                        : form.end_date,
+                                                });
+                                            }}
                                             required
                                         />
                                     </Field>
                                     <Field
                                         label="End date"
-                                        hint={dayCount ? pluralDays(dayCount) : undefined}
+                                        hint={
+                                            dayCount
+                                                ? form.half_day_period
+                                                    ? `Half day (${form.half_day_period})`
+                                                    : pluralDays(dayCount)
+                                                : undefined
+                                        }
                                     >
                                         <Input
                                             type="date"
                                             min={form.start_date || undefined}
                                             value={form.end_date}
+                                            disabled={!!form.half_day_period}
                                             onChange={(event) =>
                                                 setForm({ ...form, end_date: event.target.value })
                                             }
@@ -2061,7 +2122,7 @@ export default function LeaveRequestsPage() {
                                     ["Leave type", leaveTypeLabel(selectedRecord)],
                                     [
                                         "Dates",
-                                        `${formatRange(selectedRecord.start_date, selectedRecord.end_date)} (${pluralDays(selectedRecord.number_of_days)})`,
+                                        `${formatRange(selectedRecord.start_date, selectedRecord.end_date)} (${leaveDurationLabel(selectedRecord)})`,
                                     ],
                                     [
                                         "Last updated",

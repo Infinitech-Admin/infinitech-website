@@ -159,7 +159,7 @@ function Sidebar({
       <aside
         className={`${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-gradient-to-b from-cyan-900 to-blue-900 dark:from-cyan-950 dark:to-blue-950 text-white transition-transform duration-300 flex flex-col fixed left-0 top-0 h-full shadow-lg z-50 lg:translate-x-0 lg:sticky`}
+        } w-62 bg-gradient-to-b from-cyan-900 to-blue-900 dark:from-cyan-950 dark:to-blue-950 text-white transition-transform duration-300 flex flex-col fixed left-0 top-0 h-full shadow-lg z-50 lg:translate-x-0 lg:sticky`}
       >
         <div className="p-4 border-b border-cyan-700/50 flex items-center justify-between">
           <h1 className="text-lg font-bold text-cyan-300">Admin</h1>
