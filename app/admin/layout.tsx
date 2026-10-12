@@ -24,6 +24,8 @@ import {
   Palette,
   TrendingUp,
   BarChart3,
+  FolderOpen,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +53,8 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Overview",
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
+      { href: "/admin/website-directory", label: "Website Directory", icon: FolderOpen }
     ],
   },
   {
@@ -59,33 +63,17 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
       { href: "/admin/website-audit", label: "Website Audit", icon: Search },
       { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
-      {
-        href: "/admin/client-assessment",
-        label: "Client Assessment",
-        icon: UserCheck,
-      },
-      {
-        href: "/admin/demo-requirements",
-        label: "Demo Website Requirements",
-        icon: FileCheck,
-      },
+      { href: "/admin/client-assessment", label: "Client Assessment", icon: UserCheck },
+      { href: "/admin/demo-requirements", label: "Demo Website Requirements", icon: FileCheck },
     ],
   },
   {
     title: "Marketing Services",
     items: [
       { href: "/admin/graphic-design", label: "Graphic Design", icon: Palette },
-      {
-        href: "/admin/social-media-management",
-        label: "Social Media Management",
-        icon: Megaphone,
-      },
+      { href: "/admin/social-media-management", label: "Social Media Management", icon: Megaphone },
       { href: "/admin/paid-ads", label: "Paid Ads", icon: TrendingUp },
-      {
-        href: "/admin/market-research",
-        label: "Market Research",
-        icon: BarChart3,
-      },
+      { href: "/admin/market-research", label: "Market Research", icon: BarChart3 },
       { href: "/admin/blog", label: "Blog", icon: FileText },
     ],
   },
@@ -100,30 +88,16 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Customer Support",
     items: [
-      {
-        href: "/admin/support-tickets",
-        label: "Support Tickets",
-        icon: Ticket,
-      },
+      { href: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
     ],
   },
   {
     title: "Human Resources",
     items: [
-      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
-      {
-        href: "/admin/employee-clearance-form",
-        label: "Clearance Form",
-        icon: ClipboardCheck,
-      },
-
+      { href: "/admin/employee-clearance-form", label: "Clearance Form", icon: ClipboardCheck },
       // { href: "/admin/coe", label: "COE", icon: FileText },'
       { href: "/admin/leave-request", label: "Leave Requests", icon: FileText },
-      {
-        href: "/admin/attendance",
-        label: "OJT Attendance",
-        icon: CalendarCheck,
-      },
+      { href: "/admin/attendance", label: "OJT Attendance", icon: CalendarCheck },
     ],
   },
 ];
@@ -150,8 +124,10 @@ function Sidebar({
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          className="fixed inset-0 z-40 border-0 bg-black/50 p-0 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -286,7 +262,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-950 flex overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <Sidebar
         pathname={pathname}
         isOpen={sidebarOpen}
@@ -294,9 +270,11 @@ export default function AdminLayout({
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 flex flex-col overflow-auto">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar onOpenSidebar={() => setSidebarOpen(true)} />
-        <div className="flex-1 p-4 lg:p-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
+          {children}
+        </div>
       </main>
     </div>
   );

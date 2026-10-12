@@ -103,6 +103,73 @@ const STATUS_COLORS: Record<string, string> = {
   resolved: COLORS.emerald,
 };
 
+type WebsiteDirectoryStats = {
+  total: number;
+  in_progress: number;
+  on_hold: number;
+  completed: number;
+  in_testing: number;
+  qa_needs_attention: number;
+};
+
+function WebsiteDirectorySummary() {
+  const [websiteStats, setWebsiteStats] = useState<WebsiteDirectoryStats | null>(null);
+  const [websiteStatsError, setWebsiteStatsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/websites/stats", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "Unable to load website statistics.");
+        if (active) setWebsiteStats(result.data as WebsiteDirectoryStats);
+      })
+      .catch((loadError: unknown) => {
+        console.error("Website dashboard summary failed:", loadError);
+        if (active) setWebsiteStatsError(
+          loadError instanceof Error ? loadError.message : "Unable to load website statistics.",
+        );
+      });
+    return () => { active = false; };
+  }, []);
+
+  const cards = websiteStats
+    ? [
+        { label: "Total Websites", value: websiteStats.total, href: "/admin/website-directory", accent: "border-cyan-500" },
+        { label: "Projects In Progress", value: websiteStats.in_progress, href: "/admin/website-directory?status=In%20Progress", accent: "border-blue-500" },
+        { label: "Projects On Hold", value: websiteStats.on_hold, href: "/admin/website-directory?status=On%20Hold", accent: "border-amber-500" },
+        { label: "Projects Completed", value: websiteStats.completed, href: "/admin/website-directory?status=Completed", accent: "border-emerald-500" },
+        { label: "Projects in Testing", value: websiteStats.in_testing, href: "/admin/website-directory?phase=Testing", accent: "border-violet-500" },
+        { label: "QA Needs Attention", value: websiteStats.qa_needs_attention, href: "/admin/website-directory?qa_status=attention", accent: "border-rose-500" },
+      ]
+    : [];
+
+  return (
+    <section aria-label="Website project summary" className="space-y-3">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Website projects</h2>
+        <p className="text-sm text-slate-500">Live counts from the Website Directory.</p>
+      </div>
+      {websiteStatsError ? (
+        <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">{websiteStatsError}</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {cards.length
+            ? cards.map((card) => (
+                <Link key={card.label} href={card.href} className={`rounded-xl border border-slate-200 border-l-4 ${card.accent} bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900`}>
+                  <p className="text-sm font-medium text-slate-500">{card.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{card.value}</p>
+                </Link>
+              ))
+            : Array.from({ length: 6 }, (_, index) => (
+                <div key={index} className="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" aria-label="Loading website summary" />
+              ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -281,6 +348,8 @@ export default function AdminDashboard() {
           {error}
         </div>
       )}
+
+      <WebsiteDirectorySummary />
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

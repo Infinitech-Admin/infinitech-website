@@ -48,6 +48,7 @@ type LeaveRecord = {
     employee_id: number;
     employee_number: string;
     employee_name: string;
+    employee_search_name: string;
     department: string;
     position: string;
     leave_type: string;
@@ -154,10 +155,7 @@ const GRID_7: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
 };
-const PRIMARY_STYLE: React.CSSProperties = {
-    backgroundColor: "#0e7490",
-    color: "#ffffff",
-};
+
 const TAB_STYLE: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -370,19 +368,15 @@ function LeaveRow({
     return (
         <button
             onClick={() => onOpen(leave)}
-            className="flex w-full items-start gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 dark:hover:bg-slate-800/60"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 dark:hover:bg-slate-800/60"
         >
             <Avatar name={leave.employee_name} size="sm" />
-            <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {leave.employee_name}
-                </span>
-                <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                    {leaveTypeLabel(leave)}, {formatRange(leave.start_date, leave.end_date)} ·{" "}
-                    {leaveDurationLabel(leave)}
-                </span>
-            </span>
-            <StatusBadge status={leave.status} />
+                </p>
+            </div>
         </button>
     );
 }
@@ -393,6 +387,8 @@ export default function LeaveRequestsPage() {
     const [employees, setEmployees] = useState<EmployeeOption[]>([]);
     const [approvers, setApprovers] = useState<ApproverOption[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDateRecords, setSelectedDateRecords] = useState<LeaveRecord[]>([]);
+    const [selectedDateLoading, setSelectedDateLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [view, setView] = useState<"calendar" | "week" | "list">("calendar");
     const [month, setMonth] = useState(startOfMonth(new Date()));
@@ -503,6 +499,7 @@ export default function LeaveRequestsPage() {
                     [
                         leave.employee_number,
                         leave.employee_name,
+                        leave.employee_search_name,
                         leave.department,
                         leave.position,
                         leave.leave_type,
@@ -667,14 +664,87 @@ export default function LeaveRequestsPage() {
         } else setMonth((v) => addMonths(v, 1));
     };
 
-    const getRecordsForDay = (day: Date) =>
-        calendarRecords.filter((leave) => {
-            const start = parseDay(leave.start_date);
-            const end = parseDay(leave.end_date);
-            return day >= start && day <= end;
-        });
+    useEffect(() => {
+        if (view === "list") return;
 
-    const selectedDayRecords = getRecordsForDay(selectedDate);
+        const controller = new AbortController();
+        const selectedDay = dateValue(selectedDate);
+        setSelectedDateRecords([]);
+        setSelectedDateLoading(true);
+
+        void (async () => {
+            try {
+                const params = new URLSearchParams({
+                    from: selectedDay,
+                    to: selectedDay,
+                    status: "Approved",
+                });
+                const response = await adminFetch(
+                    `/api/admin/leave-requests?${params.toString()}`,
+                    { cache: "no-store", signal: controller.signal },
+                );
+                const data = await readJson<{ data: LeaveRecord[] }>(response);
+                if (!controller.signal.aborted) setSelectedDateRecords(data.data);
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : "Unable to load leave for this date.",
+                    );
+                }
+            } finally {
+                if (!controller.signal.aborted) setSelectedDateLoading(false);
+            }
+        })();
+
+        return () => controller.abort();
+    }, [selectedDate, view]);
+
+    const selectedDayValue = dateValue(selectedDate);
+    const selectedDayRecords = useMemo(() => {
+        const query = search.trim().toLowerCase();
+        return selectedDateRecords.filter((leave) => {
+            const matchesSearch =
+                !query ||
+                [
+                    leave.employee_number,
+                    leave.employee_name,
+                    leave.employee_search_name,
+                    leave.department,
+                    leave.position,
+                    leave.leave_type,
+                    leave.other_leave_type || "",
+                    leave.reason,
+                ].some((value) => value.toLowerCase().includes(query));
+            const matchesDate =
+                (!fromFilter || leave.end_date >= fromFilter) &&
+                (!toFilter || leave.start_date <= toFilter);
+
+            return (
+                leave.status === "Approved" &&
+                matchesSearch &&
+                (!employeeFilter ||
+                    leave.employee_number
+                        .toLowerCase()
+                        .includes(employeeFilter.toLowerCase())) &&
+                (departmentFilter === "All" || leave.department === departmentFilter) &&
+                (typeFilter === "All" || leave.leave_type === typeFilter) &&
+                matchesDate &&
+                leave.start_date <= selectedDayValue &&
+                leave.end_date >= selectedDayValue
+            );
+        });
+    }, [
+        selectedDateRecords,
+        search,
+        employeeFilter,
+        departmentFilter,
+        typeFilter,
+        fromFilter,
+        toFilter,
+        selectedDayValue,
+    ]);
 
     const loadApprovers = useCallback(async (employeeId: string) => {
         if (!employeeId) {
@@ -929,11 +999,11 @@ export default function LeaveRequestsPage() {
         form.half_day_period
             ? 0.5
             : form.start_date && form.end_date && form.start_date <= form.end_date
-              ? differenceInCalendarDays(
+                ? differenceInCalendarDays(
                     parseDay(form.end_date),
                     parseDay(form.start_date),
                 ) + 1
-              : 0;
+                : 0;
 
     const downloadProof = async (leave: LeaveRecord) => {
         try {
@@ -1052,20 +1122,14 @@ export default function LeaveRequestsPage() {
                         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
                             Leave monitoring
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             See who is away, and review requests that need a decision.
                         </p>
-                    </div>
-                    <div className="flex divide-x divide-slate-200 dark:divide-slate-800">
-                        <Stat value={stats.onLeave} label="Away today" />
-                        <Stat value={stats.pending} label="Awaiting approval" highlight />
-                        <Stat value={stats.upcoming} label="Starting in 7 days" />
                     </div>
                 </div>
                 <Button
                     onClick={openCreate}
-                    className={`${primaryButton} self-start lg:self-auto`}
-                    style={PRIMARY_STYLE}
+                    className="bg-[#0e7490] self-start lg:self-auto"
                 >
                     <Plus className="h-4 w-4" /> Add leave
                 </Button>
@@ -1768,9 +1832,11 @@ export default function LeaveRequestsPage() {
                                     : format(selectedDate, "EEEE, MMM d")}
                             </h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {selectedDayRecords.length === 0
-                                    ? "No approved or pending leave."
-                                    : `${selectedDayRecords.length} on leave`}
+                                {selectedDateLoading
+                                    ? "Loading leave for this date..."
+                                    : selectedDayRecords.length === 0
+                                        ? "No approved leave."
+                                        : `${selectedDayRecords.length} on approved leave`}
                             </p>
                             {selectedDayRecords.length > 0 && (
                                 <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
@@ -2039,8 +2105,7 @@ export default function LeaveRequestsPage() {
                             <Button
                                 type="submit"
                                 disabled={saving || !selectedEmployee}
-                                className={primaryButton}
-                                style={PRIMARY_STYLE}
+                                className="bg-[#0e7490] text-white hover:bg-[#0c4a6e] dark:bg-[#0c4a6e] dark:hover:bg-[#0e7490]"
                             >
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                                 {editing ? "Save changes" : "Submit leave"}
@@ -2080,8 +2145,7 @@ export default function LeaveRequestsPage() {
                             <Button
                                 type="submit"
                                 disabled={savingType}
-                                className={primaryButton}
-                                style={PRIMARY_STYLE}
+                                className="bg-[#0e7490] text-white hover:bg-[#0c4a6e] dark:bg-[#0c4a6e] dark:hover:bg-[#0e7490]"
                             >
                                 {savingType ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -2253,8 +2317,7 @@ export default function LeaveRequestsPage() {
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                style={PRIMARY_STYLE}
-                                                className={primaryButton}
+                                                className="bg-[#0e7490] text-white hover:bg-[#0c4a6e] dark:bg-[#0c4a6e] dark:hover:bg-[#0e7490]"
                                                 disabled={
                                                     savingApprover ||
                                                     detailApprover ===
