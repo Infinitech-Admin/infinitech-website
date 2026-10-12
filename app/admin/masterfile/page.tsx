@@ -114,6 +114,23 @@ const formatDate = (dateString?: string | null) => {
     year: "numeric",
   });
 };
+
+const formatMobileNumber = (value?: string | null) => {
+  if (!value) return "";
+  const digits = value.replace(/\D/g, "");
+  const nationalNumber = digits.startsWith("09")
+    ? `63${digits.slice(1)}`
+    : digits.startsWith("9") && digits.length === 10
+      ? `63${digits}`
+      : digits;
+
+  if (nationalNumber.startsWith("63") && nationalNumber.length === 12) {
+    return `+${nationalNumber.slice(0, 5)} ${nationalNumber.slice(5, 8)} ${nationalNumber.slice(8)}`;
+  }
+
+  return value;
+};
+
 // Short display name for the table row only — full first name, middle name
 // collapsed to just its initial, full last name. Keeps getFullName() (used
 // in dialogs/toasts) untouched.
@@ -1198,7 +1215,7 @@ export default function EmployeeMasterfilePage() {
                       </Button>
                     </TableHead>
 
-                    <TableHead className="h-12 whitespace-nowrap pr-5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <TableHead className="h-12 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -1230,25 +1247,20 @@ export default function EmployeeMasterfilePage() {
                         className="border-b border-slate-100 transition-colors hover:bg-blue-50/40 dark:border-slate-800/80 dark:hover:bg-slate-900/70"
                       >
                         {/* ID */}
-                        <TableCell className="whitespace-nowrap font-mono text-sm text-slate-600 dark:text-slate-300">
+                        <TableCell className="min-w-[50px] px-6 py-3.5 font-mono text-sm text-slate-600 dark:text-slate-300">
                           {employee.id_number}
                         </TableCell>
 
                         {/* Employee Identity */}
-                        <TableCell className="min-w-[230px] px-5 py-4">
+                        <TableCell className="min-w-[250px] px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 ring-2 ring-white dark:bg-blue-950 dark:text-blue-300 dark:ring-slate-950">
-                              {employee.first_name?.charAt(0)?.toUpperCase() ||
-                                "?"}
-                            </div>
-
                             <div className="min-w-0">
                               <p className="max-w-[220px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {getShortName(employee)}
                               </p>
 
                               {/* Email */}
-                              <div className="group/email mt-0.5 flex max-w-[190px] items-center gap-1">
+                              <div className="group/email mt-0.5 flex max-w-[220px] items-center gap-1">
                                 <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
                                   {employee.email_address || "No email provided"}
                                 </p>
@@ -1271,7 +1283,9 @@ export default function EmployeeMasterfilePage() {
                               {/* Phone */}
                               <div className="group/phone mt-0.5 flex max-w-[190px] items-center gap-1">
                                 <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                  {employee.mobile_number || "No phone number provided"}
+                                  {employee.mobile_number
+                                    ? formatMobileNumber(employee.mobile_number)
+                                    : "No phone number provided"}
                                 </p>
 
                                 {employee.mobile_number && (
@@ -1651,7 +1665,7 @@ export default function EmployeeMasterfilePage() {
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
                       <InfoRow
                         label="Mobile"
-                        value={viewRecord.mobile_number}
+                        value={formatMobileNumber(viewRecord.mobile_number)}
                         href={
                           viewRecord.mobile_number
                             ? `tel:${viewRecord.mobile_number.replace(/[^\d+]/g, "")}`

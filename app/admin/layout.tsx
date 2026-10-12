@@ -262,7 +262,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="fixed inset-x-0 top-0 flex h-dvh overflow-hidden bg-slate-50 dark:bg-slate-950">
       <Sidebar
         pathname={pathname}
         isOpen={sidebarOpen}
