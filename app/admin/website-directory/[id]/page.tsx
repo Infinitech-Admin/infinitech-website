@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Link from "next/link";
@@ -49,6 +50,7 @@ const PROJECT_STATUSES = [
 const QA_RESULTS = ["Pass", "Fail", "Blocked", "Pending", "Not Applicable"];
 const ENVIRONMENTS = ["Development", "Staging", "Production"];
 const SESSION_NAME_OPTIONS = [
+  "Select Option",
   "Pre-launch QA",
   "Regression QA",
   "Production QA",
@@ -63,12 +65,15 @@ type QaResponse = {
   checklist_item_id: number | null;
   category: string;
   title: string;
+  description: string | null;
   result: string;
   notes: string | null;
   severity: string | null;
   expected_behavior: string | null;
   actual_behavior: string | null;
   evidence_url: string | null;
+  tested_by: string | null;
+  tested_at: string | null;
 };
 
 type QaSummary = {
@@ -189,33 +194,33 @@ const PROGRESS_TONE: Record<string, string> = {
 
 /* What the latest QA run means for shipping. */
 const VERDICTS: Record<string, { title: string; hint: string; tone: string }> =
-  {
-    Passed: {
-      title: "Ready to ship",
-      hint: "Every applicable check passed and a reviewer approved it.",
-      tone: "border-l-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/20",
-    },
-    Failed: {
-      title: "Not ready: checks are failing",
-      hint: "Fix the failed items, then re-run the affected checks.",
-      tone: "border-l-rose-600 bg-rose-50/70 dark:bg-rose-950/20",
-    },
-    Blocked: {
-      title: "Not ready: testing is blocked",
-      hint: "Something is stopping checks from being completed.",
-      tone: "border-l-orange-500 bg-orange-50/70 dark:bg-orange-950/20",
-    },
-    "In Progress": {
-      title: "QA in progress",
-      hint: "Finish the remaining checks, then get a reviewer to approve.",
-      tone: "border-l-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/20",
-    },
-    "Not Started": {
-      title: "No QA run yet",
-      hint: "Start a session to test this site against the checklist.",
-      tone: "border-l-stone-400 bg-stone-50 dark:bg-stone-800/50",
-    },
-  };
+{
+  Passed: {
+    title: "Ready to ship",
+    hint: "Every applicable check passed and a reviewer approved it.",
+    tone: "border-l-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/20",
+  },
+  Failed: {
+    title: "Not ready: checks are failing",
+    hint: "Fix the failed items, then re-run the affected checks.",
+    tone: "border-l-rose-600 bg-rose-50/70 dark:bg-rose-950/20",
+  },
+  Blocked: {
+    title: "Not ready: testing is blocked",
+    hint: "Something is stopping checks from being completed.",
+    tone: "border-l-orange-500 bg-orange-50/70 dark:bg-orange-950/20",
+  },
+  "In Progress": {
+    title: "QA in progress",
+    hint: "Finish the remaining checks, then get a reviewer to approve.",
+    tone: "border-l-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/20",
+  },
+  "Not Started": {
+    title: "No QA run yet",
+    hint: "Start a session to test this site against the checklist.",
+    tone: "border-l-stone-400 bg-stone-50 dark:bg-stone-800/50",
+  },
+};
 
 /* Severity lives on the left edge so the findings list scans by urgency. */
 const SEVERITY_EDGE: Record<string, string> = {
@@ -276,10 +281,10 @@ function formatDate(value: string | null | undefined) {
   const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const date = dateOnly
     ? new Date(
-        Number(dateOnly[1]),
-        Number(dateOnly[2]) - 1,
-        Number(dateOnly[3]),
-      )
+      Number(dateOnly[1]),
+      Number(dateOnly[2]) - 1,
+      Number(dateOnly[3]),
+    )
     : new Date(value);
 
   return date.toLocaleDateString(undefined, {
@@ -297,7 +302,9 @@ function localDateInputValue() {
 
 function groupByCategory(responses: QaResponse[]) {
   const groups = new Map<string, QaResponse[]>();
-  for (const response of responses) {
+  for (const response of [...responses].sort(
+    (left, right) => left.id - right.id,
+  )) {
     const list = groups.get(response.category) ?? [];
     list.push(response);
     groups.set(response.category, list);
@@ -391,51 +398,6 @@ function Field({
   );
 }
 
-function PhaseStepper({ phase }: { phase: string }) {
-  const current = PHASES.indexOf(phase);
-
-  return (
-    <ol aria-label="Project phase" className="flex items-center">
-      {PHASES.map((item, index) => {
-        const done = index < current;
-        const active = index === current;
-        return (
-          <li
-            key={item}
-            aria-current={active ? "step" : undefined}
-            className={`flex items-center ${index < PHASES.length - 1 ? "flex-1" : ""}`}
-          >
-            <span className="flex flex-col items-start gap-1.5">
-              <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-semibold ${
-                  done
-                    ? "border-indigo-700 bg-indigo-700 text-white"
-                    : active
-                      ? "border-indigo-700 bg-white text-indigo-800 ring-4 ring-indigo-100 dark:bg-stone-900 dark:ring-indigo-900/50"
-                      : "border-stone-300 bg-white text-stone-400 dark:border-stone-600 dark:bg-stone-900"
-                }`}
-              >
-                {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
-              </span>
-              <span
-                className={`text-xs ${active ? "font-semibold text-stone-900 dark:text-white" : "text-stone-500"}`}
-              >
-                {item}
-              </span>
-            </span>
-            {index < PHASES.length - 1 && (
-              <span
-                aria-hidden
-                className={`mx-2 mb-5 h-0.5 flex-1 rounded ${done ? "bg-indigo-700" : "bg-stone-200 dark:bg-stone-700"}`}
-              />
-            )}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
 /* One bar, four segments: how a session's checks are split. */
 function TallyBar({ summary }: { summary: QaSummary }) {
   const total =
@@ -508,11 +470,13 @@ function TallyBar({ summary }: { summary: QaSummary }) {
 }
 
 function ReadinessBanner({
+  website,
   session,
   openFindings,
   onContinue,
   onStart,
 }: {
+  website: WebsiteData;
   session: QaSession | null;
   openFindings: number;
   onContinue: () => void;
@@ -523,10 +487,11 @@ function ReadinessBanner({
 
   return (
     <section
-      className={`rounded-lg border border-l-4 border-stone-200 p-6 dark:border-stone-800 ${verdict.tone}`}
+      className="rounded-lg border border-l-4 border-stone-200 p-6 dark:border-stone-800"
     >
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:items-center">
         <div className="space-y-3">
+          {session && <TallyBar summary={session.summary} />}
           <h2 className="text-2xl font-semibold tracking-tight text-stone-900 dark:text-white">
             {verdict.title}
           </h2>
@@ -557,54 +522,37 @@ function ReadinessBanner({
             )}
           </div>
         </div>
-        {session && <TallyBar summary={session.summary} />}
-      </div>
-    </section>
-  );
-}
 
-/* Project info: quiet strip with phase on the left, facts on the right. */
-function ProjectStrip({ website }: { website: WebsiteData }) {
-  return (
-    <section
-      className={`${panelClass} grid gap-6 p-5 lg:grid-cols-[1.2fr_1fr]`}
-    >
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-stone-900 dark:text-white">
-            Project phase
-          </h2>
-          <Badge value={website.project_status} />
+        <div>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm lg:border-l lg:border-stone-100 lg:pl-6 dark:lg:border-stone-800">
+            {[
+              ["Client", website.client_name],
+              ["Business type", website.business_type],
+              ["Created", formatDate(website.created_at)],
+              ["Updated", formatDate(website.updated_at)],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs text-stone-500">{label}</dt>
+                <dd className="font-medium text-stone-900 dark:text-stone-100">
+                  {value}
+                </dd>
+              </div>
+            ))}
+            <div className="col-span-2">
+              <dt className="text-xs text-stone-500">Description</dt>
+              <dd className="whitespace-pre-wrap text-stone-700 dark:text-stone-300">
+                {website.description || "No description provided."}
+              </dd>
+            </div>
+            <div className="col-span-2">
+              <dt className="text-xs text-stone-500">Notes</dt>
+              <dd className="whitespace-pre-wrap text-stone-700 dark:text-stone-300">
+                {website.notes || "No notes provided."}
+              </dd>
+            </div>
+          </dl>
         </div>
-        <PhaseStepper phase={website.project_phase} />
       </div>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm lg:border-l lg:border-stone-100 lg:pl-6 dark:lg:border-stone-800">
-        {[
-          ["Client", website.client_name],
-          ["Business type", website.business_type],
-          ["Created", formatDate(website.created_at)],
-          ["Updated", formatDate(website.updated_at)],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-xs text-stone-500">{label}</dt>
-            <dd className="font-medium text-stone-900 dark:text-stone-100">
-              {value}
-            </dd>
-          </div>
-        ))}
-        <div className="col-span-2">
-          <dt className="text-xs text-stone-500">Description</dt>
-          <dd className="whitespace-pre-wrap text-stone-700 dark:text-stone-300">
-            {website.description || "No description provided."}
-          </dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="text-xs text-stone-500">Notes</dt>
-          <dd className="whitespace-pre-wrap text-stone-700 dark:text-stone-300">
-            {website.notes || "No notes provided."}
-          </dd>
-        </div>
-      </dl>
     </section>
   );
 }
@@ -781,21 +729,21 @@ function ReportModal({
                     )}
                     {(response.expected_behavior ||
                       response.actual_behavior) && (
-                      <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-                        {response.expected_behavior && (
-                          <div>
-                            <dt className="text-xs text-stone-500">Expected</dt>
-                            <dd>{response.expected_behavior}</dd>
-                          </div>
-                        )}
-                        {response.actual_behavior && (
-                          <div>
-                            <dt className="text-xs text-stone-500">Actual</dt>
-                            <dd>{response.actual_behavior}</dd>
-                          </div>
-                        )}
-                      </dl>
-                    )}
+                        <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+                          {response.expected_behavior && (
+                            <div>
+                              <dt className="text-xs text-stone-500">Expected</dt>
+                              <dd>{response.expected_behavior}</dd>
+                            </div>
+                          )}
+                          {response.actual_behavior && (
+                            <div>
+                              <dt className="text-xs text-stone-500">Actual</dt>
+                              <dd>{response.actual_behavior}</dd>
+                            </div>
+                          )}
+                        </dl>
+                      )}
                     {response.evidence_url && (
                       <a
                         className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-700 hover:underline dark:text-indigo-300"
@@ -857,11 +805,12 @@ function WebsiteDetailsContent() {
   const [sessionStep, setSessionStep] = useState(0);
   const [sessionForm, setSessionForm] = useState<
     | (QaSession & {
-        session_name_detail?: string;
-      })
+      session_name_detail?: string;
+    })
     | null
   >(null);
   const [approvalConfirmed, setApprovalConfirmed] = useState(false);
+  const autoOpenedWebsite = useRef<string | null>(null);
 
   /* `silent` reloads keep the page (and any open QA form) mounted. */
   const loadWebsite = useCallback(
@@ -908,7 +857,6 @@ function WebsiteDetailsContent() {
   useEffect(() => {
     if (searchParams.get("newQa") === "1") setCreatingQa(true);
   }, [searchParams]);
-
   const latestSession = website?.qa_sessions[0] ?? null;
   const unresolvedFindings = useMemo(() => {
     const latestResults = new Map<string, Finding>();
@@ -956,18 +904,23 @@ function WebsiteDetailsContent() {
   }, [sessionForm]);
   const currentProgress = sessionForm
     ? Math.round(
-        ((currentSummary.passed +
-          currentSummary.failed +
-          currentSummary.blocked) /
-          Math.max(
-            sessionForm.responses.length - currentSummary.not_applicable,
-            1,
-          )) *
-          100,
-      )
+      ((currentSummary.passed +
+        currentSummary.failed +
+        currentSummary.blocked) /
+        Math.max(
+          sessionForm.responses.length - currentSummary.not_applicable,
+          1,
+        )) *
+      100,
+    )
     : 0;
+  const currentTested =
+    currentSummary.passed +
+    currentSummary.failed +
+    currentSummary.blocked +
+    currentSummary.not_applicable;
   const currentQaStatus =
-    currentSummary.passed + currentSummary.failed + currentSummary.blocked === 0
+    currentTested === 0
       ? "Not Started"
       : currentSummary.failed > 0
         ? "Failed"
@@ -987,6 +940,35 @@ function WebsiteDetailsContent() {
     ...sessionGroups.map(([category]) => category),
     "Review & save",
   ];
+  const hasUnsavedSessionChanges = useMemo(() => {
+    if (!selectedSession || !sessionForm) return false;
+
+    const responseValues = (responses: QaResponse[]) =>
+      responses.map((response) => [
+        response.id,
+        response.result,
+        response.notes,
+        response.severity,
+        response.expected_behavior,
+        response.actual_behavior,
+        response.evidence_url,
+      ]);
+
+    return (
+      normalizeSessionName(
+        sessionForm.session_name,
+        sessionForm.session_name_detail ?? "",
+      ) !== selectedSession.session_name ||
+      sessionForm.environment !== selectedSession.environment ||
+      sessionForm.qa_date !== selectedSession.qa_date ||
+      sessionForm.qa_by !== selectedSession.qa_by ||
+      sessionForm.notes !== selectedSession.notes ||
+      sessionForm.reviewed_by !== selectedSession.reviewed_by ||
+      JSON.stringify(responseValues(sessionForm.responses)) !==
+      JSON.stringify(responseValues(selectedSession.responses)) ||
+      (approvalConfirmed && !selectedSession.approved_at)
+    );
+  }, [approvalConfirmed, selectedSession, sessionForm]);
   const newSessionStepCount =
     new Set(checklist.map((item) => item.category)).size + 2;
 
@@ -1013,6 +995,12 @@ function WebsiteDetailsContent() {
   }
 
   function closeSessionEditor() {
+    if (
+      hasUnsavedSessionChanges &&
+      !window.confirm("Discard unsaved QA changes?")
+    ) {
+      return;
+    }
     setEditingSession(false);
     setSessionForm(
       selectedSession ? hydrateSessionForm(selectedSession) : null,
@@ -1168,16 +1156,34 @@ function WebsiteDetailsContent() {
     setReportOpen(false);
   }
 
+  useEffect(() => {
+    if (
+      searchParams.get("openQa") !== "1" ||
+      !website ||
+      autoOpenedWebsite.current === id
+    ) {
+      return;
+    }
+
+    autoOpenedWebsite.current = id;
+    const latest = website.qa_sessions[0];
+    if (latest) {
+      editSession(latest);
+    } else {
+      setCreatingQa(true);
+    }
+  }, [editSession, id, searchParams, website]);
+
   function updateResponse(responseId: number, updates: Partial<QaResponse>) {
     setSessionForm((current) =>
       current
         ? {
-            ...current,
-            approved_at: null,
-            responses: current.responses.map((item) =>
-              item.id === responseId ? { ...item, ...updates } : item,
-            ),
-          }
+          ...current,
+          approved_at: null,
+          responses: current.responses.map((item) =>
+            item.id === responseId ? { ...item, ...updates } : item,
+          ),
+        }
         : current,
     );
     setApprovalConfirmed(false);
@@ -1197,6 +1203,49 @@ function WebsiteDetailsContent() {
 
     if (!normalizedSessionName) {
       toast.error("Please provide a specific detail for the QA session name.");
+      return;
+    }
+
+    const responseMissingNotes = sessionForm.responses.find(
+      (item) =>
+        (item.result === "Fail" || item.result === "Blocked") &&
+        !item.notes?.trim(),
+    );
+    if (responseMissingNotes) {
+      const categoryStep =
+        sessionGroups.findIndex(
+          ([category]) => category === responseMissingNotes.category,
+        ) + 1;
+      setSessionStep(categoryStep);
+      toast.error(
+        `Add an explanation for "${responseMissingNotes.title}" before saving.`,
+      );
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById(`qa-response-notes-${responseMissingNotes.id}`)
+          ?.focus();
+      });
+      return;
+    }
+
+    if (approvalConfirmed && !sessionForm.reviewed_by?.trim()) {
+      setSessionStep(sessionWizardSteps.length - 1);
+      toast.error("Enter the reviewer name before confirming QA approval.");
+      window.requestAnimationFrame(() => {
+        document.getElementById("qa-reviewer")?.focus();
+      });
+      return;
+    }
+
+    if (
+      approvalConfirmed &&
+      (currentSummary.pending > 0 ||
+        currentSummary.failed > 0 ||
+        currentSummary.blocked > 0)
+    ) {
+      toast.error(
+        "QA approval requires all items to be tested with no failures or blockers.",
+      );
       return;
     }
 
@@ -1230,12 +1279,14 @@ function WebsiteDetailsContent() {
       const result = await response.json();
 
       if (!response.ok) {
-        const firstError = result.errors
-          ? Object.values(result.errors as Record<string, string[]>)[0]?.[0]
-          : null;
+        const validationMessages = result.errors
+          ? Object.values(result.errors as Record<string, string[]>).flat()
+          : [];
 
         throw new Error(
-          firstError || result.message || "Unable to save QA session.",
+          validationMessages.join(" ") ||
+          result.message ||
+          `Unable to save QA session (HTTP ${response.status}).`,
         );
       }
       setSelectedSession(result.data);
@@ -1307,9 +1358,6 @@ function WebsiteDetailsContent() {
             </Link>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 sm:h-12 sm:w-12">
-                  <ExternalLink className="h-6 w-6 text-white sm:h-7 sm:w-7" />
-                </div>
                 <div className="min-w-0">
                   <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
                     {website.website_name}
@@ -1335,7 +1383,7 @@ function WebsiteDetailsContent() {
                   onClick={openEditWebsite}
                 >
                   <Pencil className="mr-2 h-4 w-4" />
-                  Edit website
+                  Edit Details
                 </Button>
                 <Button
                   className="bg-white font-semibold text-blue-700 shadow-md hover:bg-blue-50"
@@ -1389,12 +1437,12 @@ function WebsiteDetailsContent() {
           openFindings={unresolvedFindings.length}
           onContinue={() => latestSession && editSession(latestSession)}
           onStart={() => setCreatingQa(true)}
+          website={website}
         />
-        <ProjectStrip website={website} />
         <FindingsList findings={unresolvedFindings} />
 
         {/* QA history */}
-        <section className={`${panelClass} overflow-hidden`}>
+        <section className={`${panelClass} overflow-hidden`} id="qa-history">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-5 py-4 dark:border-stone-800">
             <div>
               <h2 className="font-semibold text-stone-900 dark:text-white">
@@ -1566,6 +1614,38 @@ function WebsiteDetailsContent() {
                       Step {sessionStep + 1} of {sessionWizardSteps.length}:{" "}
                       {sessionWizardSteps[sessionStep] ?? "Review & save"}
                     </DialogDescription>
+                    <div className="space-y-2 rounded-lg bg-stone-50 p-3 text-xs dark:bg-stone-800">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-stone-700 dark:text-stone-200">
+                          {website.website_name} · {sessionForm.environment} ·{" "}
+                          {formatDate(sessionForm.qa_date)} ·{" "}
+                          {sessionForm.qa_by}
+                        </p>
+                        <Badge value={currentQaStatus} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ProgressBar
+                          className="h-2 flex-1"
+                          label="QA checklist completion"
+                          status={currentQaStatus}
+                          value={currentProgress}
+                        />
+                        <span className="min-w-10 text-right font-semibold tabular-nums">
+                          {currentProgress}%
+                        </span>
+                      </div>
+                      {(currentSummary.failed > 0 ||
+                        currentSummary.blocked > 0) && (
+                          <p
+                            className="font-medium text-rose-700 dark:text-rose-300"
+                            role="alert"
+                          >
+                            {currentSummary.failed} unresolved failure(s) and{" "}
+                            {currentSummary.blocked} blocker(s). Explain each
+                            issue before saving.
+                          </p>
+                        )}
+                    </div>
                     <div
                       aria-label="QA session steps"
                       className="flex gap-2 overflow-x-auto pt-2"
@@ -1576,13 +1656,12 @@ function WebsiteDetailsContent() {
                           aria-current={
                             sessionStep === index ? "step" : undefined
                           }
-                          className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                            sessionStep === index
+                          className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${sessionStep === index
                               ? "bg-indigo-700 text-white"
                               : index < sessionStep
                                 ? "bg-indigo-50 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200"
                                 : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400"
-                          }`}
+                            }`}
                           disabled={index > sessionStep}
                           onClick={() => setSessionStep(index)}
                           type="button"
@@ -1731,6 +1810,9 @@ function WebsiteDetailsContent() {
                                   (item) =>
                                     item.id === response.checklist_item_id,
                                 );
+                                const itemDescription =
+                                  response.description ??
+                                  definition?.description;
                                 const showsIssueFields =
                                   response.result === "Fail" ||
                                   response.result === "Blocked";
@@ -1745,11 +1827,12 @@ function WebsiteDetailsContent() {
                                         <h3 className="font-medium text-stone-900 dark:text-white">
                                           {response.title}
                                         </h3>
-                                        {definition?.description && (
-                                          <p className="mt-1 max-w-prose text-sm text-stone-500">
-                                            {definition.description}
-                                          </p>
-                                        )}
+                                        {itemDescription &&
+                                          itemDescription !== response.title && (
+                                            <p className="mt-1 max-w-prose text-sm text-stone-500">
+                                              {itemDescription}
+                                            </p>
+                                          )}
                                       </div>
                                       <div
                                         aria-label={`Result for ${response.title}`}
@@ -1763,11 +1846,10 @@ function WebsiteDetailsContent() {
                                             <button
                                               key={value}
                                               aria-checked={active}
-                                              className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${
-                                                active
+                                              className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${active
                                                   ? RESULT_ACTIVE[value]
                                                   : "border-stone-300 text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-800"
-                                              }`}
+                                                }`}
                                               onClick={() =>
                                                 updateResponse(response.id, {
                                                   result: value,
@@ -1787,7 +1869,12 @@ function WebsiteDetailsContent() {
                                       label="Checklist notes"
                                     >
                                       <textarea
+                                        id={`qa-response-notes-${response.id}`}
                                         className={`${textareaClass} min-h-16 font-normal`}
+                                        aria-invalid={
+                                          showsIssueFields &&
+                                          !response.notes?.trim()
+                                        }
                                         value={response.notes ?? ""}
                                         onChange={(event) =>
                                           updateResponse(response.id, {
@@ -1796,6 +1883,15 @@ function WebsiteDetailsContent() {
                                         }
                                       />
                                     </Field>
+                                    {response.tested_at && (
+                                      <p className="mt-2 text-xs text-stone-500">
+                                        Tested by {response.tested_by || sessionForm.qa_by}{" "}
+                                        on{" "}
+                                        {new Date(
+                                          response.tested_at,
+                                        ).toLocaleString()}
+                                      </p>
+                                    )}
                                     {showsIssueFields && (
                                       <div className="mt-3 grid gap-3 rounded-lg bg-rose-50/60 p-3 sm:grid-cols-2 dark:bg-rose-950/20">
                                         <Field
@@ -1841,7 +1937,7 @@ function WebsiteDetailsContent() {
                                         </Field>
                                         <Field
                                           className="text-xs"
-                                          label="Expected behavior"
+                                          label="Expected behavior *"
                                         >
                                           <textarea
                                             className={`${textareaClass} min-h-16 font-normal`}
@@ -1858,7 +1954,7 @@ function WebsiteDetailsContent() {
                                         </Field>
                                         <Field
                                           className="text-xs"
-                                          label="Actual behavior"
+                                          label="Actual behavior *"
                                         >
                                           <textarea
                                             className={`${textareaClass} min-h-16 font-normal`}
@@ -1909,7 +2005,8 @@ function WebsiteDetailsContent() {
                                   currentSummary.pending > 0 ||
                                   currentSummary.failed > 0 ||
                                   currentSummary.blocked > 0 ||
-                                  currentSummary.passed === 0
+                                  (currentSummary.passed === 0 &&
+                                    currentSummary.not_applicable === 0)
                                 }
                                 type="checkbox"
                                 onChange={(event) =>
@@ -1995,7 +2092,16 @@ function WebsiteDetailsContent() {
                       ) : (
                         <Button disabled={savingQa} type="submit">
                           <Save className="mr-2 h-4 w-4" />
-                          {savingQa ? "Saving…" : "Save QA progress"}
+                          {savingQa
+                            ? "Saving…"
+                            : approvalConfirmed
+                              ? "Mark QA as passed"
+                              : currentTested > 0 &&
+                                currentSummary.pending === 0 &&
+                                currentSummary.failed === 0 &&
+                                currentSummary.blocked === 0
+                                ? "Submit for review"
+                                : "Save QA progress"}
                         </Button>
                       )}
                     </div>
