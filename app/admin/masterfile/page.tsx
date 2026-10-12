@@ -26,6 +26,7 @@ import {
   ArrowDown,
   ArrowUpDown,
   Copy,
+  Phone,
 } from "lucide-react";
 
 import {
@@ -1234,7 +1235,7 @@ export default function EmployeeMasterfilePage() {
                         </TableCell>
 
                         {/* Employee Identity */}
-                        <TableCell className="min-w-[210px] px-5 py-4">
+                        <TableCell className="min-w-[230px] px-5 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 ring-2 ring-white dark:bg-blue-950 dark:text-blue-300 dark:ring-slate-950">
                               {employee.first_name?.charAt(0)?.toUpperCase() ||
@@ -1242,17 +1243,16 @@ export default function EmployeeMasterfilePage() {
                             </div>
 
                             <div className="min-w-0">
-                              <p className="max-w-[190px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              <p className="max-w-[220px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {getShortName(employee)}
                               </p>
+
+                              {/* Email */}
                               <div className="group/email mt-0.5 flex max-w-[190px] items-center gap-1">
-                                <p
-                                  className="min-w-0 flex-1 truncate text-xs text-slate-500"
-                                  title={employee.email_address || undefined}
-                                >
-                                  {employee.email_address ||
-                                    "No email provided"}
+                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                  {employee.email_address || "No email provided"}
                                 </p>
+
                                 {employee.email_address && (
                                   <Button
                                     type="button"
@@ -1260,13 +1260,29 @@ export default function EmployeeMasterfilePage() {
                                     size="icon"
                                     aria-label={`Copy email ${employee.email_address}`}
                                     title="Copy email"
-                                    className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover/email:opacity-100 focus-visible:opacity-100"
-                                    onClick={() =>
-                                      handleCopyEmail(employee.email_address!)
-                                    }
+                                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-slate-500 opacity-0 transition-opacity group-hover/email:opacity-100 focus-visible:opacity-100 hover:text-cyan-700"
+                                    onClick={() => handleCopyEmail(employee.email_address!)}
                                   >
                                     <Copy className="h-3 w-3" />
                                   </Button>
+                                )}
+                              </div>
+
+                              {/* Phone */}
+                              <div className="group/phone mt-0.5 flex max-w-[190px] items-center gap-1">
+                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                  {employee.mobile_number || "No phone number provided"}
+                                </p>
+
+                                {employee.mobile_number && (
+                                  <a
+                                    href={`tel:${employee.mobile_number.replace(/[^\d+]/g, "")}`}
+                                    aria-label={`Call ${employee.mobile_number}`}
+                                    title={`Call ${employee.mobile_number}`}
+                                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-500 opacity-0 transition-opacity group-hover/phone:opacity-100 hover:text-cyan-700 focus-visible:opacity-100"
+                                  >
+                                    <Phone className="h-3.5 w-3.5" />
+                                  </a>
                                 )}
                               </div>
                             </div>
@@ -1633,7 +1649,15 @@ export default function EmployeeMasterfilePage() {
                       Contact Information
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                      <InfoRow label="Mobile" value={viewRecord.mobile_number} />
+                      <InfoRow
+                        label="Mobile"
+                        value={viewRecord.mobile_number}
+                        href={
+                          viewRecord.mobile_number
+                            ? `tel:${viewRecord.mobile_number.replace(/[^\d+]/g, "")}`
+                            : undefined
+                        }
+                      />
                       <InfoRow label="Email" value={viewRecord.email_address} />
                       <div className="sm:col-span-2">
                         <InfoRow
@@ -1808,13 +1832,31 @@ export default function EmployeeMasterfilePage() {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string | null }) {
+function InfoRow({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value?: string | null;
+  href?: string;
+}) {
+  const content = value && value.trim() !== "" ? value : "—";
+
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium">
-        {value && value.trim() !== "" ? value : "—"}
-      </p>
+      {href && content !== "—" ? (
+        <a
+          href={href}
+          className="inline-flex items-center gap-1.5 font-medium text-slate-700 transition-colors hover:text-cyan-700 dark:text-slate-200 dark:hover:text-cyan-300"
+        >
+          <span>{content}</span>
+          <Phone className="h-3.5 w-3.5" />
+        </a>
+      ) : (
+        <p className="font-medium">{content}</p>
+      )}
     </div>
   );
 }
