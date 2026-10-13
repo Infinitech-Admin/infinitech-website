@@ -40,6 +40,7 @@ interface CategoryData {
   key: string;
   label: string;
   endpoint: string;
+  directory: string;
   records: RequestRecord[];
 }
 
@@ -56,27 +57,37 @@ const CATEGORY_CONFIG: Omit<CategoryData, "records">[] = [
     key: "supportTickets",
     label: "Support Tickets",
     endpoint: "/api/support-tickets",
+    directory: "support_tickets",
   },
   {
     key: "graphicDesign",
     label: "Graphic Design",
     endpoint: "/api/graphic-design-requests",
+    directory: "graphic_design",
   },
   {
     key: "marketResearch",
     label: "Market Research",
     endpoint: "/api/market-research-requests",
+    directory: "market_research",
   },
-  { key: "paidAds", label: "Paid Ads", endpoint: "/api/paid-ads-requests" },
+  {
+    key: "paidAds",
+    label: "Paid Ads",
+    endpoint: "/api/paid-ads-requests",
+    directory: "paid_ads",
+  },
   {
     key: "socialMedia",
     label: "Social Media",
     endpoint: "/api/social-media-requests",
+    directory: "social_media_management",
   },
   {
     key: "tiktokShop",
     label: "TikTok Shop",
     endpoint: "/api/tiktok-shop-requests",
+    directory: "tiktok_shop",
   },
 ];
 
@@ -236,28 +247,46 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [permissionKeys, setPermissionKeys] = useState<string[]>([]);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
       return;
     }
 
-    fetchAllData();
+    void loadDashboard();
   }, [router]);
 
-  const fetchAllData = async () => {
+  const loadDashboard = async () => {
     try {
       setError(null);
+      const sessionResponse = await adminFetch("/api/admin/session", {
+        cache: "no-store",
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Unable to load your admin permissions.");
+      }
+      const session = await sessionResponse.json();
+      const grantedDirectories: string[] = (session.permissions || []).map(
+        (permission: { key: string }) => permission.key,
+      );
+      const superadmin = session.is_superadmin === true;
+      setPermissionKeys(grantedDirectories);
+      setIsSuperadmin(superadmin);
+      const visibleCategories = superadmin
+        ? CATEGORY_CONFIG
+        : CATEGORY_CONFIG.filter((category) =>
+            grantedDirectories.includes(category.directory),
+          );
 
       const results = await Promise.allSettled(
-        CATEGORY_CONFIG.map(async (cfg) => {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}${cfg.endpoint}`,
-          );
+        visibleCategories.map(async (cfg) => {
+          const response = await adminFetch(cfg.endpoint);
 
           if (!response.ok) {
             let bodyText = "";
@@ -284,12 +313,12 @@ export default function AdminDashboard() {
       const resolved: CategoryData[] = results.map((result, i) =>
         result.status === "fulfilled"
           ? result.value
-          : { ...CATEGORY_CONFIG[i], records: [] },
+          : { ...visibleCategories[i], records: [] },
       );
 
       const failed = results
         .map((result, i) =>
-          result.status === "rejected" ? CATEGORY_CONFIG[i].label : null,
+          result.status === "rejected" ? visibleCategories[i].label : null,
         )
         .filter((label): label is string => label !== null);
 
@@ -521,22 +550,26 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      <WebsiteDirectorySummary />
+      {(isSuperadmin || permissionKeys.includes("website_directory")) && (
+        <WebsiteDirectorySummary />
+      )}
 
       {/* Quick Actions */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Navigate to manage support tickets</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/admin/support-tickets">
-            <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
-              View All Support Tickets
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      {(isSuperadmin || permissionKeys.includes("support_tickets")) && (
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Navigate to manage support tickets</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/admin/support-tickets">
+              <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
+                View All Support Tickets
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

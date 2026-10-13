@@ -5,7 +5,7 @@ const getAuthHeaders = (): HeadersInit => {
     return {};
   }
 
-  const token = localStorage.getItem("adminToken");
+  const token = localStorage.getItem("adminSessionActive");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -88,7 +88,7 @@ export function uploadImageDirect(
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/admin/blog/uploads/image");
 
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (token) {
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }

@@ -121,7 +121,7 @@ export default function BlogAdminPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
       return;

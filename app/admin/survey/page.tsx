@@ -89,7 +89,7 @@ export default function AdminSurveyPage() {
   const [sendingEmail, setSendingEmail] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) {
       router.push("/admin/login")
       return

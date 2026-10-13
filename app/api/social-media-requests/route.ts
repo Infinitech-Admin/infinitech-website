@@ -1,6 +1,7 @@
 // 📁 Place this file at: app/api/social-media-requests/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { notifyTeamOfNewSocialMediaRequest } from "@/lib/social-media-mailer";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET() {
   try {
@@ -8,7 +9,7 @@ export async function GET() {
     if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
 
     const res = await fetch(`${apiUrl}/api/social-media-requests`, {
-      headers: { Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), Accept: "application/json" },
     });
 
     const data = await res.json();
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${apiUrl}/api/social-media-requests`, {
       method: "POST",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },

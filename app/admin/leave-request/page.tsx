@@ -237,7 +237,7 @@ async function readJson<T>(response: Response): Promise<T> {
 function adminFetch(input: RequestInfo | URL, init?: RequestInit) {
   const headers = new Headers(init?.headers);
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+    typeof window !== "undefined" ? localStorage.getItem("adminSessionActive") : null;
   if (token) headers.set("Authorization", `Bearer ${token}`);
   return fetch(input, { ...init, headers });
 }

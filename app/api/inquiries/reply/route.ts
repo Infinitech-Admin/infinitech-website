@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
@@ -10,14 +11,22 @@ export async function POST(request: NextRequest) {
 
     // 1. Update status in database if provided
     if (status) {
-      await fetch(`${API_URL}/api/inquiries/${inquiryId}`, {
+      const statusResponse = await fetch(`${API_URL}/api/inquiries/${inquiryId}/updatestatus`, {
         method: 'PATCH',
         headers: {
+          ...laravelServiceHeaders(),
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify({ status }),
       })
+      if (!statusResponse.ok) {
+        const error = await statusResponse.json()
+        return NextResponse.json(
+          { success: false, message: error.message || 'Failed to update inquiry status.' },
+          { status: statusResponse.status },
+        )
+      }
     }
 
     // 2. Send email reply via nodemailer

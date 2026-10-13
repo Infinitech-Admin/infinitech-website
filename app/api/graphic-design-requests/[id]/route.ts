@@ -1,5 +1,6 @@
 // 📁 Place this file at: app/api/graphic-design-requests/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET(
   req: NextRequest,
@@ -11,7 +12,7 @@ export async function GET(
 
     const res = await fetch(
       `${apiUrl}/api/graphic-design-requests/${params.id}`,
-      { headers: { Accept: "application/json" } },
+      { headers: { ...laravelServiceHeaders(), Accept: "application/json" } },
     );
 
     const data = await res.json();
@@ -49,6 +50,7 @@ export async function PUT(
       {
         method: "PUT",
         headers: {
+          ...laravelServiceHeaders(),
           "Content-Type": "application/json",
           Accept: "application/json",
         },
@@ -105,7 +107,7 @@ export async function DELETE(
       `${apiUrl}/api/graphic-design-requests/${params.id}`,
       {
         method: "DELETE",
-        headers: { Accept: "application/json" },
+        headers: { ...laravelServiceHeaders(), Accept: "application/json" },
       },
     );
 

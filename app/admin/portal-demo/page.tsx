@@ -82,7 +82,7 @@ export default function PortalDemoAdminPage() {
   const isNewDemo = form.id === null;
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
       return;

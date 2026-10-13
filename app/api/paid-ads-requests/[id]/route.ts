@@ -1,5 +1,6 @@
 // 📁 Place this file at: app/api/paid-ads-requests/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
     if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
 
     const res = await fetch(`${apiUrl}/api/paid-ads-requests/${params.id}`, {
-      headers: { Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), Accept: "application/json" },
     });
 
     const data = await res.json();
@@ -45,6 +46,7 @@ export async function PATCH(
     const res = await fetch(`${apiUrl}/api/paid-ads-requests/${params.id}`, {
       method: "PATCH",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -102,6 +104,7 @@ export async function PUT(
     const res = await fetch(`${apiUrl}/api/paid-ads-requests/${params.id}`, {
       method: "PUT",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -156,7 +159,7 @@ export async function DELETE(
 
     const res = await fetch(`${apiUrl}/api/paid-ads-requests/${params.id}`, {
       method: "DELETE",
-      headers: { Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), Accept: "application/json" },
     });
 
     const data = await res.json();

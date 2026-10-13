@@ -27,6 +27,7 @@ import {
   ArrowUpDown,
   Copy,
   Phone,
+  CreditCard,
 } from "lucide-react";
 
 import {
@@ -92,6 +93,11 @@ import {
 } from "@/components/admin/coe-types";
 import { ClearanceDialog } from "@/components/admin/clearance-dialog";
 import { ClearanceCertificateDialog } from "@/components/admin/clearance-certificate-dialog";
+import { EmployeeIdDialog } from "@/components/admin/employee-id-dialog";
+import {
+  EmployeeAvatar,
+  EmployeePrivateImage,
+} from "@/components/admin/employee-media";
 
 // The two downloadable formats for a generated certificate. "docx" stays the
 // default so existing behavior (Word doc with employee's + employer's copy)
@@ -206,6 +212,11 @@ export default function EmployeeMasterfilePage() {
     Partial<Record<keyof EmployeeFormData, boolean>>
   >({});
   const [submitting, setSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [profileImageRemoved, setProfileImageRemoved] = useState(false);
+  const [signatureRemoved, setSignatureRemoved] = useState(false);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<Employee | null>(null);
@@ -250,8 +261,13 @@ export default function EmployeeMasterfilePage() {
     null,
   );
 
+  const [employeeIdDialogOpen, setEmployeeIdDialogOpen] = useState(false);
+  const [employeeIdTarget, setEmployeeIdTarget] = useState<Employee | null>(
+    null,
+  );
+
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
 
     if (!token) {
       router.push("/admin/login");
@@ -263,7 +279,7 @@ export default function EmployeeMasterfilePage() {
 
   // mount effect: auth only, the debounce effect does the first fetch
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
     }
@@ -273,7 +289,7 @@ export default function EmployeeMasterfilePage() {
     const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
-      const token = localStorage.getItem("adminToken");
+      const token = localStorage.getItem("adminSessionActive");
       const url = search
         ? `/api/employee-masterfile?search=${encodeURIComponent(search)}`
         : "/api/employee-masterfile";
@@ -299,7 +315,7 @@ export default function EmployeeMasterfilePage() {
 
   // Debounced search: fetch immediately when cleared, otherwise wait 350ms.
   useEffect(() => {
-    if (!localStorage.getItem("adminToken")) return;
+    if (!localStorage.getItem("adminSessionActive")) return;
 
     const timeout = setTimeout(
       () => {
@@ -360,12 +376,25 @@ export default function EmployeeMasterfilePage() {
     setEditingId(null);
     setFormData(emptyEmployee());
     setFormErrors({});
+    setProfileImageFile(null);
+    setSignatureFile(null);
+    setProfileImageRemoved(false);
+    setSignatureRemoved(false);
     setFormOpen(true);
+  };
+
+  const openEmployeeIdDialog = (employee: Employee) => {
+    setEmployeeIdTarget(employee);
+    setEmployeeIdDialogOpen(true);
   };
 
   const openEditDialog = async (employee: Employee) => {
     setEditingId(employee.id);
-    const token = localStorage.getItem("adminToken");
+    setProfileImageFile(null);
+    setSignatureFile(null);
+    setProfileImageRemoved(false);
+    setSignatureRemoved(false);
+    const token = localStorage.getItem("adminSessionActive");
     const { id, created_at, updated_at, allowances, ...rest } = employee;
 
     let positionHistory: EmployeeFormData["position_history"] = [];
@@ -446,6 +475,26 @@ export default function EmployeeMasterfilePage() {
     }));
   };
 
+  const handleProfileImageChange = (file: File | null) => {
+    setProfileImageFile(file);
+    if (file) setProfileImageRemoved(false);
+  };
+
+  const handleSignatureChange = (file: File | null) => {
+    setSignatureFile(file);
+    if (file) setSignatureRemoved(false);
+  };
+
+  const removeProfileImage = () => {
+    setProfileImageFile(null);
+    setProfileImageRemoved(Boolean(formData.profile_image_path));
+  };
+
+  const removeSignature = () => {
+    setSignatureFile(null);
+    setSignatureRemoved(Boolean(formData.signature_path));
+  };
+
   const validate = (): boolean => {
     const errors: Partial<Record<keyof EmployeeFormData, boolean>> = {};
 
@@ -459,18 +508,26 @@ export default function EmployeeMasterfilePage() {
   };
 
   const handleSubmit = async () => {
+    if (submitLockRef.current) return;
     if (!validate()) {
       toast.error("Please fill in the highlighted fields.");
 
       return;
     }
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("adminToken");
+      const token = localStorage.getItem("adminSessionActive");
       const url = editingId
         ? `/api/employee-masterfile/${editingId}`
         : "/api/employee-masterfile";
-      const method = editingId ? "PUT" : "POST";
+      const hasFileChanges = Boolean(
+        profileImageFile ||
+        signatureFile ||
+        profileImageRemoved ||
+        signatureRemoved,
+      );
+      const method = editingId && !hasFileChanges ? "PUT" : "POST";
 
       // The API expects allowances as EmployeeAllowance[], not the
       // checkbox/amount map the form uses internally — convert on the way out.
@@ -514,18 +571,49 @@ export default function EmployeeMasterfilePage() {
         allowances: buildEmployeeAllowances(formData.allowances),
       };
 
+      let body: BodyInit;
+      const headers: Record<string, string> = {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      if (hasFileChanges) {
+        const multipart = new FormData();
+        if (editingId) multipart.append("_method", "PUT");
+
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+          multipart.append(
+            key,
+            typeof value === "object" ? JSON.stringify(value) : String(value),
+          );
+        });
+
+        if (profileImageFile) multipart.append("profile_image", profileImageFile);
+        if (signatureFile) multipart.append("signature", signatureFile);
+        if (profileImageRemoved) multipart.append("remove_profile_image", "1");
+        if (signatureRemoved) multipart.append("remove_signature", "1");
+        body = multipart;
+      } else {
+        headers["Content-Type"] = "application/json";
+        body = JSON.stringify(payload);
+      }
+
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
+        headers,
+        body,
       });
       const data = await response.json();
 
       if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || "Failed to save employee record");
+        const validationMessage = Object.values(
+          data?.errors ?? {},
+        ).flat()[0];
+        throw new Error(
+          data?.message ||
+          (typeof validationMessage === "string" ? validationMessage : null) ||
+          "Failed to save employee record",
+        );
       }
 
       toast.success(editingId ? "Employee record updated!" : "Employee added!");
@@ -534,6 +622,7 @@ export default function EmployeeMasterfilePage() {
     } catch (error: any) {
       toast.error(error.message || "Failed to save employee record");
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };
@@ -547,7 +636,7 @@ export default function EmployeeMasterfilePage() {
   ) => {
     if (status === employee.status) return;
     const previousStatus = employee.status;
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
 
     setStatusUpdatingId(employee.id);
     setEmployees((prev) =>
@@ -588,7 +677,7 @@ export default function EmployeeMasterfilePage() {
 
   const handleDelete = async () => {
     if (!recordToDelete) return;
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
 
     setDeleting(true);
     try {
@@ -901,6 +990,25 @@ export default function EmployeeMasterfilePage() {
     })
     : filteredEmployees;
 
+  const sortHeadButton =
+    "-ml-2 h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white";
+
+  const sortableHead = (
+    column: EmployeeSortKey,
+    label: string,
+    className = "",
+  ) => (
+    <TableHead className={`h-11 whitespace-nowrap px-4 ${className}`}>
+      <Button
+        variant="ghost"
+        className={sortHeadButton}
+        onClick={() => handleSort(column)}
+      >
+        {label} <SortIcon column={column} />
+      </Button>
+    </TableHead>
+  );
+
   const totalPages = Math.ceil(
     filteredEmployees.length / ITEMS_PER_PAGE,
   );
@@ -1015,6 +1123,20 @@ export default function EmployeeMasterfilePage() {
                   <EmployeeForm
                     data={formData}
                     errors={formErrors}
+                    employeeId={editingId}
+                    profileImageFile={profileImageFile}
+                    signatureFile={signatureFile}
+                    profileImageRemoved={profileImageRemoved}
+                    signatureRemoved={signatureRemoved}
+                    uploadingFiles={
+                      submitting && Boolean(profileImageFile || signatureFile)
+                    }
+                    onProfileImageChange={handleProfileImageChange}
+                    onSignatureChange={handleSignatureChange}
+                    onRemoveProfileImage={removeProfileImage}
+                    onRemoveSignature={removeSignature}
+                    onRestoreProfileImage={() => setProfileImageRemoved(false)}
+                    onRestoreSignature={() => setSignatureRemoved(false)}
                     onAllowanceChange={handleAllowanceChange}
                     onChange={handleFieldChange}
                     showPositionChangeSection={!!editingId}
@@ -1155,67 +1277,13 @@ export default function EmployeeMasterfilePage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-slate-200 bg-slate-50/80 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70">
-                    <TableHead className="h-8 whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        className="h-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("id_number")}
-                      >
-                        ID Number <SortIcon column="id_number" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="h-12 whitespace-nowrap px-5">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("employee")}
-                      >
-                        Employee <SortIcon column="employee" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="hidden h-12 whitespace-nowrap md:table-cell">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("department")}
-                      >
-                        Department <SortIcon column="department" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="hidden h-12 whitespace-nowrap lg:table-cell">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("position")}
-                      >
-                        Position <SortIcon column="position" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="hidden h-12 whitespace-nowrap lg:table-cell">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("date_hired")}
-                      >
-                        Date Hired <SortIcon column="date_hired" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="h-12 whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        className="h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                        onClick={() => handleSort("status")}
-                      >
-                        Status <SortIcon column="status" />
-                      </Button>
-                    </TableHead>
-
-                    <TableHead className="h-12 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {sortableHead("id_number", "ID Number")}
+                    {sortableHead("employee", "Employee")}
+                    {sortableHead("department", "Department", "hidden md:table-cell")}
+                    {sortableHead("position", "Position", "hidden lg:table-cell")}
+                    {sortableHead("date_hired", "Date Hired", "hidden lg:table-cell")}
+                    {sortableHead("status", "Status")}
+                    <TableHead className="h-11 whitespace-nowrap flex justify-center items-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -1252,9 +1320,14 @@ export default function EmployeeMasterfilePage() {
                         </TableCell>
 
                         {/* Employee Identity */}
-                        <TableCell className="min-w-[250px] px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="min-w-0">
+                        <TableCell className="min-w-[200px]">
+                          <div className="flex gap-3">
+                            <EmployeeAvatar
+                              employee={employee}
+                              className="flex h-10 w-10 shrink-0 items-center justify-center bg-blue-100 text-sm font-bold text-blue-700 ring-2 ring-white dark:bg-blue-950 dark:text-blue-300 dark:ring-slate-950"
+                            />
+
+                            <div className="min-w-0 justify-center items-center">
                               <p className="max-w-[220px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {getShortName(employee)}
                               </p>
@@ -1304,7 +1377,7 @@ export default function EmployeeMasterfilePage() {
                         </TableCell>
 
                         {/* Department */}
-                        <TableCell className="hidden max-w-[200px] md:table-cell">
+                        <TableCell className="hidden max-w-[180px] md:table-cell">
                           <span className="block truncate text-sm text-slate-600 dark:text-slate-300">
                             {employee.department || "—"}
                           </span>
@@ -1363,19 +1436,8 @@ export default function EmployeeMasterfilePage() {
 
                         {/* Actions */}
                         <TableCell className="whitespace-nowrap pr-5">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              aria-label={`View ${getFullName(employee)}`}
-                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300"
-                              size="icon"
-                              title="View employee"
-                              variant="outline"
-                              onClick={() => setViewRecord(employee)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-
-                            {/* Keep your existing Generate DropdownMenu here */}
+                          {/* Generate Dropdown Menu */}
+                          <div className="py-2 flex items-center justify-center">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -1384,9 +1446,7 @@ export default function EmployeeMasterfilePage() {
                                   variant="outline"
                                 >
                                   <FileStack className="h-4 w-4" />
-                                  <span className="hidden xl:inline">
-                                    Files
-                                  </span>
+                                  Files
                                   <ChevronDown className="h-3 w-3" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -1395,6 +1455,15 @@ export default function EmployeeMasterfilePage() {
                                 align="end"
                                 className="z-[999] w-60 border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
                               >
+                                <DropdownMenuItem
+                                  onClick={() => openEmployeeIdDialog(employee)}
+                                >
+                                  <CreditCard className="mr-2 h-4 w-4 text-indigo-600" />
+                                  Employee ID &amp; history
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator />
+
                                 <DropdownMenuItem
                                   onClick={() => openCoeDialog(employee)}
                                 >
@@ -1417,8 +1486,21 @@ export default function EmployeeMasterfilePage() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                          </div>
 
-                            {/* Keep your existing Edit Dialog */}
+                          <div className="flex items-center justify-center gap-1.5">
+                            <Button
+                              aria-label={`View ${getFullName(employee)}`}
+                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300"
+                              size="icon"
+                              title="View employee"
+                              variant="outline"
+                              onClick={() => setViewRecord(employee)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+
+                            {/* Edit Dialog */}
                             <Button
                               aria-label={`Edit ${getFullName(employee)}`}
                               className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-slate-700 dark:text-slate-300"
@@ -1430,7 +1512,7 @@ export default function EmployeeMasterfilePage() {
                               <Pencil className="h-4 w-4" />
                             </Button>
 
-                            {/* Keep your existing Delete Dialog */}
+                            {/* Delete Dialog */}
                             <Dialog
                               open={
                                 deleteDialogOpen &&
@@ -1556,9 +1638,10 @@ export default function EmployeeMasterfilePage() {
             <>
               <div className="relative shrink-0 border-b border-slate-200 px-5 py-5 pr-14 dark:border-slate-800 sm:px-7">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                    {getShortName(viewRecord).charAt(0)?.toUpperCase() || "?"}
-                  </div>
+                  <EmployeeAvatar
+                    employee={viewRecord}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center bg-blue-100 text-lg font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
@@ -1673,6 +1756,16 @@ export default function EmployeeMasterfilePage() {
                         }
                       />
                       <InfoRow label="Email" value={viewRecord.email_address} />
+                      <InfoRow
+                        label="Emergency Contact Person"
+                        value={viewRecord.emergency_contact_name}
+                      />
+                      <InfoRow
+                        label="Emergency Contact Mobile"
+                        value={formatMobileNumber(
+                          viewRecord.emergency_contact_mobile_number,
+                        )}
+                      />
                       <div className="sm:col-span-2">
                         <InfoRow
                           label="Address"
@@ -1693,28 +1786,68 @@ export default function EmployeeMasterfilePage() {
                     </div>
                   </div>
 
-                  {viewRecord.allowances && viewRecord.allowances.length > 0 && (
-                    <div className="pb-1">
-                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        Allowances
-                      </p>
-                      <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                        {viewRecord.allowances.map((a, i) => (
-                          <InfoRow
-                            key={`${a.label}-${i}`}
-                            label={a.label}
-                            value={formatCurrency(String(a.amount))}
-                          />
-                        ))}
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    {viewRecord.allowances && viewRecord.allowances.length > 0 && (
+                      <div className="min-w-0 pb-3">
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                          Allowances
+                        </p>
+
+                        <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                          {viewRecord.allowances.map((a, i) => (
+                            <InfoRow
+                              key={`${a.label}-${i}`}
+                              label={a.label}
+                              value={formatCurrency(String(a.amount))}
+                            />
+                          ))}
+                        </div>
                       </div>
+                    )}
+
+                    <div
+                      className={`min-w-0 pb-3 ${
+                        viewRecord.allowances?.length
+                          ? "border-t border-slate-200 pt-6 dark:border-slate-800 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
+                          : ""
+                      }`}
+                    >
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        Employee Signature
+                      </p>
+
+                      {viewRecord.signature_path ? (
+                        <EmployeePrivateImage
+                          employeeId={viewRecord.id}
+                          fileType="signature"
+                          storagePath={viewRecord.signature_path}
+                          alt={`${getFullName(viewRecord)} signature`}
+                          className="max-h-24 max-w-full object-contain"
+                          fallback={
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              No signature uploaded
+                            </p>
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          No signature uploaded
+                        </p>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
               <div className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-7">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   {[
+                    {
+                      label: "Employee ID",
+                      icon: CreditCard,
+                      action: openEmployeeIdDialog,
+                      className: "from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800",
+                    },
                     {
                       label: "COE",
                       icon: FilePlus2,
@@ -1758,6 +1891,16 @@ export default function EmployeeMasterfilePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <EmployeeIdDialog
+        employee={employeeIdTarget}
+        open={employeeIdDialogOpen}
+        onOpenChange={setEmployeeIdDialogOpen}
+        onEditEmployee={(employee) => {
+          setEmployeeIdDialogOpen(false);
+          openEditDialog(employee);
+        }}
+      />
 
       {/* ── Generate COE dialog, launched from a row's Eye view or its own icon ── */}
       <Dialog open={coeDialogOpen} onOpenChange={setCoeDialogOpen}>

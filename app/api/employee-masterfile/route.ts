@@ -1,16 +1,31 @@
 // File: app/api/employee-masterfile/route.ts
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAdminAuth } from "@/lib/admin-auth";
 
 const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
 
 export async function GET(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
+  const serviceToken = process.env.LARAVEL_SERVICE_TOKEN;
+  if (!serviceToken) {
+    return NextResponse.json(
+      { success: false, message: "Employee service is not configured." },
+      { status: 500 },
+    );
+  }
+
   try {
     const search = request.nextUrl.searchParams.get("search");
     const url = new URL(`${laravelUrl}/api/employee-masterfile`);
     if (search) url.searchParams.set("search", search);
 
     const response = await fetch(url.toString(), {
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${serviceToken}`,
+      },
       cache: "no-store",
     });
 
@@ -60,16 +75,30 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
+  const serviceToken = process.env.LARAVEL_SERVICE_TOKEN;
+  if (!serviceToken) {
+    return NextResponse.json(
+      { success: false, message: "Employee service is not configured." },
+      { status: 500 },
+    );
+  }
+
   try {
-    const body = await request.json();
+    const contentType = request.headers.get("content-type") ?? "";
+    const isMultipart = contentType.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json();
 
     const response = await fetch(`${laravelUrl}/api/employee-masterfile`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${serviceToken}`,
+        ...(!isMultipart ? { "Content-Type": "application/json" } : {}),
       },
-      body: JSON.stringify(body),
+      body: isMultipart ? body : JSON.stringify(body),
     });
 
     const text = await response.text();

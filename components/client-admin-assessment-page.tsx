@@ -138,7 +138,7 @@ export default function AdminClientAssessmentPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) {
       router.push("/admin/login")
       return
@@ -184,7 +184,7 @@ export default function AdminClientAssessmentPage() {
   const handleDeleteAssessment = async () => {
     if (!assessmentToDelete) return
 
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) return
 
     setDeleting(true)

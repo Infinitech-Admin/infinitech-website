@@ -1,6 +1,7 @@
 
 
 import { type NextRequest, NextResponse } from "next/server"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET(
   request: NextRequest,
@@ -25,6 +26,7 @@ export async function GET(
 
     const laravelResponse = await fetch(`${laravelApiUrl}/api/video-surveys/${id}`, {
       headers: {
+        ...laravelServiceHeaders(),
         Accept: "application/json",
       },
       cache: 'no-store',
@@ -148,7 +150,9 @@ export async function PUT(
     const laravelResponse = await fetch(`${laravelApiUrl}/api/video-surveys/${id}`, {
       method: "PUT",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
+        ...laravelServiceHeaders(),
         Accept: "application/json",
       },
       body: JSON.stringify(formData),

@@ -98,6 +98,12 @@ export interface Employee {
   city_municipality?: string | null;
   zip_code?: string | null;
   email_address?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_mobile_number?: string | null;
+
+  // Private employee image files — API returns storage paths, not public URLs.
+  profile_image_path?: string | null;
+  signature_path?: string | null;
 
   // Allowances — nullable JSON array
   allowances?: EmployeeAllowance[] | null;
@@ -203,6 +209,10 @@ export const emptyEmployee = (): EmployeeFormData => ({
   city_municipality: "",
   zip_code: "",
   email_address: "",
+  emergency_contact_name: "",
+  emergency_contact_mobile_number: "",
+  profile_image_path: "",
+  signature_path: "",
   allowances: emptyAllowancesState(),
 });
 

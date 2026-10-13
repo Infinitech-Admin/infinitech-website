@@ -87,7 +87,7 @@ export default function SocialMediaAdminPage() {
   const [emailMessage, setEmailMessage] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
       return;

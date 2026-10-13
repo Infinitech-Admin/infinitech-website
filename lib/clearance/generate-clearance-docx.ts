@@ -439,9 +439,12 @@ function sectionDTable() {
 
 // ── Section F signature block ───────────────────────────────────────────
 
-function signatureBlock(employeeName: string) {
+function signatureBlock(
+  employeeName: string,
+  employeeSignature?: ClearancePayload["employee_signature"],
+) {
   const width = Math.floor(PAGE_WIDTH_DXA / 2);
-  const cell = (lines: string[]) =>
+  const cell = (lines: string[], signature?: ClearancePayload["employee_signature"]) =>
     new TableCell({
       width: { size: width, type: WidthType.DXA },
       margins: { top: 50, bottom: 50, left: 100, right: 100 },
@@ -451,13 +454,30 @@ function signatureBlock(employeeName: string) {
         left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
         right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
       },
-      children: lines.map(
-        (line) =>
-          new Paragraph({
+      children: lines.map((line, index) => {
+        if (index === 0 && signature) {
+          return new Paragraph({
             alignment: AlignmentType.CENTER,
-            children: [run(line)],
-          }),
-      ),
+            children: [
+              new ImageRun({
+                type: signature.mimeType === "image/png" ? "png" : "jpg",
+                data: signature.data,
+                transformation: { width: 150, height: 42 },
+                altText: {
+                  title: "Employee signature",
+                  description: "Signature provided for this employee",
+                  name: "employee-signature",
+                },
+              }),
+            ],
+          });
+        }
+
+        return new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [run(line)],
+        });
+      }),
     });
 
   return new Table({
@@ -481,7 +501,7 @@ function signatureBlock(employeeName: string) {
             employeeName,
             "Employee",
             "Date: ____________________",
-          ]),
+          ], employeeSignature),
           cell([
             "________________________________",
             DEFAULT_SIGNATORY_NAME,
@@ -640,7 +660,7 @@ export async function generateClearanceDocx(
             "Based on the records and confirmations indicated in this form, the employee has completed the applicable company clearance requirements as of the date signed, subject to any subsequently discovered and properly documented accountability. This form records administrative clearance and does not waive rights or obligations provided by law, contract, or company policy.",
           ),
           spacer(180),
-          signatureBlock(employee.employee_name),
+          signatureBlock(employee.employee_name, payload.employee_signature),
         ],
       },
     ],

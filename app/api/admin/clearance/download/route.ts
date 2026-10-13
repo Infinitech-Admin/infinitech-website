@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAdminAuth } from "@/lib/admin-auth";
 import { generateClearanceDocx } from "@/lib/clearance/generate-clearance-docx";
 import { generateClearancePdf } from "@/lib/clearance/generate-clearance-pdf";
 
@@ -26,6 +27,8 @@ import {
 export const runtime = "nodejs"; // needs fs (logo files) + sharp
 
 const MAX_ROWS = 50;
+const LARAVEL_API_URL =
+  process.env.LARAVEL_API_URL || "http://localhost:8000";
 
 const VALID_COMPANIES = new Set(COMPANY_OPTIONS.map((o) => o.value));
 
@@ -69,6 +72,7 @@ function parsePayload(body: any): ClearanceDownloadPayload | null {
   const format = VALID_FORMATS.has(body?.format) ? body.format : null;
 
   if (
+    employee.employee_id <= 0 ||
     !employee.employee_name ||
     !units.length ||
     !properties.length ||
@@ -88,7 +92,8 @@ function parsePayload(body: any): ClearanceDownloadPayload | null {
 }
 
 export async function POST(request: NextRequest) {
-  // TODO: put the same auth guard here that your /api/admin/coe routes use.
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
 
   try {
     const payload = parsePayload(await request.json());
@@ -104,6 +109,67 @@ export async function POST(request: NextRequest) {
     }
 
     const { format, company, ...docPayload } = payload;
+    const serviceToken = process.env.LARAVEL_SERVICE_TOKEN;
+    if (!serviceToken) {
+      return NextResponse.json(
+        { success: false, message: "Employee service is not configured." },
+        { status: 500 },
+      );
+    }
+
+    const backendHeaders = {
+      Accept: "application/json",
+      Authorization: `Bearer ${serviceToken}`,
+    };
+    const employeeResponse = await fetch(
+      `${LARAVEL_API_URL}/api/employee-masterfile/${payload.employee.employee_id}`,
+      { headers: backendHeaders, cache: "no-store" },
+    );
+    if (!employeeResponse.ok) {
+      return NextResponse.json(
+        { success: false, message: "Unable to verify the clearance employee." },
+        { status: employeeResponse.status },
+      );
+    }
+
+    const employeeResult = await employeeResponse.json();
+    const employeeRecord = employeeResult?.data;
+    if (
+      Number(employeeRecord?.id) !== payload.employee.employee_id ||
+      String(employeeRecord?.id_number ?? "").trim() !==
+        payload.employee.id_number
+    ) {
+      return NextResponse.json(
+        { success: false, message: "The clearance employee could not be verified." },
+        { status: 404 },
+      );
+    }
+
+    if (employeeRecord.signature_path) {
+      const signatureResponse = await fetch(
+        `${LARAVEL_API_URL}/api/employee-masterfile/${payload.employee.employee_id}/files/signature`,
+        { headers: backendHeaders, cache: "no-store" },
+      );
+      if (!signatureResponse.ok) {
+        return NextResponse.json(
+          { success: false, message: "Unable to load the employee signature." },
+          { status: signatureResponse.status },
+        );
+      }
+
+      const mimeType = signatureResponse.headers.get("content-type");
+      if (mimeType !== "image/png" && mimeType !== "image/jpeg") {
+        return NextResponse.json(
+          { success: false, message: "The employee signature has an unsupported format." },
+          { status: 415 },
+        );
+      }
+
+      docPayload.employee_signature = {
+        data: new Uint8Array(await signatureResponse.arrayBuffer()),
+        mimeType,
+      };
+    }
 
     const file =
       format === "pdf"

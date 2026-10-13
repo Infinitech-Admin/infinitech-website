@@ -3,6 +3,7 @@
 // ============================================
 
 import { type NextRequest, NextResponse } from "next/server"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
     
     const response = await fetch(`${laravelApiUrl}/api/video-surveys?page=${page}`, {
       headers: {
+        ...laravelServiceHeaders(),
         Accept: "application/json",
       },
       cache: 'no-store', // Prevent caching
@@ -121,4 +123,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

@@ -66,7 +66,7 @@ export default function AdminSupportTicketsPage() {
   const [filterStatus, setFilterStatus] = useState("all")
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) {
       router.push("/admin/login")
       return
@@ -76,7 +76,7 @@ export default function AdminSupportTicketsPage() {
 
   const fetchTickets = async () => {
     try {
-      const token = localStorage.getItem("adminToken")
+      const token = localStorage.getItem("adminSessionActive")
       const response = await fetch("/api/admin/support-tickets", {
         headers: {
           Authorization: `Bearer ${token}`,

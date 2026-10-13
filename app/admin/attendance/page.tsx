@@ -165,7 +165,7 @@ export default function AdminAttendancePage() {
   const [selectedTraineeName, setSelectedTraineeName] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) { router.push("/admin/login"); return }
     fetchRecords(token)
     fetchTrainees()
@@ -299,7 +299,7 @@ export default function AdminAttendancePage() {
 
   const handleDeleteTrainee = async () => {
     if (!traineeToDelete) return
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) return
     setSubmittingTrainee(true)
     try {
@@ -321,7 +321,7 @@ export default function AdminAttendancePage() {
 
   const handleDeleteRecord = async () => {
     if (!recordToDelete) return
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) return
     setDeleting(true)
     try {

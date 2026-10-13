@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const LARAVEL_API_URL = process.env.LARAVEL_API_URL || 'http://localhost:8000'
 
@@ -10,6 +11,7 @@ export async function GET(
     const response = await fetch(`${LARAVEL_API_URL}/api/client-assessment/${params.uuid}`, {
       method: 'GET',
       headers: {
+        ...laravelServiceHeaders(),
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
@@ -57,6 +59,7 @@ export async function PUT(
       method: 'POST', // Laravel uses POST with _method field for PUT in FormData
       body: formData,
       headers: {
+        ...laravelServiceHeaders(),
         'Accept': 'application/json',
       },
     })
@@ -102,6 +105,7 @@ export async function DELETE(
     const response = await fetch(`${LARAVEL_API_URL}/api/client-assessment/${params.uuid}`, {
       method: 'DELETE',
       headers: {
+        ...laravelServiceHeaders(),
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },

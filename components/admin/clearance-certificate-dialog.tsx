@@ -89,7 +89,7 @@ export function ClearanceCertificateDialog({
   const fetchNextCertificateNo = async () => {
     setLoadingCertNo(true);
     try {
-      const token = localStorage.getItem("adminToken");
+      const token = localStorage.getItem("adminSessionActive");
       const response = await fetch(
         "/api/admin/employee-clearance/next-number",
         {
@@ -135,7 +135,7 @@ export function ClearanceCertificateDialog({
 
     setGenerating(true);
     try {
-      const token = localStorage.getItem("adminToken");
+      const token = localStorage.getItem("adminSessionActive");
       const response = await fetch("/api/admin/employee-clearance/download", {
         method: "POST",
         headers: {

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAdminAuth } from "@/lib/admin-auth";
 
 const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
 
@@ -6,15 +7,25 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authError = requireAdminAuth(request);
+  if (authError) return authError;
+
+  const serviceToken = process.env.LARAVEL_SERVICE_TOKEN;
+  if (!serviceToken) {
+    return NextResponse.json(
+      { success: false, message: "Employee service is not configured." },
+      { status: 500 },
+    );
+  }
+
   try {
     const { id } = await params;
-    const authorization = request.headers.get("authorization");
     const response = await fetch(
       `${laravelUrl}/api/employee-masterfile/${id}/position-history`,
       {
         headers: {
           Accept: "application/json",
-          ...(authorization ? { Authorization: authorization } : {}),
+          Authorization: `Bearer ${serviceToken}`,
         },
         cache: "no-store",
       },

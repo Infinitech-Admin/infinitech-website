@@ -1,7 +1,9 @@
 // File: components/admin/employee-form.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { LoaderCircle, RotateCcw, Trash2, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +29,15 @@ import {
   type PositionHistoryEntry,
 } from "./employee-types";
 import { Button } from "@/components/ui/button";
+import {
+  EmployeeImageViewer,
+  EmployeePrivateImage,
+  type EmployeeFileType,
+} from "./employee-media";
+
+const MAX_EMPLOYEE_IMAGE_SIZE =
+  (Number(process.env.NEXT_PUBLIC_EMPLOYEE_IMAGE_MAX_KB) || 5120) * 1024;
+const MAX_EMPLOYEE_IMAGE_SIZE_MB = MAX_EMPLOYEE_IMAGE_SIZE / (1024 * 1024);
 
 interface Props {
   data: EmployeeFormData;
@@ -42,6 +53,18 @@ interface Props {
   ) => void;
   /** field names the caller marked invalid (missing/required) after a failed submit attempt */
   errors?: Partial<Record<keyof EmployeeFormData, boolean>>;
+  employeeId?: number | null;
+  profileImageFile: File | null;
+  signatureFile: File | null;
+  profileImageRemoved: boolean;
+  signatureRemoved: boolean;
+  uploadingFiles: boolean;
+  onProfileImageChange: (file: File | null) => void;
+  onSignatureChange: (file: File | null) => void;
+  onRemoveProfileImage: () => void;
+  onRemoveSignature: () => void;
+  onRestoreProfileImage: () => void;
+  onRestoreSignature: () => void;
 }
 
 // Which fields live under which tab — used to render each tab and to flag a
@@ -83,6 +106,8 @@ const SECTION_FIELDS: Record<string, (keyof EmployeeFormData)[]> = {
   contact: [
     "mobile_number",
     "email_address",
+    "emergency_contact_name",
+    "emergency_contact_mobile_number",
     "house_number",
     "street",
     "village",
@@ -338,6 +363,213 @@ function PositionChangeSection({
   );
 }
 
+function EmployeeUploadField({
+  label,
+  fileType,
+  accept,
+  employeeId,
+  storagePath,
+  firstName,
+  file,
+  removed,
+  uploading,
+  onFileChange,
+  onRemove,
+  onRestore,
+}: {
+  label: string;
+  fileType: EmployeeFileType;
+  accept: string;
+  employeeId?: number | null;
+  storagePath?: string | null;
+  firstName: string;
+  file: File | null;
+  removed: boolean;
+  uploading: boolean;
+  onFileChange: (file: File | null) => void;
+  onRemove: () => void;
+  onRestore: () => void;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputId = `employee-${fileType}-upload`;
+  const isProfileImage = fileType === "profile-image";
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const handleFileChange = (selected: File | undefined, input: HTMLInputElement) => {
+    input.value = "";
+    if (!selected) return;
+
+    const allowedTypes = isProfileImage
+      ? ["image/jpeg", "image/png", "image/webp"]
+      : ["image/jpeg", "image/png"];
+    if (!allowedTypes.includes(selected.type)) {
+      toast.error(
+        isProfileImage
+          ? "Choose a JPG, PNG, or WEBP profile image."
+          : "Choose a JPG or PNG signature image.",
+      );
+      return;
+    }
+
+    if (selected.size > MAX_EMPLOYEE_IMAGE_SIZE) {
+      toast.error(
+        `Each employee image must be ${MAX_EMPLOYEE_IMAGE_SIZE_MB} MB or smaller.`,
+      );
+      return;
+    }
+
+    onFileChange(selected);
+  };
+
+  const hasCurrentFile = Boolean(storagePath) && !removed;
+  const showSavedFile = hasCurrentFile && !file;
+
+  return (
+    <div className="space-y-2">
+      <Label
+        htmlFor={inputId}
+        className="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300"
+      >
+        {label}
+      </Label>
+      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700 sm:flex-row sm:items-center">
+        <div
+          className={`relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden ${
+            isProfileImage
+              ? "rounded-full bg-blue-100 text-xl font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+              : "rounded-md border border-dashed border-slate-300 bg-slate-50 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+          }`}
+        >
+          {file && previewUrl ? (
+            isProfileImage ? (
+              <EmployeeImageViewer
+                src={previewUrl}
+                alt={`${label} preview`}
+                downloadName={file?.name}
+                className="absolute inset-0"
+              >
+                <img
+                  src={previewUrl}
+                  alt={`${label} preview`}
+                  className="h-full w-full object-contain"
+                />
+              </EmployeeImageViewer>
+            ) : (
+              <img
+                src={previewUrl}
+                alt={`${label} preview`}
+                className="h-full w-full object-contain"
+              />
+            )
+          ) : (
+            <>
+              {isProfileImage ? (
+                <span>{firstName.trim().charAt(0).toUpperCase() || "?"}</span>
+              ) : (
+                <span>No signature uploaded</span>
+              )}
+              {showSavedFile && employeeId && (
+                <EmployeePrivateImage
+                  employeeId={employeeId}
+                  fileType={fileType}
+                  storagePath={storagePath}
+                  alt={`${label} preview`}
+                  className="absolute inset-0 h-full w-full object-contain"
+                  viewable={isProfileImage}
+                />
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            id={inputId}
+            type="file"
+            accept={accept}
+            className="hidden"
+            disabled={uploading}
+            onChange={(event) => {
+              const input = event.currentTarget;
+              handleFileChange(input.files?.[0], input);
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            aria-label={`Upload or replace ${label.toLowerCase()}`}
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {file || hasCurrentFile ? "Replace" : "Upload"}
+          </Button>
+
+          {file && (
+            <span className="max-w-full truncate text-xs text-slate-500 dark:text-slate-400">
+              {file.name}
+            </span>
+          )}
+
+          {removed ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={uploading}
+              onClick={onRestore}
+            >
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              Undo remove
+            </Button>
+          ) : (
+            (file || hasCurrentFile) && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={uploading}
+                onClick={onRemove}
+                aria-label={`Remove ${label.toLowerCase()}`}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Remove
+              </Button>
+            )
+          )}
+
+          {uploading && file && (
+            <span
+              className="inline-flex items-center gap-1 text-xs text-blue-600"
+              role="status"
+            >
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              Uploading...
+            </span>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {isProfileImage
+          ? `JPG, PNG, or WEBP. Maximum size ${MAX_EMPLOYEE_IMAGE_SIZE_MB} MB.`
+          : `PNG or JPG/JPEG. Maximum size ${MAX_EMPLOYEE_IMAGE_SIZE_MB} MB.`}
+      </p>
+    </div>
+  );
+}
+
 /**
  * Employee Masterfile form, split into tabs so each section (Employee Info,
  * Allowances, Government IDs, Family Info, Contact Info) is viewed on its own
@@ -349,6 +581,18 @@ export function EmployeeForm({
   onAllowanceChange,
   errors = {},
   showPositionChangeSection = false,
+  employeeId,
+  profileImageFile,
+  signatureFile,
+  profileImageRemoved,
+  signatureRemoved,
+  uploadingFiles,
+  onProfileImageChange,
+  onSignatureChange,
+  onRemoveProfileImage,
+  onRemoveSignature,
+  onRestoreProfileImage,
+  onRestoreSignature,
 }: Props & { showPositionChangeSection?: boolean }) {
   const invalid = (f: keyof EmployeeFormData) => !!errors[f];
   const sectionHasError = (section: string) =>
@@ -405,6 +649,36 @@ export function EmployeeForm({
 
       {/* ── Employee + Personal Information ── */}
       <TabsContent value="employee" className="space-y-4 pt-4">
+        <div className="grid grid-cols-1 gap-4">
+          <EmployeeUploadField
+            label="Profile Image (Optional)"
+            fileType="profile-image"
+            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            employeeId={employeeId}
+            storagePath={data.profile_image_path}
+            firstName={data.first_name}
+            file={profileImageFile}
+            removed={profileImageRemoved}
+            uploading={uploadingFiles}
+            onFileChange={onProfileImageChange}
+            onRemove={onRemoveProfileImage}
+            onRestore={onRestoreProfileImage}
+          />
+          <EmployeeUploadField
+            label="Employee Signature (Optional)"
+            fileType="signature"
+            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+            employeeId={employeeId}
+            storagePath={data.signature_path}
+            firstName={data.first_name}
+            file={signatureFile}
+            removed={signatureRemoved}
+            uploading={uploadingFiles}
+            onFileChange={onSignatureChange}
+            onRemove={onRemoveSignature}
+            onRestore={onRestoreSignature}
+          />
+        </div>
         <Row>
           <Field
             label="ID Number"
@@ -708,6 +982,20 @@ export function EmployeeForm({
             data={data}
             onChange={onChange}
             type="email"
+          />
+        </Row>
+        <Row>
+          <Field
+            label="Emergency Contact Person"
+            field="emergency_contact_name"
+            data={data}
+            onChange={onChange}
+          />
+          <Field
+            label="Emergency Contact Mobile Number"
+            field="emergency_contact_mobile_number"
+            data={data}
+            onChange={onChange}
           />
         </Row>
         <Row>

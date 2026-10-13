@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 import nodemailer from "nodemailer"
 
 const LARAVEL_URL = process.env.LARAVEL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
@@ -77,7 +78,7 @@ export async function POST(
     // 1. Save reply to Laravel DB
     const laravelRes = await fetch(`${LARAVEL_URL}/api/seo-audits/${auditId}/replies`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
         body: reply_body,
         subject: replySubject,
