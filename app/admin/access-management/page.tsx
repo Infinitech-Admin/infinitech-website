@@ -97,6 +97,14 @@ type ConfirmRequest = {
   destructive?: boolean;
 };
 
+// Role preset (HR, Accounting, ...) loaded from /api/admin/access-management/roles
+type Role = {
+  id: number;
+  key: string;
+  label: string;
+  directories: { id: number; key: string; label: string; actions: string[] }[];
+};
+
 const ACTIONS = ["view", "create", "edit", "delete", "export"] as const;
 type Action = (typeof ACTIONS)[number];
 type Grants = Record<number, Action[]>;
@@ -199,6 +207,22 @@ const makePayload = (grants: Grants) => ({
     actions,
   })),
 });
+
+// Turns a role preset into a Grants object, keeping only what this user can grant.
+function grantsFromRole(role: Role, directories: Directory[]): Grants {
+  const next: Grants = {};
+  for (const grant of role.directories) {
+    const directory = directories.find((item) => item.id === grant.id);
+    if (!directory) continue;
+    const actions = ACTIONS.filter(
+      (action) =>
+        grant.actions.includes(action) &&
+        directory.grantable_actions?.includes(action),
+    );
+    if (actions.length) next[directory.id] = actions;
+  }
+  return next;
+}
 
 function withAction(
   existing: Action[],
@@ -768,6 +792,10 @@ export default function UserAccessManagementPage() {
   );
   const [newGrants, setNewGrants] = useState<Grants>({});
 
+  // Role presets (HR, Accounting, ...)
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [newRoleId, setNewRoleId] = useState<number | null>(null);
+
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [editGrants, setEditGrants] = useState<Grants>({});
   const [audit, setAudit] = useState<AuditEvent[] | null>(null);
@@ -933,6 +961,22 @@ export default function UserAccessManagementPage() {
     })();
   }, []);
 
+  // Role presets are optional: if the endpoint is missing the page still works.
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await readJson(
+          await fetch("/api/admin/access-management/roles", {
+            cache: "no-store",
+          }),
+        );
+        setRoles(result.data ?? []);
+      } catch {
+        setRoles([]);
+      }
+    })();
+  }, []);
+
   // Debounced: instant when the search box is empty, 300ms while typing.
   useEffect(() => {
     const timer = window.setTimeout(
@@ -980,6 +1024,7 @@ export default function UserAccessManagementPage() {
     setSelectedEmployee(null);
     setEmployees([]);
     setNewAccountRole("admin");
+    setNewRoleId(null);
     setNewGrants({});
   }
 
@@ -987,13 +1032,16 @@ export default function UserAccessManagementPage() {
     if (!selectedEmployee) return;
     const employee = selectedEmployee;
     const count = Object.keys(newGrants).length;
+    const roleLabel = newRoleId
+      ? roles.find((role) => role.id === newRoleId)?.label
+      : null;
 
     const confirmed = await askConfirm({
       title: "Create this account?",
       description:
         newAccountRole === "superadmin"
           ? `An active superadmin account will be created for ${fullName(employee)} with unrestricted access to all admin directories. A 12-character one-time password will be generated.`
-          : `An active admin account will be created for ${fullName(employee)} with access to ${count} ${count === 1 ? "directory" : "directories"}. A 12-character one-time password will be generated.`,
+          : `An active ${roleLabel ? `${roleLabel} (admin)` : "admin"} account will be created for ${fullName(employee)} with access to ${count} ${count === 1 ? "directory" : "directories"}. A 12-character one-time password will be generated.`,
       confirmLabel: "Create account",
     });
     if (!confirmed) return;
@@ -1007,6 +1055,7 @@ export default function UserAccessManagementPage() {
           body: JSON.stringify({
             employee_id: employee.id,
             admin_role: newAccountRole,
+            ...(newRoleId ? { role_id: newRoleId } : {}),
             ...(newAccountRole === "admin" ? makePayload(newGrants) : {}),
           }),
         }),
@@ -1617,7 +1666,7 @@ export default function UserAccessManagementPage() {
 
             <section>
               <div
-                className={`grid gap-4 ${isSuperadmin ? "sm:grid-cols-2" : ""}`}
+                className={`grid gap-4 ${isSuperadmin || roles.length > 0 ? "sm:grid-cols-2" : ""}`}
               >
                 <div>
                   <h3 className="mb-2 text-sm font-semibold text-slate-900 ">
@@ -1661,18 +1710,27 @@ export default function UserAccessManagementPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                {isSuperadmin && (
+                {(isSuperadmin || roles.length > 0) && (
                   <div>
                     <h3 className="mb-2 text-sm font-semibold text-slate-900 ">
                       Account role
                     </h3>
                     <Select
-                      onValueChange={(value) =>
-                        setNewAccountRole(
-                          value === "superadmin" ? "superadmin" : "admin",
-                        )
-                      }
-                      value={newAccountRole}
+                      onValueChange={(value) => {
+                        if (value === "admin" || value === "superadmin") {
+                          setNewAccountRole(value);
+                          setNewRoleId(null);
+                          return;
+                        }
+                        const role = roles.find(
+                          (item) => `role:${item.id}` === value,
+                        );
+                        if (!role) return;
+                        setNewAccountRole("admin");
+                        setNewRoleId(role.id);
+                        setNewGrants(grantsFromRole(role, directories));
+                      }}
+                      value={newRoleId ? `role:${newRoleId}` : newAccountRole}
                     >
                       <SelectTrigger aria-label="Choose account role">
                         <SelectValue />
@@ -1681,8 +1739,17 @@ export default function UserAccessManagementPage() {
                         className={SELECT_CONTENT_CLASS}
                         position="popper"
                       >
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="superadmin">Superadmin</SelectItem>
+                        <SelectItem value="admin">
+                          Admin (custom permissions)
+                        </SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={`role:${role.id}`}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                        {isSuperadmin && (
+                          <SelectItem value="superadmin">Superadmin</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1735,7 +1802,11 @@ export default function UserAccessManagementPage() {
               {" · "}
               {newAccountRole === "superadmin"
                 ? "Superadmin · unrestricted access"
-                : `${Object.keys(newGrants).length} ${
+                : `${
+                    newRoleId
+                      ? `${roles.find((role) => role.id === newRoleId)?.label ?? "Role"} · `
+                      : ""
+                  }${Object.keys(newGrants).length} ${
                     Object.keys(newGrants).length === 1
                       ? "directory"
                       : "directories"
@@ -1854,6 +1925,39 @@ export default function UserAccessManagementPage() {
                       Saving permission changes revokes the account’s active
                       sessions.
                     </p>
+
+                    {canEditAccounts && roles.length > 0 && (
+                      <div className="mb-3 max-w-xs">
+                        <Select
+                          onValueChange={(value) => {
+                            const role = roles.find(
+                              (item) => `role:${item.id}` === value,
+                            );
+                            if (role)
+                              setEditGrants(grantsFromRole(role, directories));
+                          }}
+                          value=""
+                        >
+                          <SelectTrigger aria-label="Apply a role preset">
+                            <SelectValue placeholder="Apply a role preset…" />
+                          </SelectTrigger>
+                          <SelectContent
+                            className={SELECT_CONTENT_CLASS}
+                            position="popper"
+                          >
+                            {roles.map((role) => (
+                              <SelectItem
+                                key={role.id}
+                                value={`role:${role.id}`}
+                              >
+                                {role.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <PermissionMatrix
                       grants={editGrants}
                       groups={groupedDirectories}
