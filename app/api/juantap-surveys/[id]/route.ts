@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -14,6 +15,7 @@ export async function GET(
     const laravelResponse = await fetch(`${API_URL}/api/juantap-surveys/${id}`, {
       method: 'GET',
       headers: {
+        ...laravelServiceHeaders(),
         'Accept': 'application/json',
       },
     });

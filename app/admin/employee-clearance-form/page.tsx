@@ -70,7 +70,7 @@ interface TemplateResponse {
 
 const authHeaders = () => {
   const token =
-    typeof window === "undefined" ? null : localStorage.getItem("adminToken");
+    typeof window === "undefined" ? null : localStorage.getItem("adminSessionActive");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

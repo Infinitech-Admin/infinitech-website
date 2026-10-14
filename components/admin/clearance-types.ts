@@ -55,6 +55,10 @@ export interface ClearancePayload {
   employee: ClearanceEmployeeInfo;
   units: { unit: string; items: string }[];
   properties: { item: string }[];
+  employee_signature?: {
+    data: Uint8Array;
+    mimeType: "image/jpeg" | "image/png";
+  };
 }
 
 /** Document format the wizard can generate. */
@@ -310,7 +314,7 @@ export const buildClearanceFilename = (
 
 const authHeaders = () => {
   const token =
-    typeof window === "undefined" ? null : localStorage.getItem("adminToken");
+    typeof window === "undefined" ? null : localStorage.getItem("adminSessionActive");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -26,6 +26,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { adminFetch } from "@/lib/admin-fetch";
+
 // ---------- Types ----------
 
 interface RequestRecord {
@@ -38,6 +40,7 @@ interface CategoryData {
   key: string;
   label: string;
   endpoint: string;
+  directory: string;
   records: RequestRecord[];
 }
 
@@ -54,27 +57,37 @@ const CATEGORY_CONFIG: Omit<CategoryData, "records">[] = [
     key: "supportTickets",
     label: "Support Tickets",
     endpoint: "/api/support-tickets",
+    directory: "support_tickets",
   },
   {
     key: "graphicDesign",
     label: "Graphic Design",
     endpoint: "/api/graphic-design-requests",
+    directory: "graphic_design",
   },
   {
     key: "marketResearch",
     label: "Market Research",
     endpoint: "/api/market-research-requests",
+    directory: "market_research",
   },
-  { key: "paidAds", label: "Paid Ads", endpoint: "/api/paid-ads-requests" },
+  {
+    key: "paidAds",
+    label: "Paid Ads",
+    endpoint: "/api/paid-ads-requests",
+    directory: "paid_ads",
+  },
   {
     key: "socialMedia",
     label: "Social Media",
     endpoint: "/api/social-media-requests",
+    directory: "social_media_management",
   },
   {
     key: "tiktokShop",
     label: "TikTok Shop",
     endpoint: "/api/tiktok-shop-requests",
+    directory: "tiktok_shop",
   },
 ];
 
@@ -103,32 +116,177 @@ const STATUS_COLORS: Record<string, string> = {
   resolved: COLORS.emerald,
 };
 
+type WebsiteDirectoryStats = {
+  total: number;
+  in_progress: number;
+  on_hold: number;
+  completed: number;
+  in_testing: number;
+  qa_needs_attention: number;
+};
+
+function WebsiteDirectorySummary() {
+  const [websiteStats, setWebsiteStats] =
+    useState<WebsiteDirectoryStats | null>(null);
+  const [websiteStatsError, setWebsiteStatsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    adminFetch("/api/admin/websites/stats", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok)
+          throw new Error(
+            result.message || "Unable to load website statistics.",
+          );
+        if (active) setWebsiteStats(result.data as WebsiteDirectoryStats);
+      })
+      .catch((loadError: unknown) => {
+        console.error("Website dashboard summary failed:", loadError);
+        if (active)
+          setWebsiteStatsError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load website statistics.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const cards = websiteStats
+    ? [
+        {
+          label: "Total Websites",
+          value: websiteStats.total,
+          href: "/admin/website-directory",
+          accent: "border-l-cyan-500",
+        },
+        {
+          label: "Projects In Progress",
+          value: websiteStats.in_progress,
+          href: "/admin/website-directory?status=In%20Progress",
+          accent: "border-l-blue-500",
+        },
+        {
+          label: "Projects On Hold",
+          value: websiteStats.on_hold,
+          href: "/admin/website-directory?status=On%20Hold",
+          accent: "border-l-amber-500",
+        },
+        {
+          label: "Projects Completed",
+          value: websiteStats.completed,
+          href: "/admin/website-directory?status=Completed",
+          accent: "border-l-emerald-500",
+        },
+        {
+          label: "Projects in Testing",
+          value: websiteStats.in_testing,
+          href: "/admin/website-directory?phase=Testing",
+          accent: "border-l-violet-500",
+        },
+        {
+          label: "QA Needs Attention",
+          value: websiteStats.qa_needs_attention,
+          href: "/admin/website-directory?qa_status=attention",
+          accent: "border-l-rose-500",
+        },
+      ]
+    : [];
+
+  return (
+    <section aria-label="Website project summary" className="space-y-3">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          Website projects
+        </h2>
+        <p className="text-sm text-slate-500">
+          Live counts from the Website Directory.
+        </p>
+      </div>
+      {websiteStatsError ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          {websiteStatsError}
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {cards.length
+            ? cards.map((card) => (
+                <Link
+                  key={card.label}
+                  href={card.href}
+                  className={`rounded-xl border border-l-4 border-slate-200 ${card.accent} bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900`}
+                >
+                  <p className="text-sm font-medium text-slate-500">
+                    {card.label}
+                  </p>
+                  <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                    {card.value}
+                  </p>
+                </Link>
+              ))
+            : Array.from({ length: 6 }, (_, index) => (
+                <div
+                  key={index}
+                  aria-label="Loading website summary"
+                  className="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                />
+              ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [permissionKeys, setPermissionKeys] = useState<string[]>([]);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
       router.push("/admin/login");
       return;
     }
 
-    fetchAllData();
+    void loadDashboard();
   }, [router]);
 
-  const fetchAllData = async () => {
+  const loadDashboard = async () => {
     try {
       setError(null);
+      const sessionResponse = await adminFetch("/api/admin/session", {
+        cache: "no-store",
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Unable to load your admin permissions.");
+      }
+      const session = await sessionResponse.json();
+      const grantedDirectories: string[] = (session.permissions || []).map(
+        (permission: { key: string }) => permission.key,
+      );
+      const superadmin = session.is_superadmin === true;
+      setPermissionKeys(grantedDirectories);
+      setIsSuperadmin(superadmin);
+      const visibleCategories = superadmin
+        ? CATEGORY_CONFIG
+        : CATEGORY_CONFIG.filter((category) =>
+            grantedDirectories.includes(category.directory),
+          );
 
       const results = await Promise.allSettled(
-        CATEGORY_CONFIG.map(async (cfg) => {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}${cfg.endpoint}`,
-          );
+        visibleCategories.map(async (cfg) => {
+          const response = await adminFetch(cfg.endpoint);
 
           if (!response.ok) {
             let bodyText = "";
@@ -155,12 +313,12 @@ export default function AdminDashboard() {
       const resolved: CategoryData[] = results.map((result, i) =>
         result.status === "fulfilled"
           ? result.value
-          : { ...CATEGORY_CONFIG[i], records: [] },
+          : { ...visibleCategories[i], records: [] },
       );
 
       const failed = results
         .map((result, i) =>
-          result.status === "rejected" ? CATEGORY_CONFIG[i].label : null,
+          result.status === "rejected" ? visibleCategories[i].label : null,
         )
         .filter((label): label is string => label !== null);
 
@@ -392,20 +550,26 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
+      {(isSuperadmin || permissionKeys.includes("website_directory")) && (
+        <WebsiteDirectorySummary />
+      )}
+
       {/* Quick Actions */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Navigate to manage support tickets</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/admin/support-tickets">
-            <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
-              View All Support Tickets
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      {(isSuperadmin || permissionKeys.includes("support_tickets")) && (
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Navigate to manage support tickets</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/admin/support-tickets">
+              <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
+                View All Support Tickets
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

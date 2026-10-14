@@ -51,7 +51,6 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json(
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
 
   const format: "docx" | "pdf" = body.format === "docx" ? "docx" : "pdf";
   const company: string | undefined = body.company || undefined;
-
   // 1. Persist the record in Laravel and get the assigned certificate_no.
   let record: { certificate_no: string } | null = null;
   try {

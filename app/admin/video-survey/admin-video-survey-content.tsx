@@ -74,7 +74,7 @@ export default function AdminVideoSurveyPageContent() {
   const [deleting, setDeleting] = useState(false)
 const [downloadingId, setDownloadingId] = useState<number | null>(null)
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) {
       router.push("/admin/login")
       return

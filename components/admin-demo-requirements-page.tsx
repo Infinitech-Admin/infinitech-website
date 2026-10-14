@@ -68,7 +68,7 @@ export default function AdminDemoRequirementsPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) {
       router.push("/admin/login")
       return
@@ -113,7 +113,7 @@ export default function AdminDemoRequirementsPage() {
   const handleDeleteRequirement = async () => {
     if (!requirementToDelete) return
 
-    const token = localStorage.getItem("adminToken")
+    const token = localStorage.getItem("adminSessionActive")
     if (!token) return
 
     setDeleting(true)

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const LARAVEL_URL = process.env.LARAVEL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
 
@@ -181,7 +182,7 @@ export async function GET(request: NextRequest) {
   try {
     const page = request.nextUrl.searchParams.get("page") || "1"
     const res  = await fetch(`${LARAVEL_URL}/api/seo-audits?page=${page}`, {
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), "Content-Type": "application/json", Accept: "application/json" },
       cache: "no-store",
     })
     const data = await res.json()

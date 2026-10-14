@@ -16,6 +16,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminLoginPage() {
+  const [loginMode, setLoginMode] = useState<"superadmin" | "personnel">("superadmin");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,9 @@ export default function AdminLoginPage() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify(
+          loginMode === "superadmin" ? { password } : { identifier, password },
+        ),
       });
 
       const data = await response.json();
@@ -42,12 +46,10 @@ export default function AdminLoginPage() {
         return;
       }
 
-      localStorage.setItem("adminToken", data.token);
-
-      // Keep loading = true hanggang makalipat ng page
+      localStorage.setItem("adminSessionActive", "1");
       setSuccess(true);
       router.push("/admin/dashboard");
-    } catch (err) {
+    } catch {
       setError("Login failed. Please try again.");
       setLoading(false);
     }
@@ -59,7 +61,9 @@ export default function AdminLoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
-            Enter your password to access the support dashboard
+            {loginMode === "superadmin"
+              ? "Sign in with the administrator password."
+              : "Sign in with the account credentials provided by your administrator."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,6 +74,25 @@ export default function AdminLoginPage() {
               </Alert>
             )}
 
+            {loginMode === "personnel" && (
+              <div className="space-y-2">
+                <label htmlFor="identifier" className="text-sm font-medium">
+                  Employee email
+                </label>
+                <Input
+                  id="identifier"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  disabled={loading}
+                  required
+                  className="bg-background"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
                 Password
@@ -77,7 +100,7 @@ export default function AdminLoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter admin password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -99,6 +122,23 @@ export default function AdminLoginPage() {
                 "Login"
               )}
             </Button>
+            <button
+              type="button"
+              className="w-full text-sm text-primary underline-offset-4 hover:underline disabled:opacity-50"
+              disabled={loading}
+              onClick={() => {
+                setLoginMode((mode) =>
+                  mode === "superadmin" ? "personnel" : "superadmin",
+                );
+                setIdentifier("");
+                setPassword("");
+                setError("");
+              }}
+            >
+              {loginMode === "superadmin"
+                ? "Restricted personnel login"
+                : "Superadmin login"}
+            </button>
           </form>
         </CardContent>
       </Card>

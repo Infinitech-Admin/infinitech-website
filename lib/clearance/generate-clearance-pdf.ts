@@ -270,13 +270,33 @@ function sectionD(): Content {
   return { table: { widths, body }, layout: gridLayout, margin: [0, 0, 0, 12] };
 }
 
-function signatureBlock(employeeName: string): Content {
-  const cell = (lines: string[]) => ({
-    stack: lines.map((l) => ({
-      text: l,
-      alignment: "center" as const,
-      fontSize: 9,
-    })),
+function signatureBlock(
+  employeeName: string,
+  employeeSignature?: ClearancePayload["employee_signature"],
+): Content {
+  const cell = (
+    lines: string[],
+    signature?: ClearancePayload["employee_signature"],
+  ) => ({
+    stack: signature
+      ? [
+          {
+            image: `data:${signature.mimeType};base64,${Buffer.from(signature.data).toString("base64")}`,
+            width: 150,
+            height: 42,
+            alignment: "center" as const,
+          },
+          ...lines.slice(1).map((line) => ({
+            text: line,
+            alignment: "center" as const,
+            fontSize: 9,
+          })),
+        ]
+      : lines.map((line) => ({
+          text: line,
+          alignment: "center" as const,
+          fontSize: 9,
+        })),
   });
   return {
     columns: [
@@ -285,7 +305,7 @@ function signatureBlock(employeeName: string): Content {
         employeeName,
         "Employee",
         "Date: ____________________",
-      ]),
+        ], employeeSignature),
       cell([
         "________________________________",
         DEFAULT_SIGNATORY_NAME,
@@ -402,7 +422,7 @@ export async function generateClearancePdf(
       bodyParagraph(
         "Based on the records and confirmations indicated in this form, the employee has completed the applicable company clearance requirements as of the date signed, subject to any subsequently discovered and properly documented accountability. This form records administrative clearance and does not waive rights or obligations provided by law, contract, or company policy.",
       ),
-      signatureBlock(employee.employee_name),
+      signatureBlock(employee.employee_name, payload.employee_signature),
     ],
     defaultStyle: { font: "Helvetica", fontSize: 9, lineHeight: 1.2 },
   };

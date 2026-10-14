@@ -30,7 +30,6 @@ import {
   TrendingUp,
   BarChart3,
   FolderOpen,
-  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,11 +58,8 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Overview",
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      {
-        href: "/admin/website-directory",
-        label: "Website Directory",
-        icon: FolderOpen,
-      },
+      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
+      { href: "/admin/website-directory", label: "Website Directory", icon: FolderOpen }
     ],
   },
   {
@@ -72,46 +68,20 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
       { href: "/admin/website-audit", label: "Website Audit", icon: Search },
       { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
-      {
-        href: "/admin/client-assessment",
-        label: "Client Assessment",
-        icon: UserCheck,
-      },
-      {
-        href: "/admin/demo-requirements",
-        label: "Demo Website Requirements",
-        icon: FileCheck,
-      },
+      { href: "/admin/client-assessment", label: "Client Assessment", icon: UserCheck },
+      { href: "/admin/demo-requirements", label: "Demo Website Requirements", icon: FileCheck },
     ],
   },
   {
     title: "Marketing Services",
     items: [
       { href: "/admin/graphic-design", label: "Graphic Design", icon: Palette },
-      {
-        href: "/admin/social-media-management",
-        label: "Social Media Management",
-        icon: Megaphone,
-      },
+      { href: "/admin/social-media-management", label: "Social Media Management", icon: Megaphone },
       { href: "/admin/paid-ads", label: "Paid Ads", icon: TrendingUp },
-      {
-        href: "/admin/market-research",
-        label: "Market Research",
-        icon: BarChart3,
-      },
+      { href: "/admin/market-research", label: "Market Research", icon: BarChart3 },
       { href: "/admin/blog", label: "Blog", icon: FileText },
       { href: "/admin/portal-demo", label: "Portal Demo", icon: FolderOpen },
-      {
-        href: "/admin/tiktok-shop-opening",
-        label: "TikTok Shop Opening",
-        icon: TrendingUp,
-      },
-    ],
-  },
-  {
-    title: "Sales & Finance",
-    items: [
-      { href: "/admin/contracts", label: "Contracts", icon: FileSignature },
+      { href: "/admin/tiktok-shop-opening", label: "TikTok Shop Opening", icon: TrendingUp },
     ],
   },
   {
@@ -125,29 +95,16 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Customer Support",
     items: [
-      {
-        href: "/admin/support-tickets",
-        label: "Support Tickets",
-        icon: Ticket,
-      },
+      { href: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
     ],
   },
   {
     title: "Human Resources",
     items: [
-      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
-      {
-        href: "/admin/employee-clearance-form",
-        label: "Clearance Form",
-        icon: ClipboardCheck,
-      },
+      { href: "/admin/employee-clearance-form", label: "Clearance Form", icon: ClipboardCheck },
       // { href: "/admin/coe", label: "COE", icon: FileText },'
       { href: "/admin/leave-request", label: "Leave Requests", icon: FileText },
-      {
-        href: "/admin/attendance",
-        label: "OJT Attendance",
-        icon: CalendarCheck,
-      },
+      { href: "/admin/attendance", label: "OJT Attendance", icon: CalendarCheck },
     ],
   },
 ];
@@ -165,7 +122,6 @@ const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
   "/admin/paid-ads": "paid_ads",
   "/admin/market-research": "market_research",
   "/admin/blog": "blog",
-  "/admin/contracts": "contracts",
   "/admin/survey": "survey",
   "/admin/juantap-survey": "juantap_survey",
   "/admin/video-survey": "video_survey",
@@ -207,8 +163,7 @@ function Sidebar({
   permissionKeys: string[];
   isSuperadmin: boolean;
 }) {
-  const isActive = (path: string) =>
-    pathname === path || pathname.startsWith(`${path}/`);
+  const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
   const sections = NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
@@ -217,42 +172,15 @@ function Sidebar({
       return !key || isSuperadmin || hasDirectoryAccess(permissionKeys, key);
     }),
   })).filter((section) => section.items.length > 0);
-  const canManageAccess =
-    isSuperadmin ||
-    hasDirectoryAccess(permissionKeys, "user_access_management");
-  const canViewSystemAudit =
-    isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
+  const canManageAccess = isSuperadmin || hasDirectoryAccess(permissionKeys, "user_access_management");
+  const canViewSystemAudit = isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
   if (isSuperadmin || canManageAccess || canViewSystemAudit) {
     sections.unshift({
       title: isSuperadmin ? "Superadmin" : "Administration",
       items: [
-        ...(isSuperadmin
-          ? [
-              {
-                href: "/admin/dashboard",
-                label: "Dashboard",
-                icon: LayoutDashboard,
-              },
-            ]
-          : []),
-        ...(canManageAccess
-          ? [
-              {
-                href: "/admin/access-management",
-                label: "User Access Management",
-                icon: Users,
-              },
-            ]
-          : []),
-        ...(canViewSystemAudit
-          ? [
-              {
-                href: "/admin/audit-logs",
-                label: "System Audit Logs",
-                icon: ClipboardList,
-              },
-            ]
-          : []),
+        ...(isSuperadmin ? [{ href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }] : []),
+        ...(canManageAccess ? [{ href: "/admin/access-management", label: "User Access Management", icon: Users }] : []),
+        ...(canViewSystemAudit ? [{ href: "/admin/audit-logs", label: "System Audit Logs", icon: ClipboardList }] : []),
       ],
     });
   }
@@ -279,7 +207,9 @@ function Sidebar({
           isOpen
             ? "visible translate-x-0 pointer-events-auto"
             : "invisible -translate-x-full pointer-events-none lg:!visible lg:!translate-x-0 lg:!pointer-events-auto"
-        } ${collapsed ? "lg:w-[4.5rem]" : "lg:w-64"}`}
+        } ${
+          collapsed ? "lg:w-[4.5rem]" : "lg:w-64"
+        }`}
       >
         <div
           className={`flex items-center border-b border-cyan-700/50 p-4 ${
@@ -313,11 +243,7 @@ function Sidebar({
             onClick={onToggleCollapsed}
             className="hidden rounded-lg p-1 hover:bg-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 lg:inline-flex"
           >
-            {collapsed ? (
-              <PanelLeftOpen size={20} />
-            ) : (
-              <PanelLeftClose size={20} />
-            )}
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
         </div>
 
@@ -350,9 +276,7 @@ function Sidebar({
                     } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
                   >
                     <Icon size={16} className="shrink-0" />
-                    <span className={collapsed ? "lg:hidden" : ""}>
-                      {label}
-                    </span>
+                    <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
                   </Link>
                 ))}
               </div>
@@ -405,21 +329,12 @@ function TopBar({
 }) {
   const pageItems = [
     ...NAV_SECTIONS.flatMap((section) => section.items),
-    {
-      href: "/admin/access-management",
-      label: "User Access Management",
-      icon: Users,
-    },
-    {
-      href: "/admin/audit-logs",
-      label: "System Audit Logs",
-      icon: ClipboardList,
-    },
+    { href: "/admin/access-management", label: "User Access Management", icon: Users },
+    { href: "/admin/audit-logs", label: "System Audit Logs", icon: ClipboardList },
   ].sort((left, right) => right.href.length - left.href.length);
-  const pageTitle =
-    pageItems.find(
-      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-    )?.label ?? "Admin";
+  const pageTitle = pageItems.find(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  )?.label ?? "Admin";
 
   return (
     <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-4 flex items-center justify-between">
@@ -504,9 +419,7 @@ export default function AdminLayout({
     const originalOverflow = body.style.overflow;
     const desktopBreakpoint = window.matchMedia("(min-width: 1024px)");
     const syncScrollLock = () => {
-      body.style.overflow = desktopBreakpoint.matches
-        ? originalOverflow
-        : "hidden";
+      body.style.overflow = desktopBreakpoint.matches ? originalOverflow : "hidden";
     };
 
     syncScrollLock();
@@ -527,9 +440,7 @@ export default function AdminLayout({
     let active = true;
     const checkSession = async () => {
       try {
-        const response = await fetch("/api/admin/session", {
-          cache: "no-store",
-        });
+        const response = await fetch("/api/admin/session", { cache: "no-store" });
         if (!response.ok) {
           if (active) {
             localStorage.removeItem("adminSessionActive");
@@ -550,12 +461,9 @@ export default function AdminLayout({
         setIsChecking(false);
 
         if (pathname === "/admin/dashboard" && !session.is_superadmin) {
-          const firstAuthorizedPath =
-            NAV_SECTIONS.flatMap((section) => section.items).find(
-              (item) =>
-                NAV_DIRECTORY_BY_HREF[item.href] &&
-                hasDirectoryAccess(keys, NAV_DIRECTORY_BY_HREF[item.href]),
-            )?.href ||
+          const firstAuthorizedPath = NAV_SECTIONS.flatMap((section) => section.items).find(
+            (item) => NAV_DIRECTORY_BY_HREF[item.href] && hasDirectoryAccess(keys, NAV_DIRECTORY_BY_HREF[item.href]),
+          )?.href ||
             (hasDirectoryAccess(keys, "user_access_management")
               ? "/admin/access-management"
               : hasDirectoryAccess(keys, "system_audit_logs")
@@ -635,7 +543,9 @@ export default function AdminLayout({
           onOpenSidebar={() => setSidebarOpen(true)}
           pathname={pathname}
         />
-        <div className="p-4 lg:p-6">{children}</div>
+        <div className="p-4 lg:p-6">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const response = await fetch(`${API_URL}/api/surveys/${id}`, {
       method: "GET",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -65,6 +67,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const response = await fetch(`${API_URL}/api/surveys/${id}`, {
       method: "PUT",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -87,6 +90,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const response = await fetch(`${API_URL}/api/surveys/${id}`, {
       method: "DELETE",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },

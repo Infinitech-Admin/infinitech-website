@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const LARAVEL_API_URL = process.env.LARAVEL_API_URL || 'http://localhost:8000'
 
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${LARAVEL_API_URL}/api/client-assessment?page=${page}`, {
       method: 'GET',
       headers: {
+        ...laravelServiceHeaders(),
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },

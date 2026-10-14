@@ -49,7 +49,7 @@ interface TemplateResponse {
 
 const authHeaders = () => {
   const token =
-    typeof window === "undefined" ? null : localStorage.getItem("adminToken");
+    typeof window === "undefined" ? null : localStorage.getItem("adminSessionActive");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -260,6 +260,12 @@ export function ClearanceDialog({
                   <AutoField label="Position" value={info.position} />
                   <AutoField label="Department" value={info.department} />
                 </div>
+                {employee.signature_path && (
+                  <p className="px-3 pb-3 text-xs text-muted-foreground sm:px-4">
+                    The saved employee signature will be included in the
+                    generated clearance form.
+                  </p>
+                )}
               </section>
 
               <section className="rounded-lg border-2 border-slate-200 dark:border-slate-800 overflow-hidden">

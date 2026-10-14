@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
       `${laravelUrl}/api/attendance/history?name=${encodeURIComponent(name)}`,
       {
         headers: {
+          ...laravelServiceHeaders(),
           Accept: "application/json",
           "Content-Type": "application/json",
         },

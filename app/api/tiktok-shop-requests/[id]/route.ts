@@ -1,5 +1,6 @@
 // 📁 Place this file at: app/api/tiktok-shop-requests/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -13,7 +14,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
 
     const res = await fetch(`${apiUrl}/api/tiktok-shop-requests/${id}`, {
-      headers: { Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), Accept: "application/json" },
     });
 
     const data = await res.json();
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const res = await fetch(`${apiUrl}/api/tiktok-shop-requests/${id}`, {
       method: "PATCH",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -93,7 +95,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 
     const res = await fetch(`${apiUrl}/api/tiktok-shop-requests/${id}`, {
       method: "DELETE",
-      headers: { Accept: "application/json" },
+      headers: { ...laravelServiceHeaders(), Accept: "application/json" },
     });
 
     if (!res.ok) {

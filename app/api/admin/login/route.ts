@@ -1,47 +1,55 @@
 import { type NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = await request.json();
+    const { identifier, password } = await request.json();
 
-    if (!password) {
+    if (
+      typeof password !== "string" ||
+      password.length === 0 ||
+      (identifier !== undefined &&
+        (typeof identifier !== "string" || identifier.trim().length === 0))
+    ) {
       return NextResponse.json(
-        { message: "Password required" },
+        { message: "Enter a password and, for personnel accounts, a login identifier." },
         { status: 400 },
       );
     }
 
-    // Validate admin password from environment
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (password !== adminPassword) {
+    const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
+    const loginResponse = await fetch(`${laravelUrl}/api/admin/login`, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(identifier ? { identifier, password } : { password }),
+      cache: "no-store",
+    });
+    const result = await loginResponse.json();
+
+    if (!loginResponse.ok) {
       return NextResponse.json(
-        { message: "Invalid password" },
-        { status: 401 },
+        { message: result.message || "Unable to sign in." },
+        { status: loginResponse.status },
       );
     }
 
-    // Generate session token
-    const token = crypto.randomBytes(32).toString("hex");
-
     const response = NextResponse.json(
-      { message: "Login successful", token },
-      { status: 200 },
+      { message: "Login successful.", user: result.user },
+      { status: 200, headers: { "Cache-Control": "private, no-store" } },
     );
 
-    response.cookies.set("adminToken", token, {
+    response.cookies.set("adminToken", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 86400 * 7,
-      domain: ".infinitechphil.com", // leading dot covers www + bare domain
+      path: "/",
+      maxAge: 60 * 60 * 12,
     });
 
     return response;
   } catch (error) {
-    console.error("[v0] Admin login error:", error);
+    console.error("Admin login error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Unable to reach the authentication service." },
       { status: 500 },
     );
   }

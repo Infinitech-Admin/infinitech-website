@@ -429,10 +429,7 @@ export default function BlogPage() {
       : posts.filter((p) => p.category === activeCategory);
 
   // hide the featured post from the grid only when browsing "All"
-  const gridPosts =
-    featuredPost && activeCategory === "All"
-      ? filtered.filter((p) => p.id !== featuredPost.id)
-      : filtered;
+  const gridPosts = filtered;
 
   return (
     <>
@@ -497,7 +494,7 @@ export default function BlogPage() {
 
                 {gridPosts.length === 0 ? (
                   <p className="py-12 text-center text-[#8a97bd]">
-                    No other posts in this category yet.
+                    No posts in this category yet.
                   </p>
                 ) : (
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

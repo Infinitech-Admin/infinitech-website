@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${API_URL}/api/inquiries?${queryParams}`, {
       method: 'GET',
       headers: {
+        ...laravelServiceHeaders(),
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
