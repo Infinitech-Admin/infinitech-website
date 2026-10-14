@@ -1,20 +1,23 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   AlertTriangle,
   CheckCircle2,
   CreditCard,
-  Download,
   Loader,
-  Printer,
   RefreshCw,
   ShieldAlert,
 } from "lucide-react";
 import NextImage from "next/image";
 import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -27,12 +30,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { EmployeePrivateImage } from "@/components/admin/employee-media";
 import { getFullName, type Employee } from "@/components/admin/employee-types";
 import { apiFetch } from "@/lib/api-client";
 
 type IssuanceStatus = "Issued" | "Reprinted" | "Replaced" | "Revoked";
 type IssuanceAction = "issue" | "reprint" | "replace" | "revoke";
+type EmployeeIdTemplate = "infinitech" | "glimit";
 
 interface EmployeeIdIssuance {
   id: number;
@@ -40,6 +45,7 @@ interface EmployeeIdIssuance {
   employee_name: string;
   issued_by: string;
   status: IssuanceStatus;
+  id_template: EmployeeIdTemplate;
   version: number;
   related_issuance_id: number | null;
   remarks: string | null;
@@ -53,8 +59,6 @@ interface EmployeeIdDialogProps {
   onEditEmployee: (employee: Employee) => void;
 }
 
-const companyAddress = "Unit 311, Campos Rueda Bldg., Urban Ave., Makati City";
-const companyPhone = "(02) 7001-6157";
 const notice =
   "This is issued by this company form properly identification of the employee hereon. This card remains the property of the company and must be surrendered upon registration or termination of service.";
 const activeStatuses: IssuanceStatus[] = ["Issued", "Reprinted"];
@@ -107,25 +111,74 @@ const employeeIdTemplateStyles = `
   .employee-id-artwork .emp-name { top: calc(730 * var(--u)); font: 700 calc(50 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; white-space: nowrap; text-transform: uppercase; }
   .employee-id-artwork .emp-position { top: calc(770 * var(--u)); font: 700 calc(28 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; color: #000; }
   .employee-id-artwork .emp-id { top: calc(897 * var(--u)); font: 400 calc(58 * var(--u)) "Bebas Neue", Impact, "Arial Narrow", sans-serif; letter-spacing: calc(12 * var(--u)); padding-left: calc(12 * var(--u)); color: #1b2a41; font-weight: bold; }
-  .employee-id-artwork .emp-signature { position: absolute; left: calc(134 * var(--u)); top: calc(1000 * var(--u)); width: calc(636 * var(--u)); height: calc(220 * var(--u)); object-fit: contain; }
+  .employee-id-artwork .emp-signature { position: absolute; left: calc(300 * var(--u)); top: calc(1030 * var(--u)); width: calc(300 * var(--u)); height: calc(170 * var(--u)); object-fit: contain; }
   .employee-id-artwork .signature-placeholder { position: absolute; left: calc(134 * var(--u)); top: calc(1070 * var(--u)); width: calc(636 * var(--u)); height: calc(80 * var(--u)); display: grid; place-items: center; color: #b91c1c; font-size: calc(18 * var(--u)); font-weight: 700; }
   .employee-id-artwork .sig-line { position: absolute; left: calc(134 * var(--u)); top: calc(1153 * var(--u)); width: calc(636 * var(--u)); height: calc(6 * var(--u)); background: #000; }
   .employee-id-artwork .sig-label { top: calc(1193 * var(--u)); font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  
   .employee-id-artwork .back-left { position: absolute; left: calc(42 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(34 * var(--u)); padding-right: calc(50 * var(--u)); text-align: justify; text-align-last: left; }
   .employee-id-artwork .gov { display: grid; grid-template-columns: calc(226 * var(--u)) 1fr; font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(38 * var(--u)); }
   .employee-id-artwork .gov dt, .employee-id-artwork .gov dd { margin: 0; }
   .employee-id-artwork .gov dd::before { content: ": "; }
   .employee-id-artwork .emergency { font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  
   .employee-id-artwork .terms { position: absolute; left: calc(42 * var(--u)); width: calc(813 * var(--u)); top: calc(622 * var(--u)); font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(38.5 * var(--u)); text-align: justify; text-align-last: left; }
+  
   .employee-id-artwork .ceo-sig { position: absolute; left: calc(300 * var(--u)); top: calc(890 * var(--u)); width: calc(300 * var(--u)); height: calc(170 * var(--u)); object-fit: contain; }
   .employee-id-artwork .ceo-name { top: calc(1022 * var(--u)); font: 700 calc(40 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; }
   .employee-id-artwork .ceo-line { position: absolute; left: calc(130 * var(--u)); top: calc(1053 * var(--u)); width: calc(636 * var(--u)); height: calc(6 * var(--u)); background: #000; }
   .employee-id-artwork .ceo-title { top: calc(1085 * var(--u)); font: 700 calc(34 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
   .employee-id-artwork .co-name { top: calc(1165 * var(--u)); font: 700 calc(32 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; }
+  
   .employee-id-artwork .co-addr { top: calc(1198 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
   .employee-id-artwork .co-tel { top: calc(1235 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
   .employee-id-artwork .missing { color: #b91c1c !important; font-weight: 700 !important; }
   .employee-id-artwork .photo-placeholder { position: absolute; inset: 0; display: grid; place-items: center; background: #fef2f2; color: #b91c1c; font-size: calc(24 * var(--u)); font-weight: 700; text-align: center; }
+  
+  .employee-id-artwork[data-template="glimit"] { font-family: Montserrat, "Segoe UI", Arial, sans-serif; }
+  .employee-id-artwork[data-template="glimit"] .swoosh-left,
+  .employee-id-artwork[data-template="glimit"] .swoosh-right { fill: #bbb; }
+  .employee-id-artwork[data-template="glimit"] .swoosh-g1,
+  .employee-id-artwork[data-template="glimit"] .swoosh-g2 { fill: #e4b848; }
+  .employee-id-artwork[data-template="glimit"] .swoosh-blue-accent { fill: transparent; }
+  /* Logo is a CSS background so html2canvas honors "contain" (it ignores object-fit on <img>). */
+  .employee-id-artwork[data-template="glimit"] .glimit-logo {
+    position: absolute;
+    left: 50%;
+    width: calc(400 * var(--u));
+    height: calc(400 * var(--u));
+    object-fit: contain;
+    display: block;
+    transform: translateX(-50%);
+    background: url("/images/glimit-logo.png") center / contain no-repeat;
+  }
+  .employee-id-artwork[data-template="glimit"] .photo { position: absolute; left: calc(258 * var(--u)); top: calc(306 * var(--u)); width: calc(380 * var(--u)); height: calc(400 * var(--u)); border: calc(8 * var(--u)) solid #000; background: linear-gradient(#c3e8fc, #f0f9fe 62%, #fff 100%); overflow: hidden; }
+  .employee-id-artwork[data-template="glimit"] .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .employee-id-artwork[data-template="glimit"] .photo .placeholder { position: absolute; inset: 0; }
+
+  .employee-id-artwork[data-template="glimit"] .emp-name { top: calc(730 * var(--u)); font: 700 calc(50 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; white-space: nowrap; text-transform: uppercase; }
+  .employee-id-artwork[data-template="glimit"] .emp-position { top: calc(770 * var(--u)); font: 700 calc(28 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; color: #000; }
+  .employee-id-artwork[data-template="glimit"] .emp-id { top: calc(897 * var(--u)); font: 400 calc(58 * var(--u)) "Bebas Neue", Impact, "Arial Narrow", sans-serif; letter-spacing: calc(12 * var(--u)); padding-left: calc(12 * var(--u)); color: #1b2a41; font-weight: bold; }
+  .employee-id-artwork[data-template="glimit"] .emp-signature { position: absolute; left: calc(300 * var(--u)); top: calc(1030 * var(--u)); width: calc(300 * var(--u)); height: calc(170 * var(--u)); object-fit: contain; }
+  .employee-id-artwork[data-template="glimit"] .signature-placeholder { position: absolute; left: calc(134 * var(--u)); top: calc(1070 * var(--u)); width: calc(636 * var(--u)); height: calc(80 * var(--u)); display: grid; place-items: center; color: #b91c1c; font-size: calc(18 * var(--u)); font-weight: 700; }
+  .employee-id-artwork[data-template="glimit"] .sig-line { position: absolute; left: calc(134 * var(--u)); top: calc(1153 * var(--u)); width: calc(636 * var(--u)); height: calc(6 * var(--u)); background: #000; }
+  .employee-id-artwork[data-template="glimit"] .sig-label { top: calc(1193 * var(--u)); font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  
+  .employee-id-artwork[data-template="glimit"] .back-left { position: absolute; left: calc(42 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(34 * var(--u)); padding-right: calc(50 * var(--u)); text-align: justify; text-align-last: left; }
+  .employee-id-artwork[data-template="glimit"] .gov { display: grid; grid-template-columns: calc(226 * var(--u)) 1fr; font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(38 * var(--u)); }
+  .employee-id-artwork[data-template="glimit"] .gov dt, .employee-id-artwork[data-template="glimit"] .gov dd { margin: 0; }
+  .employee-id-artwork[data-template="glimit"] .gov dd::before { content: ": "; }
+  .employee-id-artwork[data-template="glimit"] .emergency { font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  .employee-id-artwork[data-template="glimit"] .terms { position: absolute; left: calc(42 * var(--u)); width: calc(813 * var(--u)); top: calc(622 * var(--u)); font: 700 calc(26 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; line-height: calc(38.5 * var(--u)); text-align: justify; text-align-last: left; }
+  
+  .employee-id-artwork[data-template="glimit"] .ceo-sig { position: absolute; left: calc(300 * var(--u)); top: calc(890 * var(--u)); width: calc(300 * var(--u)); height: calc(170 * var(--u)); object-fit: contain; }
+  .employee-id-artwork[data-template="glimit"] .ceo-name { top: calc(1022 * var(--u)); font: 700 calc(40 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; }
+  .employee-id-artwork[data-template="glimit"] .ceo-line { position: absolute; left: calc(130 * var(--u)); top: calc(1053 * var(--u)); width: calc(636 * var(--u)); height: calc(6 * var(--u)); background: #000; }
+  .employee-id-artwork[data-template="glimit"] .ceo-title { top: calc(1085 * var(--u)); font: 700 calc(34 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  .employee-id-artwork[data-template="glimit"] .co-name { top: calc(1165 * var(--u)); font: 700 calc(32 * var(--u)) Poppins, Montserrat, Arial, sans-serif; color: #1b2a41; }
+  .employee-id-artwork[data-template="glimit"] .co-addr { top: calc(1198 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  .employee-id-artwork[data-template="glimit"] .co-tel { top: calc(1235 * var(--u)); font: 700 calc(24 * var(--u)) Montserrat, "Segoe UI", Arial, sans-serif; }
+  
   .employee-id-artwork[data-export="true"] { width: 896px; height: 1358px; aspect-ratio: auto; box-shadow: none; container-type: normal; flex: none; }
   .employee-id-artwork[data-export="true"] .face { --u: 1px; }
 `;
@@ -185,338 +238,46 @@ function missingEmployeeFields(employee: Employee): string[] {
   return missing;
 }
 
-async function fetchBrandLogo(): Promise<string> {
-  const response = await fetch("/infinitech-logo.png", {
-    cache: "force-cache",
-  });
-
-  if (!response.ok) throw new Error("Unable to load the company logo.");
-
-  const objectUrl = URL.createObjectURL(await response.blob());
-
-  try {
-    const image = new Image();
-
-    image.src = objectUrl;
-    await image.decode();
-
-    const source = document.createElement("canvas");
-
-    source.width = image.naturalWidth;
-    source.height = image.naturalHeight;
-    const sourceContext = source.getContext("2d", { willReadFrequently: true });
-
-    if (!sourceContext) throw new Error("Unable to prepare the company logo.");
-    sourceContext.drawImage(image, 0, 0);
-
-    const { data, width, height } = sourceContext.getImageData(
-      0,
-      0,
-      source.width,
-      source.height,
-    );
-    let left = width;
-    let top = height;
-    let right = 0;
-    let bottom = 0;
-
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        if (data[(y * width + x) * 4 + 3] > 8) {
-          left = Math.min(left, x);
-          top = Math.min(top, y);
-          right = Math.max(right, x);
-          bottom = Math.max(bottom, y);
-        }
-      }
-    }
-    if (right < left || bottom < top) {
-      throw new Error("The company logo is empty.");
-    }
-
-    const cropped = document.createElement("canvas");
-
-    cropped.width = right - left + 1;
-    cropped.height = bottom - top + 1;
-    const croppedContext = cropped.getContext("2d");
-
-    if (!croppedContext) throw new Error("Unable to prepare the company logo.");
-    croppedContext.drawImage(
-      source,
-      left,
-      top,
-      cropped.width,
-      cropped.height,
-      0,
-      0,
-      cropped.width,
-      cropped.height,
-    );
-
-    return cropped.toDataURL("image/png");
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
-function drawPhotoPlaceholder(doc: jsPDF, x: number, y: number, size: number) {
-  doc.setFillColor(254, 242, 242);
-  doc.setDrawColor(148, 163, 184);
-  doc.roundedRect(x, y, size, size, 1.2, 1.2, "FD");
-  doc.setTextColor(185, 28, 28);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(5);
-  doc.text("PHOTO NOT PROVIDED", x + size / 2, y + size / 2 + 1, {
-    align: "center",
-  });
-}
-
-function fitImage(
-  doc: jsPDF,
-  image: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  maxHeight: number,
-) {
-  const dimensions = doc.getImageProperties(image);
-  const scale = Math.min(
-    maxWidth / dimensions.width,
-    maxHeight / dimensions.height,
+// Rendered as an SVG <g> inside the card's background <svg> so html2canvas
+// exports it (standalone inline <svg> elements sized with calc() get dropped).
+function GlimitHexDecoration({ transform }: { transform: string }) {
+  return (
+    <g transform={transform}>
+      <g fill="none" stroke="#b9851a" strokeWidth="3">
+        <polygon points="30,10 50,10 60,28 50,46 30,46 20,28" />
+        <polygon points="62,40 82,40 92,58 82,76 62,76 52,58" />
+        <polygon points="20,60 40,60 50,78 40,96 20,96 10,78" />
+        <polygon points="62,84 82,84 92,102 82,120 62,120 52,102" />
+        <line x1="82" y1="58" x2="112" y2="58" stroke="#f1d521" />
+        <line x1="40" y1="78" x2="40" y2="140" />
+      </g>
+      <g fill="#c9921d">
+        <circle cx="112" cy="58" r="4" />
+        <circle cx="40" cy="140" r="4" />
+        <polygon points="102,20 108,20 111,26 108,32 102,32 99,26" />
+      </g>
+      <g fill="none" stroke="#bbb" strokeWidth="1.5">
+        <polygon points="86,4 94,4 98,11 94,18 86,18 82,11" />
+        <polygon points="96,118 106,118 111,127 106,136 96,136 91,127" />
+      </g>
+    </g>
   );
-  const width = dimensions.width * scale;
-  const height = dimensions.height * scale;
-
-  doc.addImage(
-    image,
-    "PNG",
-    x + (maxWidth - width) / 2,
-    y + (maxHeight - height) / 2,
-    width,
-    height,
-  );
-}
-
-function pdfValue(value?: string | null): string {
-  return value?.trim() || "Not provided";
-}
-
-function createEmployeeIdPdf(
-  employee: Employee,
-  logo: string,
-  photo: string | null,
-  signature: string | null,
-): jsPDF {
-  const width = 95;
-  const height = 130;
-  const center = width / 2;
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: [width, height],
-    compress: true,
-  });
-
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, width, height, "F");
-  doc.setFillColor(18, 74, 145);
-  doc.rect(0, 0, width, 1.4, "F");
-  doc.setFillColor(75, 191, 213);
-  doc.rect(0, 1.4, width, 0.55, "F");
-  fitImage(doc, logo, center - 12, 4.5, 24, 12);
-
-  const photoSize = 25;
-  const photoX = center - photoSize / 2;
-  const photoY = 18.3;
-
-  if (photo) {
-    doc.setDrawColor(14, 46, 91);
-    doc.setLineWidth(0.65);
-    doc.rect(photoX - 0.5, photoY - 0.5, photoSize + 1, photoSize + 1);
-    doc.addImage(photo, "PNG", photoX, photoY, photoSize, photoSize);
-  } else {
-    drawPhotoPlaceholder(doc, photoX, photoY, photoSize);
-  }
-
-  const hasName = Boolean(getFullName(employee).trim());
-  const fullName = getFullName(employee).trim() || "NAME NOT PROVIDED";
-  doc.setTextColor(hasName ? 14 : 185, hasName ? 46 : 28, hasName ? 91 : 28);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(fullName.length > 25 ? 8 : fullName.length > 18 ? 9 : 10);
-  const nameLines = doc.splitTextToSize(fullName.toUpperCase(), 48);
-
-  doc.text(nameLines, center, 47, { align: "center", lineHeightFactor: 1.05 });
-
-  const positionY = 47 + nameLines.length * 4.1;
-
-  const hasPosition = Boolean(employee.position?.trim());
-  doc.setTextColor(
-    hasPosition ? 25 : 185,
-    hasPosition ? 100 : 28,
-    hasPosition ? 190 : 28,
-  );
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.text(
-    doc.splitTextToSize(pdfValue(employee.position).toUpperCase(), 46),
-    center,
-    positionY,
-    { align: "center" },
-  );
-
-  const hasEmployeeNumber = Boolean(employee.id_number?.trim());
-  doc.setTextColor(
-    hasEmployeeNumber ? 14 : 185,
-    hasEmployeeNumber ? 46 : 28,
-    hasEmployeeNumber ? 91 : 28,
-  );
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.2);
-  doc.text(
-    doc.splitTextToSize(`ID NO.  ${pdfValue(employee.id_number)}`, 46),
-    center,
-    62,
-    { align: "center", lineHeightFactor: 1.05 },
-  );
-
-  doc.setDrawColor(100, 116, 139);
-  doc.setLineWidth(0.2);
-  doc.line(13, 69.5, 41, 69.5);
-  if (signature) fitImage(doc, signature, 16, 64.5, 22, 4.7);
-  else {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(4);
-    doc.setTextColor(185, 28, 28);
-    doc.text("SIGNATURE NOT PROVIDED", center, 68.5, { align: "center" });
-  }
-  doc.setTextColor(71, 85, 105);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(4.5);
-  doc.text("EMPLOYEE SIGNATURE", center, 72, { align: "center" });
-
-  doc.setFillColor(14, 46, 91);
-  doc.rect(0, 76, width, 9.6, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(4.2);
-  doc.text("INFINITECH ADVERTISING CORPORATION", center, 79, {
-    align: "center",
-  });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(3.65);
-  doc.text(companyAddress, center, 81.4, { align: "center" });
-  doc.text(companyPhone, center, 83.5, { align: "center" });
-
-  doc.addPage([width, height], "portrait");
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, width, height, "F");
-  doc.setFillColor(18, 74, 145);
-  doc.rect(0, 0, width, 1.4, "F");
-  doc.setTextColor(14, 46, 91);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.text("PERSONAL DETAILS", 5, 7);
-
-  const address = employeeAddress(employee);
-  const details: [string, string][] = [
-    ["Residential Address", address || "Not provided"],
-    ["SSS Number", pdfValue(employee.sss_number)],
-    ["PhilHealth Number", pdfValue(employee.philhealth_number)],
-    ["Pag-IBIG Number", pdfValue(employee.pagibig_number)],
-    ["TIN", pdfValue(employee.tin_number)],
-  ];
-  let y = 11;
-
-  for (const [label, value] of details) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(4.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text(label.toUpperCase(), 5, y);
-    const isMissing = value === "Not provided";
-    doc.setFont("helvetica", isMissing ? "bold" : "normal");
-    doc.setFontSize(label === "Residential Address" ? 4.4 : 5.2);
-    doc.setTextColor(
-      isMissing ? 185 : 15,
-      isMissing ? 28 : 23,
-      isMissing ? 28 : 42,
-    );
-    const lines = doc.splitTextToSize(value, 43);
-
-    doc.text(lines.slice(0, 2), 5, y + 2.2, { lineHeightFactor: 0.5 });
-    y += label === "Residential Address" ? 10 : 7.6;
-  }
-
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.2);
-  doc.line(5, 49, 49, 49);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.3);
-  doc.setTextColor(14, 46, 91);
-  doc.text("EMERGENCY CONTACT", 5, 53);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(4.8);
-  const contactName = pdfValue(employee.emergency_contact_name);
-  const contactMobile = pdfValue(employee.emergency_contact_mobile_number);
-  doc.setTextColor(51, 65, 85);
-  doc.text("Contact Person:", 5, 57);
-  doc.setTextColor(
-    contactName === "Not provided" ? 185 : 51,
-    contactName === "Not provided" ? 28 : 65,
-    contactName === "Not provided" ? 28 : 85,
-  );
-  doc.text(doc.splitTextToSize(contactName, 43), 5, 59);
-  doc.setTextColor(51, 65, 85);
-  doc.text("Mobile Number:", 5, 63);
-  doc.setTextColor(
-    contactMobile === "Not provided" ? 185 : 51,
-    contactMobile === "Not provided" ? 28 : 65,
-    contactMobile === "Not provided" ? 28 : 85,
-  );
-  doc.text(doc.splitTextToSize(contactMobile, 43), 5, 65);
-
-  doc.setFillColor(239, 246, 255);
-  doc.roundedRect(4, 69, 45.98, 6.5, 1, 1, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(4.15);
-  doc.setTextColor(30, 41, 59);
-  doc.text(doc.splitTextToSize(notice, 42), center, 71, {
-    align: "center",
-    lineHeightFactor: 1.12,
-  });
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(5.5);
-  doc.setTextColor(14, 46, 91);
-  doc.text("ANGELLE S. SARMIENTO", center, 78, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(4.3);
-  doc.text("Chief Executive Officer", center, 80.3, { align: "center" });
-  doc.setDrawColor(18, 74, 145);
-  doc.line(0, 82.3, width, 82.3);
-  doc.setFontSize(3.8);
-  doc.text("INFINITECH ADVERTISING CORPORATION", center, 84, {
-    align: "center",
-  });
-  doc.setFontSize(3.1);
-  doc.text(`${companyAddress}  |  ${companyPhone}`, center, 85.2, {
-    align: "center",
-  });
-
-  return doc;
 }
 
 function EmployeeIdCard({
   employee,
   side,
+  template,
   exportMode = false,
   setCardElement,
 }: {
   employee: Employee;
   side: "front" | "back";
+  template: EmployeeIdTemplate;
   exportMode?: boolean;
   setCardElement?: (element: HTMLDivElement | null) => void;
 }) {
-  const uid = `${side}${exportMode ? "-export" : ""}`;
+  const uid = `${template}-${side}${exportMode ? "-export" : ""}`;
   const nameSize =
     fullNameLength(employee) > 30
       ? 30
@@ -541,6 +302,7 @@ function EmployeeIdCard({
     <div
       ref={setCardElement}
       data-export={exportMode ? "true" : undefined}
+      data-template={template}
       aria-label={`Employee ID card ${side}`}
       className="employee-id-artwork"
     >
@@ -553,10 +315,11 @@ function EmployeeIdCard({
         >
           <defs>
             <g id={`swoosh-${uid}`}>
-              <polygon points="0,1215 540,1358 0,1358" fill="#1456ac" />
-              <polygon points="0,1262 520,1358 0,1358" fill="#fff" />
-              <polygon points="0,1276 500,1358 0,1358" fill="#14376b" />
-              <polygon points="540,1358 896,1180 896,1358" fill="#0b2347" />
+              <polygon className="swoosh-left" points="0,1215 540,1358 0,1358" fill="#1456ac" />
+              <polygon className="swoosh-g1" points="0,1262 520,1358 0,1358" fill="#fff" />
+              <polygon className="swoosh-blue-accent" points="0,1276 500,1358 0,1358" fill="#14376b" />
+              <polygon className="swoosh-g2" points="430,1358 896,1180 896,1358" fill="transparent" />
+              <polygon className="swoosh-right" points="600,1358 896,1230 896,1358" fill="#0b2347" />
             </g>
             <g id={`hexes-${uid}`} fill="none" strokeWidth="3">
               <polygon
@@ -598,30 +361,49 @@ function EmployeeIdCard({
               <circle cx="72" cy="274" r="6" fill="#2f7f9d" stroke="none" />
             </g>
           </defs>
-          {side === "front" && (
+          {template === "infinitech" && side === "front" && (
             <use href={`#hexes-${uid}`} transform="translate(-45 255)" />
           )}
-          {side === "front" && (
+          {template === "infinitech" && side === "front" && (
             <use
               href={`#hexes-${uid}`}
               transform="translate(940 1030) scale(-1 1) rotate(180 75 130)"
             />
           )}
           <use href={`#swoosh-${uid}`} />
+          {template === "glimit" && side === "front" && (
+            <>
+              <GlimitHexDecoration transform="translate(0 204) scale(1.2667)" />
+              <GlimitHexDecoration transform="translate(896 788) scale(-1.2667 1.2667)" />
+            </>
+          )}
+          {template === "glimit" && side === "back" && (
+            <GlimitHexDecoration transform="translate(896 150) scale(-1.1 1.1)" />
+          )}
         </svg>
         {side === "front" ? (
           <>
-            <NextImage
-              alt="Infinitech Advertising Corporation logo"
-              className="brand-logo"
-              height={1140}
-              priority
-              unoptimized={exportMode}
-              src="/images/logo-only.png"
-              width={1140}
-            />
-            <p className="abs brand-name">INFINITECH</p>
-            <p className="abs brand-sub">ADVERTISING CORPORATION</p>
+            {template === "glimit" ? (
+              <div
+                role="img"
+                aria-label="G-LIMIT Studio logo"
+                className="glimit-logo"
+              />
+            ) : (
+              <>
+                <NextImage
+                  alt="Infinitech Advertising Corporation logo"
+                  className="brand-logo"
+                  height={1140}
+                  priority
+                  unoptimized={exportMode}
+                  src="/images/logo-only.png"
+                  width={1140}
+                />
+                <p className="abs brand-name">INFINITECH</p>
+                <p className="abs brand-sub">ADVERTISING CORPORATION</p>
+              </>
+            )}
             <div className="photo">
               {employee.profile_image_path ? (
                 <EmployeePrivateImage
@@ -701,7 +483,7 @@ function EmployeeIdCard({
               ))}
             </dl>
             <p
-              className="abs emergency"
+              className="abs emergency emergency-heading"
               style={{ top: "calc(417 * var(--u))" }}
             >
               Contact Person in case of Emergency
@@ -726,17 +508,25 @@ function EmployeeIdCard({
               height={193}
               unoptimized={exportMode}
               loading={exportMode ? "eager" : undefined}
-              src="/ANGELLE.png"
+              src={
+                template === "glimit"
+                  ? "/images/glimit-signature.png"
+                  : "/ANGELLE.png"
+              }
               width={215}
             />
             <p className="abs ceo-name">ANGELLE S. SARMIENTO</p>
             <div className="ceo-line" />
             <p className="abs ceo-title">Chief Executive Officer</p>
-            <p className="abs co-name">INFINITECH ADVERTISING CORPORATION</p>
-            <p className="abs co-addr">
-              Unit 311, Campos Rueda Bldg. Urban Ave., Makati City
+            <p className="abs co-name">
+              {template === "glimit"
+                ? "G-LIMIT STUDIO"
+                : "INFINITECH ADVERTISING CORPORATION"}
             </p>
-            <p className="abs co-tel">Tel: (02)7001-6157</p>
+            <p className="abs co-addr">
+              Unit 311, Campos Rueda Bldg., Urban Ave., Makati City
+            </p>
+            <p className="abs co-tel">(02) 7001-6157</p>
           </>
         )}
       </div>
@@ -751,9 +541,12 @@ export function EmployeeIdDialog({
   onEditEmployee,
 }: EmployeeIdDialogProps) {
   const [history, setHistory] = useState<EmployeeIdIssuance[]>([]);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<EmployeeIdTemplate>("infinitech");
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [busy, setBusy] = useState(false);
   const [remarks, setRemarks] = useState("");
+  const [reissuanceDetails, setReissuanceDetails] = useState("");
   const [confirmAction, setConfirmAction] = useState<IssuanceAction | null>(
     null,
   );
@@ -787,6 +580,7 @@ export function EmployeeIdDialog({
     setLoadingHistory(true);
     setHistory([]);
     setRemarks("");
+    setReissuanceDetails("");
     setConfirmAction(null);
     setConfirmTarget(null);
     apiFetch(`/api/employee-masterfile/${employee.id}/id-issuances`, {
@@ -798,7 +592,13 @@ export function EmployeeIdDialog({
         if (!response.ok) {
           throw new Error(result.message || "Unable to load issuance history.");
         }
-        if (!cancelled) setHistory(result.data as EmployeeIdIssuance[]);
+        if (!cancelled) {
+          const records = result.data as EmployeeIdIssuance[];
+          setHistory(records);
+          setSelectedTemplate(
+            records[0]?.id_template === "glimit" ? "glimit" : "infinitech",
+          );
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -829,7 +629,13 @@ export function EmployeeIdDialog({
     if (!response.ok) {
       throw new Error(result.message || "Unable to refresh issuance history.");
     }
-    setHistory(result.data as EmployeeIdIssuance[]);
+    const records = result.data as EmployeeIdIssuance[];
+    setHistory(records);
+    if (records[0]) {
+      setSelectedTemplate(
+        records[0].id_template === "glimit" ? "glimit" : "infinitech",
+      );
+    }
   }
 
   async function createIssuance() {
@@ -837,13 +643,18 @@ export function EmployeeIdDialog({
 
     setBusy(true);
     try {
-      const pdf = await getPdf();
       const response = await apiFetch(
         `/api/employee-masterfile/${employee.id}/id-issuances`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ remarks: remarks.trim() || null }),
+          body: JSON.stringify({
+            id_template: selectedTemplate,
+            remarks:
+              reissuanceDetails.trim() ||
+              remarks.trim() ||
+              null,
+          }),
         },
       );
       const result = await response.json();
@@ -851,10 +662,39 @@ export function EmployeeIdDialog({
       if (!response.ok) {
         throw new Error(result.message || "Unable to issue employee ID.");
       }
-      pdf.save(`employee-id-${employee.id}.pdf`);
-      await refreshHistory();
+      const issuance = result.data as EmployeeIdIssuance;
+      const followUpErrors: string[] = [];
+      try {
+        await refreshHistory();
+      } catch (error) {
+        console.error("Employee ID issuance history refresh failed:", error);
+        followUpErrors.push("history could not be refreshed");
+      }
       setRemarks("");
-      toast.success("Employee ID issued and PDF downloaded.");
+      setReissuanceDetails("");
+      try {
+        const pngs = await getPngs();
+        await Promise.all([
+          downloadPng(
+            pngs.front,
+            `employee-id-${employee.id}-v${issuance.version}-front.png`,
+          ),
+          downloadPng(
+            pngs.back,
+            `employee-id-${employee.id}-v${issuance.version}-back.png`,
+          ),
+        ]);
+      } catch (error) {
+        console.error("Employee ID PNG export failed:", error);
+        followUpErrors.push("PNG export failed");
+      }
+      if (followUpErrors.length) {
+        toast.error(
+          `Employee ID issued and recorded, but ${followUpErrors.join(" and ")}. Use the reprint action to export the ID again.`,
+        );
+      } else {
+        toast.success("Employee ID issued, recorded, and exported as PNG.");
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Unable to issue employee ID.",
@@ -870,8 +710,6 @@ export function EmployeeIdDialog({
 
     setBusy(true);
     try {
-      const pdf =
-        action === "reprint" || action === "replace" ? await getPdf() : null;
       const response = await apiFetch(
         `/api/employee-masterfile/${employee.id}/id-issuances/${latest.id}/actions`,
         {
@@ -879,7 +717,11 @@ export function EmployeeIdDialog({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action,
-            remarks: remarks.trim() || null,
+            id_template: selectedTemplate,
+            remarks:
+              action === "reprint" || action === "replace"
+                ? reissuanceDetails.trim()
+                : remarks.trim() || null,
           }),
         },
       );
@@ -888,16 +730,47 @@ export function EmployeeIdDialog({
       if (!response.ok) {
         throw new Error(result.message || "Unable to update employee ID.");
       }
-      if (pdf) pdf.save(`employee-id-${employee.id}.pdf`);
-      await refreshHistory();
+      const issuance = result.data as EmployeeIdIssuance;
+      const followUpErrors: string[] = [];
+      try {
+        await refreshHistory();
+      } catch (error) {
+        console.error("Employee ID issuance history refresh failed:", error);
+        followUpErrors.push("history could not be refreshed");
+      }
       setRemarks("");
-      toast.success(
+      setReissuanceDetails("");
+      if (action === "reprint" || action === "replace") {
+        try {
+          const pngs = await getPngs();
+          await Promise.all([
+            downloadPng(
+              pngs.front,
+              `employee-id-${employee.id}-v${issuance.version}-front.png`,
+            ),
+            downloadPng(
+              pngs.back,
+              `employee-id-${employee.id}-v${issuance.version}-back.png`,
+            ),
+          ]);
+        } catch (error) {
+          console.error("Employee ID PNG export failed:", error);
+          followUpErrors.push("PNG export failed");
+        }
+      }
+      const successMessage =
         action === "reprint"
-          ? "Reprint recorded and PDF downloaded."
+          ? "ID reprint recorded and exported as PNG."
           : action === "replace"
-            ? "Replacement ID issued and PDF downloaded."
-            : "Employee ID revoked.",
-      );
+            ? "ID reissued, recorded, and exported as PNG."
+            : "Employee ID revoked and recorded in history.";
+      if (followUpErrors.length) {
+        toast.error(
+          `${successMessage} However, ${followUpErrors.join(" and ")}.`,
+        );
+      } else {
+        toast.success(successMessage);
+      }
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -911,7 +784,7 @@ export function EmployeeIdDialog({
     }
   }
 
-  async function getPdf() {
+  async function getPngs() {
     if (!employee) throw new Error("Select an employee first.");
     const front = exportFrontRef.current;
     const back = exportBackRef.current;
@@ -929,8 +802,20 @@ export function EmployeeIdDialog({
     ]);
     await document.fonts.ready;
 
+    // The G-LIMIT logo is a CSS background, so preload it explicitly to make
+    // sure it is decoded before html2canvas captures the card.
+    if (selectedTemplate === "glimit") {
+      await new Promise<void>((resolve) => {
+        const logo = new Image();
+        logo.onload = () => resolve();
+        logo.onerror = () => resolve();
+        logo.src = "/images/glimit-logo.png";
+        setTimeout(resolve, 8000);
+      });
+    }
+
     const expectedFrontImages =
-      1 +
+      (selectedTemplate === "glimit" ? 0 : 1) +
       (employee.profile_image_path ? 1 : 0) +
       (employee.signature_path ? 1 : 0);
     const deadline = Date.now() + 8000;
@@ -960,116 +845,77 @@ export function EmployeeIdDialog({
       ),
     );
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-      compress: true,
+    const cardCanvases = await Promise.all(
+      cards.map((card) =>
+        html2canvas(card, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          width: 896,
+          height: 1358,
+          windowWidth: 896,
+          useCORS: true,
+          logging: false,
+          onclone: (clonedDocument) => {
+            const holder = clonedDocument.querySelector<HTMLElement>(
+              "[data-employee-id-export]",
+            );
+
+            if (holder) {
+              holder.style.left = "0px";
+              holder.style.top = "0px";
+            }
+          },
+        }),
+      ),
+    );
+    return {
+      front: cardCanvases[0],
+      back: cardCanvases[1],
+    };
+  }
+
+  async function downloadPng(canvas: HTMLCanvasElement, filename: string) {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) =>
+          result
+            ? resolve(result)
+            : reject(new Error("Unable to create the employee ID PNG.")),
+        "image/png",
+      );
     });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    for (let index = 0; index < cards.length; index += 1) {
-      const canvas = await html2canvas(cards[index], {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        width: 896,
-        height: 1358,
-        windowWidth: 896,
-        useCORS: true,
-        logging: false,
-        onclone: (clonedDocument) => {
-          const holder = clonedDocument.querySelector<HTMLElement>(
-            "[data-employee-id-export]",
-          );
-
-          if (holder) {
-            holder.style.left = "0px";
-            holder.style.top = "0px";
-          }
-        },
-      });
-
-      if (index > 0) {
-        pdf.addPage("a4", "portrait");
-      }
-
-      pdf.addImage(
-        canvas.toDataURL("image/png"),
-        "PNG",
-        0,
-        0,
-        pageWidth,
-        pageHeight,
-        undefined,
-        "FAST",
-      );
-    }
-
-    return pdf;
-  }
-
-  async function downloadPdf() {
-    if (!employee) return;
-
-    setBusy(true);
-    try {
-      const pdf = await getPdf();
-
-      pdf.save(`employee-id-${employee.id}.pdf`);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to generate employee ID PDF.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function printPdf() {
-    const printWindow = window.open("about:blank", "_blank");
-
-    if (!printWindow) {
-      toast.error("Allow pop-ups to print the employee ID.");
-
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const pdf = await getPdf();
-
-      pdf.autoPrint();
-      const url = URL.createObjectURL(pdf.output("blob"));
-
-      printWindow.location.href = url;
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (error) {
-      printWindow.close();
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to prepare employee ID for printing.",
-      );
-    } finally {
-      setBusy(false);
-    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   function requestAction(action: IssuanceAction) {
     setConfirmTarget(null);
+    setReissuanceDetails("");
     setConfirmAction(action);
   }
 
   function requestRecordAction(action: IssuanceAction) {
     setConfirmTarget(latest);
+    setReissuanceDetails("");
     setConfirmAction(action);
   }
 
   async function confirm() {
     if (!confirmAction) return;
+    const requiresReissuanceDetails =
+      confirmAction === "replace" ||
+      confirmAction === "reprint" ||
+      (confirmAction === "issue" && latest !== null);
+    if (requiresReissuanceDetails && !reissuanceDetails.trim()) {
+      toast.error("Enter the reason and details for reissuing this employee ID.");
+      return;
+    }
     if (confirmAction === "issue") {
       await createIssuance();
 
@@ -1090,9 +936,15 @@ export function EmployeeIdDialog({
   const actionLabel: Record<IssuanceAction, string> = {
     issue: "Issue ID",
     reprint: "Record reprint",
-    replace: "Replace ID",
+    replace: "Reissue ID",
     revoke: "Revoke ID",
   };
+  const requiresReissuanceDetails =
+    confirmAction === "replace" ||
+    confirmAction === "reprint" ||
+    (confirmAction === "issue" && latest !== null);
+  const selectedTemplateLabel =
+    selectedTemplate === "glimit" ? "G-LIMIT Studio" : "Infinitech";
 
   return (
     <>
@@ -1111,15 +963,50 @@ export function EmployeeIdDialog({
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div>
+              <fieldset className="mb-4">
+                <legend className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  ID template to issue
+                </legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    ["infinitech", "Infinitech"],
+                    ["glimit", "G-LIMIT Studio"],
+                  ] as const).map(([template, label]) => (
+                    <Button
+                      key={template}
+                      type="button"
+                      variant="outline"
+                      aria-pressed={selectedTemplate === template}
+                      disabled={busy || loadingHistory}
+                      onClick={() => setSelectedTemplate(template)}
+                      className={
+                        selectedTemplate === template
+                          ? "border-blue-600 bg-blue-50 text-blue-800 ring-1 ring-blue-600 dark:bg-blue-950 dark:text-blue-100"
+                          : ""
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </fieldset>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <EmployeeIdCard employee={employee} side="front" />
+                  <EmployeeIdCard
+                    employee={employee}
+                    side="front"
+                    template={selectedTemplate}
+                  />
                   <p className="mt-2 text-center text-xs font-semibold text-slate-500">
                     FRONT
                   </p>
                 </div>
                 <div>
-                  <EmployeeIdCard employee={employee} side="back" />
+                  <EmployeeIdCard
+                    employee={employee}
+                    side="back"
+                    template={selectedTemplate}
+                  />
                   <p className="mt-2 text-center text-xs font-semibold text-slate-500">
                     BACK
                   </p>
@@ -1146,7 +1033,7 @@ export function EmployeeIdDialog({
                 {missingFields.length ? (
                   <>
                     <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                      Missing values print as “Not provided.” Complete the
+                      Missing values are displayed as “Not provided.” Complete the
                       employee record through Edit before issuing when the
                       information is available.
                     </p>
@@ -1182,46 +1069,27 @@ export function EmployeeIdDialog({
                 )}
               </section>
 
-              <div>
-                <label
-                  className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300"
-                  htmlFor="employee-id-remarks"
-                >
-                  Remarks (optional)
-                </label>
-                <Input
-                  id="employee-id-remarks"
-                  maxLength={1000}
-                  placeholder="Issuance note"
-                  value={remarks}
-                  onChange={(event) => setRemarks(event.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  disabled={busy}
-                  type="button"
-                  variant="outline"
-                  onClick={downloadPdf}
-                >
-                  {busy ? (
-                    <Loader className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="mr-1.5 h-4 w-4" />
-                  )}
-                  Download PDF
-                </Button>
-                <Button
-                  disabled={busy}
-                  type="button"
-                  variant="outline"
-                  onClick={printPdf}
-                >
-                  <Printer className="mr-1.5 h-4 w-4" />
-                  Print
-                </Button>
-              </div>
+              {(latest === null || hasActiveId) && (
+                <div>
+                  <label
+                    className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300"
+                    htmlFor="employee-id-remarks"
+                  >
+                    {hasActiveId
+                      ? "Revocation note (optional)"
+                      : "Issuance note (optional)"}
+                  </label>
+                  <Input
+                    id="employee-id-remarks"
+                    maxLength={1000}
+                    placeholder={
+                      hasActiveId ? "Revocation note" : "Issuance note"
+                    }
+                    value={remarks}
+                    onChange={(event) => setRemarks(event.target.value)}
+                  />
+                </div>
+              )}
 
               {hasActiveId ? (
                 <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
@@ -1245,7 +1113,7 @@ export function EmployeeIdDialog({
                     variant="outline"
                     onClick={() => requestRecordAction("replace")}
                   >
-                    Replace ID
+                    Reissue ID
                   </Button>
                   <Button
                     className="w-full text-red-700 hover:text-red-800"
@@ -1265,7 +1133,7 @@ export function EmployeeIdDialog({
                   type="button"
                   onClick={() => requestAction("issue")}
                 >
-                  Issue Employee ID
+                  Issue {selectedTemplateLabel} ID
                 </Button>
               )}
             </aside>
@@ -1288,6 +1156,7 @@ export function EmployeeIdDialog({
                       <th className="px-2 py-2 font-medium">Date</th>
                       <th className="px-2 py-2 font-medium">Issued by</th>
                       <th className="px-2 py-2 font-medium">Status</th>
+                      <th className="px-2 py-2 font-medium">Template</th>
                       <th className="px-2 py-2 font-medium">Version</th>
                       <th className="px-2 py-2 font-medium">Remarks</th>
                     </tr>
@@ -1303,6 +1172,11 @@ export function EmployeeIdDialog({
                         </td>
                         <td className="px-2 py-2">{entry.issued_by}</td>
                         <td className="px-2 py-2">{entry.status}</td>
+                        <td className="px-2 py-2">
+                          {entry.id_template === "glimit"
+                            ? "G-LIMIT Studio"
+                            : "Infinitech"}
+                        </td>
                         <td className="px-2 py-2">{entry.version}</td>
                         <td
                           className="max-w-[140px] truncate px-2 py-2"
@@ -1338,18 +1212,46 @@ export function EmployeeIdDialog({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Confirm {confirmAction ? actionLabel[confirmAction] : "action"}
+              {confirmAction === "reprint"
+                ? `Reprint employee ID · Version ${latest?.version ?? 1}`
+                : requiresReissuanceDetails
+                  ? `Reissue employee ID · Version ${latest ? latest.version + 1 : 1}`
+                  : `Confirm ${confirmAction ? actionLabel[confirmAction] : "action"}`}
             </DialogTitle>
             <DialogDescription>
               {confirmAction === "issue"
-                ? `Issue version ${latest ? latest.version + 1 : 1} of the employee ID for ${getFullName(employee)}? Opening the preview or downloading the PDF does not issue an ID.`
+                ? `Issue version ${latest ? latest.version + 1 : 1} of the employee ID for ${getFullName(employee)}? The issuance will be added to the history and exported as separate front and back PNG files.`
                 : confirmAction === "replace"
-                  ? `Replace the active employee ID for ${getFullName(employee)}? The previous version will remain in the issuance history.`
+                  ? `Reissue the active employee ID for ${getFullName(employee)}? The previous version will remain in the issuance history.`
                   : confirmAction === "revoke"
                     ? `Revoke the active employee ID for ${getFullName(employee)}? This action will be recorded in the issuance history.`
-                    : `Record a reprint of the active employee ID for ${getFullName(employee)}?`}
+                    : `Record a reprint of the active employee ID for ${getFullName(employee)}? The front and back will be exported as separate PNG files.`}
             </DialogDescription>
           </DialogHeader>
+          {requiresReissuanceDetails && (
+            <div className="space-y-2">
+              <label
+                htmlFor="employee-id-reissuance-details"
+                className="text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
+                Reason and details
+              </label>
+              <Textarea
+                id="employee-id-reissuance-details"
+                autoFocus
+                maxLength={1000}
+                placeholder="For example: lost card, damaged card, or updated employee details"
+                value={reissuanceDetails}
+                onChange={(event) => setReissuanceDetails(event.target.value)}
+                disabled={busy}
+                required
+                className="min-h-24 bg-white dark:bg-slate-900"
+              />
+              <p className="text-xs text-slate-500">
+                This explanation will be saved in the ID issuance history.
+              </p>
+            </div>
+          )}
           <DialogFooter>
             <Button
               disabled={busy}
@@ -1394,6 +1296,7 @@ export function EmployeeIdDialog({
             <EmployeeIdCard
               exportMode
               employee={employee}
+              template={selectedTemplate}
               setCardElement={(element) => {
                 exportFrontRef.current = element;
               }}
@@ -1402,6 +1305,7 @@ export function EmployeeIdDialog({
             <EmployeeIdCard
               exportMode
               employee={employee}
+              template={selectedTemplate}
               setCardElement={(element) => {
                 exportBackRef.current = element;
               }}

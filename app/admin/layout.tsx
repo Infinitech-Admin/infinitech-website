@@ -13,8 +13,6 @@ import {
   LogOut,
   LayoutDashboard,
   Users,
-  ClipboardCheck,
-  MessageSquare,
   ClipboardList,
   Video,
   IdCard,
@@ -24,8 +22,10 @@ import {
   UserCheck,
   SearchCheck,
   CalendarCheck,
+  ClipboardCheck,
   Search,
   Megaphone,
+  MessageSquare,
   Palette,
   TrendingUp,
   BarChart3,
@@ -275,6 +275,8 @@ function Sidebar({
 
       <aside
         id="admin-sidebar"
+        data-admin-sidebar
+        data-sidebar-collapsed={collapsed}
         className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-64 flex-col overflow-hidden bg-gradient-to-b from-cyan-900 to-blue-900 text-white shadow-lg transition-[transform,width,visibility] duration-300 ease-in-out dark:from-cyan-950 dark:to-blue-950 ${
           isOpen
             ? "visible translate-x-0 pointer-events-auto"
@@ -626,6 +628,8 @@ export default function AdminLayout({
       />
 
       <main
+        data-admin-main
+        data-sidebar-collapsed={collapsed}
         className={`h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain transition-[padding] duration-300 ease-in-out ${
           collapsed ? "lg:pl-[4.5rem]" : "lg:pl-64"
         }`}

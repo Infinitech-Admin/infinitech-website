@@ -1,14 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, Plus, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Save,
+  Search,
+  X
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import { adminFetch } from "@/lib/admin-fetch";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type ChecklistItem = {
   id: number;
@@ -22,6 +37,8 @@ type ChecklistItem = {
 type ChecklistForm = Omit<ChecklistItem, "id" | "is_active"> & {
   is_active: boolean;
 };
+
+type StatusFilter = "all" | "active" | "inactive";
 
 const CATEGORIES = [
   "General & Navigation",
@@ -41,10 +58,16 @@ const EMPTY_ITEM: ChecklistForm = {
   sort_order: 1,
 };
 
-const inputClass =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-600";
-const textareaClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-600";
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+const fieldClass =
+  "w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition-shadow placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-600 dark:border-slate-700 dark:bg-slate-950";
+const labelClass =
+  "block space-y-1.5 text-sm font-medium text-slate-800 dark:text-slate-200";
 
 function nextSortOrder(checklistItems: ChecklistItem[]) {
   return (
@@ -61,10 +84,15 @@ export default function QaChecklistManagementPage() {
   const [categorySelection, setCategorySelection] = useState("");
   const [otherCategory, setOtherCategory] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
+  const [updatingCategory, setUpdatingCategory] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const editorRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -99,6 +127,22 @@ export default function QaChecklistManagementPage() {
     void loadItems();
   }, [loadItems]);
 
+  function resetForm(nextItems: ChecklistItem[]) {
+    setForm({ ...EMPTY_ITEM, sort_order: nextSortOrder(nextItems) });
+    setCategorySelection("");
+    setOtherCategory("");
+    setEditingId(null);
+    setEditorOpen(false);
+  }
+
+  function openNewItem() {
+    setForm({ ...EMPTY_ITEM, sort_order: nextSortOrder(items) });
+    setCategorySelection("");
+    setOtherCategory("");
+    setEditingId(null);
+    setEditorOpen(true);
+  }
+
   function editItem(item: ChecklistItem) {
     setEditingId(item.id);
     const isStandardCategory = CATEGORIES.some(
@@ -113,7 +157,7 @@ export default function QaChecklistManagementPage() {
       is_active: item.is_active,
       sort_order: item.sort_order,
     });
-    editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setEditorOpen(true);
   }
 
   async function saveItem(event: React.FormEvent<HTMLFormElement>) {
@@ -152,13 +196,8 @@ export default function QaChecklistManagementPage() {
           : "Checklist item added to unfinished and new QA sessions.",
       );
       const remainingItems = items.filter((item) => item.id !== result.data.id);
-      setForm({
-        ...EMPTY_ITEM,
-        sort_order: nextSortOrder([...remainingItems, result.data]),
-      });
-      setCategorySelection("");
-      setOtherCategory("");
-      setEditingId(null);
+      resetForm([...remainingItems, result.data]);
+      setExpanded((current) => new Set(current).add(category));
       await loadItems();
     } catch (saveError) {
       console.error("QA checklist save failed:", saveError);
@@ -173,6 +212,9 @@ export default function QaChecklistManagementPage() {
   }
 
   async function toggleActive(item: ChecklistItem) {
+    if (updatingItemId !== null || updatingCategory !== null) return;
+
+    setUpdatingItemId(item.id);
     try {
       const response = await adminFetch(
         `/api/admin/websites/checklist-items/${item.id}`,
@@ -191,8 +233,8 @@ export default function QaChecklistManagementPage() {
       );
       toast.success(
         item.is_active
-          ? "Checklist item deactivated for new sessions."
-          : "Checklist item activated for new sessions.",
+          ? "Checklist item deactivated and removed from unfinished sessions."
+          : "Checklist item activated for unfinished and new sessions.",
       );
     } catch (updateError) {
       console.error("QA checklist activation update failed:", updateError);
@@ -201,263 +243,556 @@ export default function QaChecklistManagementPage() {
           ? updateError.message
           : "Unable to update checklist item.",
       );
+    } finally {
+      setUpdatingItemId(null);
     }
   }
 
-  const sortedItems = [...items].sort(
-    (left, right) =>
-      left.sort_order - right.sort_order ||
-      left.category.localeCompare(right.category) ||
-      left.id - right.id,
-  );
-  const groupedItems = sortedItems.reduce<Map<string, ChecklistItem[]>>(
-    (groups, item) => {
-      const categoryItems = groups.get(item.category) ?? [];
-      categoryItems.push(item);
-      groups.set(item.category, categoryItems);
-      return groups;
-    },
-    new Map(),
+  async function toggleCategoryActive(category: string) {
+    if (updatingItemId !== null || updatingCategory !== null) return;
+
+    const categoryItems = sortedItems.filter(
+      (item) => item.category === category,
+    );
+    const shouldActivate = categoryItems.every((item) => !item.is_active);
+
+    setUpdatingCategory(category);
+    try {
+      for (const item of categoryItems) {
+        if (item.is_active === shouldActivate) continue;
+
+        const response = await adminFetch(
+          `/api/admin/websites/checklist-items/${item.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: shouldActivate }),
+          },
+        );
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || `Unable to update ${category}.`);
+        }
+        setItems((current) =>
+          current.map((entry) => (entry.id === item.id ? result.data : entry)),
+        );
+      }
+
+      toast.success(
+        shouldActivate
+          ? `All ${category} items activated.`
+          : `All ${category} items deactivated.`,
+      );
+    } catch (updateError) {
+      console.error("QA checklist category update failed:", updateError);
+      toast.error(
+        updateError instanceof Error
+          ? updateError.message
+          : `Unable to update ${category}. Some items may already have changed.`,
+      );
+    } finally {
+      setUpdatingCategory(null);
+    }
+  }
+
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort(
+        (left, right) =>
+          left.sort_order - right.sort_order ||
+          left.category.localeCompare(right.category) ||
+          left.id - right.id,
+      ),
+    [items],
   );
 
+  const searching = query.trim().length > 0;
+  const visibleItems = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return sortedItems.filter((item) => {
+      if (statusFilter === "active" && !item.is_active) return false;
+      if (statusFilter === "inactive" && item.is_active) return false;
+      if (!needle) return true;
+      return [item.title, item.description, item.category].some((text) =>
+        text.toLowerCase().includes(needle),
+      );
+    });
+  }, [sortedItems, query, statusFilter]);
+
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, ChecklistItem[]>();
+    for (const item of visibleItems) {
+      const list = groups.get(item.category) ?? [];
+      list.push(item);
+      groups.set(item.category, list);
+    }
+    return Array.from(groups, ([category, categoryItems]) => ({
+      category,
+      items: categoryItems,
+    }));
+  }, [visibleItems]);
+
+  const activeCount = items.filter((item) => item.is_active).length;
+  const allExpanded =
+    groupedItems.length > 0 &&
+    groupedItems.every((group) => expanded.has(group.category));
+
+  function toggleCategory(category: string) {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setExpanded(
+      allExpanded ? new Set() : new Set(groupedItems.map((g) => g.category)),
+    );
+  }
+
   return (
-    <main className="mx-auto max-w-5xl space-y-5">
-      <header className="rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700 p-5 text-white shadow-sm sm:p-7">
+    <main className="mx-auto max-w-6xl space-y-6">
+      <header className="space-y-3">
         <Link
-          className="mb-4 inline-flex items-center gap-1 text-sm text-blue-100 hover:text-white"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-slate-100"
           href="/admin/website-directory"
         >
           <ArrowLeft className="h-4 w-4" />
           Website Directory
         </Link>
-        <h1 className="text-2xl font-semibold sm:text-3xl">
-          Default QA checklist
-        </h1>
-        <p className="mt-1 text-sm text-blue-100">
-          Manage checks for new QA sessions. Newly added items are also added to
-          unfinished sessions; approved sessions remain unchanged.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-xl">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Default QA checklist
+            </h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              Active items are included in new sessions, and new or reactivated
+              items are added to unfinished sessions. Deactivating an item
+              removes it from unfinished sessions and excludes it from new
+              sessions, while completed session history stays intact.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-5">
+            <dl className="flex gap-5 text-sm">
+              <div>
+                <dt className="text-slate-500">Active</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-cyan-700 dark:text-cyan-400">
+                  {activeCount}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Inactive</dt>
+                <dd className="text-2xl font-semibold tabular-nums">
+                  {items.length - activeCount}
+                </dd>
+              </div>
+            </dl>
+            <Button
+              className="bg-cyan-700 text-white shadow-sm hover:bg-cyan-800"
+              onClick={openNewItem}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add item
+            </Button>
+          </div>
+        </div>
       </header>
 
-      <Card
-        className="scroll-mt-6 rounded-2xl p-5 dark:bg-slate-950"
-        ref={editorRef}
-      >
-        <h2 className="font-semibold">
-          {editingId ? "Edit checklist item" : "Add checklist item"}
-        </h2>
-        <form className="mt-4 space-y-4" onSubmit={saveItem}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label
-              className="space-y-1.5 text-sm font-medium"
-              htmlFor="checklist-category"
-            >
-              Category
-              <select
-                required
-                id="checklist-category"
-                className={inputClass}
-                value={categorySelection}
-                onChange={(event) => setCategorySelection(event.target.value)}
-              >
-                <option disabled value="">
-                  Select a category
-                </option>
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-                <option value="Other">Other</option>
-              </select>
-            </label>
-            {categorySelection === "Other" && (
-              <label
-                className="space-y-1.5 text-sm font-medium"
-                htmlFor="checklist-other-category"
-              >
-                Other category
-                <Input
-                  required
-                  id="checklist-other-category"
-                  maxLength={150}
-                  placeholder="Enter category name"
-                  value={otherCategory}
-                  onChange={(event) => setOtherCategory(event.target.value)}
-                />
-              </label>
-            )}
-            <label
-              className="space-y-1.5 text-sm font-medium"
-              htmlFor="checklist-sort-order"
-            >
-              Sort order
+      <div>
+        {/* Definitions */}
+        <section className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              />
               <Input
-                required
-                id="checklist-sort-order"
-                min={0}
-                type="number"
-                value={form.sort_order}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    sort_order: Number(event.target.value),
-                  })
-                }
+                aria-label="Search checklist items"
+                className="pl-9"
+                placeholder="Search by title, description, or category"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
               />
-            </label>
-            <label
-              className="space-y-1.5 text-sm font-medium sm:col-span-2"
-              htmlFor="checklist-title"
+            </div>
+            <div
+              aria-label="Filter by status"
+              className="flex shrink-0 rounded-md bg-slate-100 p-0.5 text-sm dark:bg-slate-900"
+              role="group"
             >
-              Checklist item
-              <Input
-                required
-                id="checklist-title"
-                maxLength={255}
-                value={form.title}
-                onChange={(event) =>
-                  setForm({ ...form, title: event.target.value })
-                }
-              />
-            </label>
-            <label
-              className="space-y-1.5 text-sm font-medium sm:col-span-2"
-              htmlFor="checklist-description"
-            >
-              Description
-              <textarea
-                required
-                className={`${textareaClass} min-h-20`}
-                id="checklist-description"
-                value={form.description}
-                onChange={(event) =>
-                  setForm({ ...form, description: event.target.value })
-                }
-              />
-            </label>
+              {STATUS_FILTERS.map((option) => (
+                <button
+                  key={option.value}
+                  aria-pressed={statusFilter === option.value}
+                  className={`rounded px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 ${statusFilter === option.value
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-50"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                    }`}
+                  type="button"
+                  onClick={() => setStatusFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button disabled={saving} type="submit">
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? "Saving…" : editingId ? "Save changes" : "Add item"}
-            </Button>
-            {editingId && (
-              <Button
-                disabled={saving}
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm({
-                    ...EMPTY_ITEM,
-                    sort_order: nextSortOrder(items),
-                  });
-                  setCategorySelection("");
-                  setOtherCategory("");
-                }}
-              >
-                Cancel edit
-              </Button>
-            )}
-          </div>
-        </form>
-      </Card>
 
-      <Card className="overflow-hidden rounded-2xl dark:bg-slate-950">
-        <div className="border-b border-slate-200 p-5 dark:border-slate-800">
-          <h2 className="font-semibold">Checklist definitions</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Adjust categories and sort order to organize the checks. Deactivate
-            definitions instead of deleting them to preserve QA history.
-          </p>
-        </div>
-        {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading checklist…</p>
-        ) : error ? (
-          <div
-            className="flex items-center justify-between gap-3 p-6 text-sm text-rose-700"
-            role="alert"
-          >
-            <span>{error}</span>
-            <Button variant="outline" onClick={() => void loadItems()}>
-              Try again
-            </Button>
-          </div>
-        ) : sortedItems.length === 0 ? (
-          <p className="p-6 text-sm text-slate-500">
-            No checklist items exist yet. Add the first item above.
-          </p>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {Array.from(groupedItems, ([category, categoryItems]) => (
-              <details key={category} className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-600 dark:hover:bg-slate-900 [&::-webkit-details-marker]:hidden">
-                  <span className="flex min-w-0 flex-wrap items-center gap-2">
-                    <span className="font-semibold">{category}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      {categoryItems.length}{" "}
-                      {categoryItems.length === 1 ? "item" : "items"}
-                    </span>
+          {loading ? (
+            <p className="p-8 text-center text-sm text-slate-500">
+              Loading checklist…
+            </p>
+          ) : error ? (
+            <div
+              className="flex items-center justify-between gap-3 p-6 text-sm text-rose-700 dark:text-rose-400"
+              role="alert"
+            >
+              <span>{error}</span>
+              <Button variant="outline" onClick={() => void loadItems()}>
+                Try again
+              </Button>
+            </div>
+          ) : items.length === 0 ? (
+            <p className="p-8 text-center text-sm text-slate-500">
+              No checklist items yet. Add the first one using the form.
+            </p>
+          ) : groupedItems.length === 0 ? (
+            <p className="p-8 text-center text-sm text-slate-500">
+              No items match your search or filter.
+            </p>
+          ) : (
+            <>
+              {!searching && (
+                <div className="flex items-center justify-between px-4 pt-3 text-xs text-slate-500">
+                  <span>
+                    {groupedItems.length}{" "}
+                    {groupedItems.length === 1 ? "category" : "categories"}
                   </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180"
-                  />
-                </summary>
-                <ul className="divide-y divide-slate-100 border-t border-slate-100 bg-slate-50/50 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/30">
-                  {categoryItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex flex-col gap-3 p-4 pl-6 sm:flex-row sm:items-start sm:justify-between sm:pl-8"
+                  <button
+                    className="font-medium text-cyan-700 hover:underline dark:text-cyan-400"
+                    type="button"
+                    onClick={toggleAll}
+                  >
+                    {allExpanded ? "Collapse all" : "Expand all"}
+                  </button>
+                </div>
+              )}
+              <div className="space-y-2 p-3">
+                {groupedItems.map(({ category, items: categoryItems }) => {
+                  const open = searching || expanded.has(category);
+                  const allCategoryItems = sortedItems.filter(
+                    (item) => item.category === category,
+                  );
+                  const activeInGroup = allCategoryItems.filter(
+                    (item) => item.is_active,
+                  ).length;
+                  const allActive = activeInGroup === allCategoryItems.length;
+                  const someActive = activeInGroup > 0;
+                  const panelId = `panel-${category.replace(/\W+/g, "-")}`;
+                  return (
+                    <div
+                      key={category}
+                      className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800"
                     >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs text-slate-500">
-                            Order {item.sort_order}
+                      <div className="flex items-center gap-3 bg-slate-50 px-3 py-2.5 dark:bg-slate-900">
+                        <button
+                          aria-controls={panelId}
+                          aria-expanded={open}
+                          className="flex min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600"
+                          type="button"
+                          onClick={() => toggleCategory(category)}
+                        >
+                          <ChevronRight
+                            aria-hidden="true"
+                            className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""
+                              }`}
+                          />
+                          <span className="min-w-0 flex-1 truncate font-semibold">
+                            {category}
                           </span>
-                          {!item.is_active && (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                              Inactive
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="mt-2 font-medium">{item.title}</h3>
-                        {item.description !== item.title && (
-                          <p className="mt-1 text-sm text-slate-500">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => editItem(item)}
+                        </button>
+                        <span className="shrink-0 text-xs tabular-nums text-slate-500">
+                          {activeInGroup} of {allCategoryItems.length} active
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="ml-2 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700"
+                        />
+                        <button
+                          aria-checked={
+                            allActive ? "true" : someActive ? "mixed" : "false"
+                          }
+                          aria-label={`Activate or deactivate all ${category} items`}
+                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${allActive
+                              ? "bg-cyan-700"
+                              : "bg-slate-300 dark:bg-slate-700"
+                            } ${updatingCategory !== null
+                              ? "animate-pulse"
+                              : ""
+                            }`}
+                          disabled={
+                            updatingItemId !== null || updatingCategory !== null
+                          }
+                          role="switch"
+                          title={
+                            updatingCategory === category
+                              ? "Updating category"
+                              : someActive
+                                ? "Deactivate all in category"
+                                : "Activate all in category"
+                          }
+                          type="button"
+                          onClick={() => void toggleCategoryActive(category)}
                         >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => void toggleActive(item)}
-                        >
-                          {item.is_active ? "Deactivate" : "Activate"}
-                        </Button>
+                          <span
+                            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${allActive
+                                ? "translate-x-4"
+                                : someActive
+                                  ? "translate-x-2"
+                                  : ""
+                              }`}
+                          />
+                        </button>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ))}
-          </div>
-        )}
-      </Card>
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <Plus className="h-4 w-4" />
-        {items.filter((item) => item.is_active).length} active item(s) will be
-        included in new sessions. Adding an active item also adds it to
-        unfinished sessions.
+                      {open && (
+                        <ul
+                          className="divide-y divide-slate-100 dark:divide-slate-800"
+                          id={panelId}
+                        >
+                          {categoryItems.map((item) => {
+                            const isEditing = editingId === item.id;
+                            return (
+                              <li
+                                key={item.id}
+                                className={`flex items-start gap-3 border-l-2 py-3 pl-3 pr-3 ${isEditing
+                                    ? "border-cyan-600 bg-cyan-50/60 dark:bg-cyan-950/20"
+                                    : "border-transparent"
+                                  }`}
+                              >
+                                <span
+                                  className="mt-0.5 w-7 shrink-0 text-right text-xs tabular-nums text-slate-400"
+                                  title="Sort order"
+                                >
+                                  {item.sort_order}
+                                </span>
+                                <div
+                                  className={`min-w-0 flex-1 ${item.is_active ? "" : "opacity-55"
+                                    }`}
+                                >
+                                  <p className="text-sm font-medium">
+                                    {item.title}
+                                  </p>
+                                  {item.description !== item.title && (
+                                    <p className="mt-0.5 text-sm leading-snug text-slate-500">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1.5">
+                                  <button
+                                    aria-checked={item.is_active}
+                                    aria-label={`${item.is_active ? "Deactivate" : "Activate"} ${item.title}`}
+                                    className={`relative h-5 w-9 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${item.is_active
+                                        ? "bg-cyan-700"
+                                        : "bg-slate-300 dark:bg-slate-700"
+                                      }`}
+                                    disabled={
+                                      updatingItemId !== null ||
+                                      updatingCategory !== null
+                                    }
+                                    role="switch"
+                                    title={item.is_active ? "Active" : "Inactive"}
+                                    type="button"
+                                    onClick={() => void toggleActive(item)}
+                                  >
+                                    <span
+                                      className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${item.is_active ? "translate-x-4" : ""
+                                        }`}
+                                    />
+                                  </button>
+                                  <Button
+                                    aria-label={`Edit ${item.title}`}
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => editItem(item)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          <p className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-800">
+            Deactivate items instead of deleting them to preserve QA history.
+          </p>
+        </section>
+
+        <Dialog
+          open={editorOpen}
+          onOpenChange={(open) => {
+            if (!open && !saving) resetForm(items);
+            else if (open) setEditorOpen(true);
+          }}
+        >
+          <DialogContent className="max-h-[100dvh] max-w-[90vh] gap-0 overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-2xl dark:border-slate-800 dark:bg-slate-950 sm:max-w-xl">
+            <DialogHeader className="border-b border-slate-200 bg-gradient-to-br from-cyan-50 via-white to-white px-6 py-5 pr-12 text-left dark:border-slate-800 dark:from-cyan-950/40 dark:via-slate-950 dark:to-slate-950">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white shadow-sm">
+                {editingId ? (
+                  <Pencil aria-hidden="true" className="h-5 w-5" />
+                ) : (
+                  <Plus aria-hidden="true" className="h-5 w-5" />
+                )}
+              </div>
+              <DialogTitle className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                {editingId ? "Edit checklist item" : "Add checklist item"}
+              </DialogTitle>
+              <DialogDescription className="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                {editingId
+                  ? "Update the item details used in website QA sessions."
+                  : "Create a reusable check for new and unfinished QA sessions."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              className="flex min-h-0 flex-col"
+              onSubmit={saveItem}
+            >
+              <div className="max-h-[calc(90dvh-190px)] space-y-5 overflow-y-auto px-6 py-5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass} htmlFor="checklist-category">
+                      Category
+                      <select
+                        required
+                        className={`${fieldClass} h-11`}
+                        id="checklist-category"
+                        value={categorySelection}
+                        onChange={(event) =>
+                          setCategorySelection(event.target.value)
+                        }
+                      >
+                        <option disabled value="">
+                          Select a category
+                        </option>
+                        {CATEGORIES.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+
+                    {categorySelection === "Other" && (
+                      <label
+                        className={labelClass}
+                        htmlFor="checklist-other-category"
+                      >
+                        Category name
+                        <Input
+                          required
+                          id="checklist-other-category"
+                          maxLength={150}
+                          placeholder="Enter category name"
+                          value={otherCategory}
+                          onChange={(event) => setOtherCategory(event.target.value)}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      className={labelClass}
+                      htmlFor="checklist-sort-order"
+                    >
+                      Sort order
+                      <Input
+                        required
+                        className="h-11 w-32"
+                        id="checklist-sort-order"
+                        min={0}
+                        type="number"
+                        value={form.sort_order}
+                        onChange={(event) =>
+                          setForm({
+                            ...form,
+                            sort_order: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <label className={labelClass} htmlFor="checklist-title">
+                  Checklist item
+                  <Input
+                    required
+                    className="h-11"
+                    id="checklist-title"
+                    maxLength={255}
+                    placeholder="e.g. Navigation links work correctly"
+                    value={form.title}
+                    onChange={(event) =>
+                      setForm({ ...form, title: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className={labelClass} htmlFor="checklist-description">
+                  Description
+                  <textarea
+                    required
+                    className={`${fieldClass} min-h-28 resize-y py-2.5`}
+                    id="checklist-description"
+                    placeholder="Describe what the tester should verify."
+                    value={form.description}
+                    onChange={(event) =>
+                      setForm({ ...form, description: event.target.value })
+                    }
+                  />
+                </label>
+              </div>
+
+              <DialogFooter className="flex-row justify-end gap-2 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/60 sm:space-x-0">
+                <Button
+                  disabled={saving}
+                  type="button"
+                  variant="outline"
+                  onClick={() => resetForm(items)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-cyan-700 text-white shadow-sm hover:bg-cyan-800"
+                  disabled={saving}
+                  type="submit"
+                >
+                  {editingId ? (
+                    <Save className="mr-2 h-4 w-4" />
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  {saving
+                    ? "Saving…"
+                    : editingId
+                      ? "Save changes"
+                      : "Add item"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

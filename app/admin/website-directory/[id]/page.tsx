@@ -645,7 +645,7 @@ function SessionActions({
       </Button>
       <Button size="sm" onClick={onEdit}>
         <Pencil className="mr-1.5 h-3.5 w-3.5" />
-        {isOpenSession(session) ? "Continue" : "Edit"}
+        {isOpenSession(session) ? "Start session" : "Continue session"}
       </Button>
     </div>
   );
@@ -1129,31 +1129,69 @@ function WebsiteDetailsContent() {
     }
   }
 
-  function reviewSession(session: QaSession) {
-    setSelectedSession(session);
-    setSessionForm(hydrateSessionForm(session));
-    setSessionStep(0);
-    setEditingSession(false);
-    setApprovalConfirmed(false);
-    setReportOpen(true);
+  async function fetchSession(sessionId: number) {
+    const response = await adminFetch(
+      `/api/admin/websites/${id}/qa-sessions/${sessionId}`,
+      { cache: "no-store" },
+    );
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(
+        result.message || "Unable to load the latest QA session.",
+      );
+    }
+
+    return result.data as QaSession;
   }
 
-  function editSession(session: QaSession) {
-    setSelectedSession(session);
-    setSessionForm({
-      ...hydrateSessionForm(session),
-      responses: session.responses.map((item) => ({ ...item })),
-    });
-    const lastStep = groupByCategory(session.responses).length + 1;
-    setSessionStep(
-      Math.min(
-        readSavedStep(id, session.id) ?? firstUnansweredStep(session),
-        lastStep,
-      ),
-    );
-    setEditingSession(true);
-    setApprovalConfirmed(false);
-    setReportOpen(false);
+  async function reviewSession(session: QaSession) {
+    try {
+      const latestSession = await fetchSession(session.id);
+
+      setSelectedSession(latestSession);
+      setSessionForm(hydrateSessionForm(latestSession));
+      setSessionStep(0);
+      setEditingSession(false);
+      setApprovalConfirmed(false);
+      setReportOpen(true);
+    } catch (loadError) {
+      console.error("QA session load failed:", loadError);
+      toast.error(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load the latest QA session.",
+      );
+    }
+  }
+
+  async function editSession(session: QaSession) {
+    try {
+      const latestSession = await fetchSession(session.id);
+
+      setSelectedSession(latestSession);
+      setSessionForm({
+        ...hydrateSessionForm(latestSession),
+        responses: latestSession.responses.map((item) => ({ ...item })),
+      });
+      const lastStep = groupByCategory(latestSession.responses).length + 1;
+      setSessionStep(
+        Math.min(
+          readSavedStep(id, latestSession.id) ??
+            firstUnansweredStep(latestSession),
+          lastStep,
+        ),
+      );
+      setEditingSession(true);
+      setApprovalConfirmed(false);
+      setReportOpen(false);
+    } catch (loadError) {
+      console.error("QA session load failed:", loadError);
+      toast.error(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load the latest QA session.",
+      );
+    }
   }
 
   useEffect(() => {

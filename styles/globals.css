@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (min-width: 1024px) {
+  [data-admin-sidebar] {
+    width: 16rem !important;
+    visibility: visible !important;
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+  }
+
+  [data-admin-sidebar][data-sidebar-collapsed="true"] {
+    width: 4.5rem !important;
+  }
+
+  [data-admin-main] {
+    padding-left: 16rem !important;
+  }
+
+  [data-admin-main][data-sidebar-collapsed="true"] {
+    padding-left: 4.5rem !important;
+  }
+}
