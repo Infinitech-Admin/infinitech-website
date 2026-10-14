@@ -4,6 +4,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileCheck,
+  FileSignature,
   FileText,
   FolderOpen,
   IdCard,
@@ -34,32 +35,56 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    title: "Overview",
-    items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
     title: "Lead Generation",
     items: [
-      { href: "/admin/website-directory", label: "Website Directory", icon: FolderOpen },
+      {
+        href: "/admin/website-directory",
+        label: "Website Directory",
+        icon: FolderOpen,
+      },
       { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
       { href: "/admin/website-audit", label: "Website Audit", icon: Search },
       { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
-      { href: "/admin/client-assessment", label: "Client Assessment", icon: UserCheck },
-      { href: "/admin/demo-requirements", label: "Demo Website Requirements", icon: FileCheck },
+      {
+        href: "/admin/client-assessment",
+        label: "Client Assessment",
+        icon: UserCheck,
+      },
+      {
+        href: "/admin/demo-requirements",
+        label: "Demo Website Requirements",
+        icon: FileCheck,
+      },
     ],
   },
   {
     title: "Marketing Services",
     items: [
       { href: "/admin/graphic-design", label: "Graphic Design", icon: Palette },
-      { href: "/admin/social-media-management", label: "Social Media Management", icon: Megaphone },
+      {
+        href: "/admin/social-media-management",
+        label: "Social Media Management",
+        icon: Megaphone,
+      },
       { href: "/admin/paid-ads", label: "Paid Ads", icon: TrendingUp },
-      { href: "/admin/market-research", label: "Market Research", icon: BarChart3 },
+      {
+        href: "/admin/market-research",
+        label: "Market Research",
+        icon: BarChart3,
+      },
       { href: "/admin/blog", label: "Blog", icon: FileText },
       { href: "/admin/portal-demo", label: "Portal Demo", icon: FolderOpen },
-      { href: "/admin/tiktok-shop-opening", label: "TikTok Shop Opening", icon: TrendingUp },
+      {
+        href: "/admin/tiktok-shop-opening",
+        label: "TikTok Shop Opening",
+        icon: TrendingUp,
+      },
+    ],
+  },
+  {
+    title: "Sales & Finance",
+    items: [
+      { href: "/admin/contracts", label: "Contracts", icon: FileSignature },
     ],
   },
   {
@@ -73,16 +98,28 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "Customer Support",
     items: [
-      { href: "/admin/support-tickets", label: "Support Tickets", icon: Ticket },
+      {
+        href: "/admin/support-tickets",
+        label: "Support Tickets",
+        icon: Ticket,
+      },
     ],
   },
   {
     title: "Human Resources",
     items: [
       { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
-      { href: "/admin/employee-clearance-form", label: "Clearance Form", icon: ClipboardCheck },
+      {
+        href: "/admin/employee-clearance-form",
+        label: "Clearance Form",
+        icon: ClipboardCheck,
+      },
       { href: "/admin/leave-request", label: "Leave Requests", icon: FileText },
-      { href: "/admin/attendance", label: "OJT Attendance", icon: CalendarCheck },
+      {
+        href: "/admin/attendance",
+        label: "OJT Attendance",
+        icon: CalendarCheck,
+      },
     ],
   },
 ];
@@ -100,6 +137,7 @@ export const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
   "/admin/paid-ads": "paid_ads",
   "/admin/market-research": "market_research",
   "/admin/blog": "blog",
+  "/admin/contracts": "contracts",
   "/admin/survey": "survey",
   "/admin/juantap-survey": "juantap_survey",
   "/admin/video-survey": "video_survey",
@@ -110,6 +148,7 @@ export const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
   "/admin/portal-demo": "portal_demo",
   "/admin/tiktok-shop-opening": "tiktok_shop",
   "/admin/access-management": "user_access_management",
+  "/admin/audit-logs": "system_audit_logs",
 };
 
 export const hasDirectoryAccess = (keys: string[], directory: string) =>
@@ -124,24 +163,41 @@ export function getAuthorizedNavSections(
     items: section.items.filter((item) => {
       if (isSuperadmin && item.href === "/admin/dashboard") return false;
       const directory = NAV_DIRECTORY_BY_HREF[item.href];
-      return !directory || isSuperadmin || hasDirectoryAccess(permissionKeys, directory);
+      return (
+        !directory ||
+        isSuperadmin ||
+        hasDirectoryAccess(permissionKeys, directory)
+      );
     }),
   })).filter((section) => section.items.length > 0);
 
   const canManageAccess =
-    isSuperadmin || hasDirectoryAccess(permissionKeys, "user_access_management");
+    isSuperadmin ||
+    hasDirectoryAccess(permissionKeys, "user_access_management");
   const canViewSystemAudit =
     isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
 
   if (isSuperadmin || canManageAccess || canViewSystemAudit) {
     sections.unshift({
-      title: isSuperadmin ? "Overview" : "Overview",
+      title: "Overview",
       items: [
         ...(isSuperadmin
-          ? [{ href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }]
+          ? [
+            {
+              href: "/admin/dashboard",
+              label: "Dashboard",
+              icon: LayoutDashboard,
+            },
+          ]
           : []),
         ...(canManageAccess
-          ? [{ href: "/admin/access-management", label: "User Access Management", icon: Users }]
+          ? [
+            {
+              href: "/admin/access-management",
+              label: "User Access Management",
+              icon: Users,
+            },
+          ]
           : []),
       ],
     });

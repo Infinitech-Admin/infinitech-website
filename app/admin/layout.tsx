@@ -11,176 +11,15 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-  LayoutDashboard,
-  Users,
-  ClipboardList,
-  Video,
-  IdCard,
-  FileText,
-  Ticket,
-  FileCheck,
-  UserCheck,
-  SearchCheck,
-  CalendarCheck,
-  ClipboardCheck,
-  Search,
-  Megaphone,
-  MessageSquare,
-  Palette,
-  TrendingUp,
-  BarChart3,
-  FolderOpen,
-  FileSignature,
-  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-/* ============================================================================
- * NAVIGATION CONFIG
- * One array, grouped into labeled sections. Add a new page by adding an
- * entry to the relevant section (or a new section) — the sidebar renders
- * itself from this list, nothing else to touch.
- * ========================================================================== */
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    title: "Overview",
-    items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      {
-        href: "/admin/website-directory",
-        label: "Website Directory",
-        icon: FolderOpen,
-      },
-    ],
-  },
-  {
-    title: "Lead Generation",
-    items: [
-      { href: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
-      { href: "/admin/website-audit", label: "Website Audit", icon: Search },
-      { href: "/admin/seo-audits", label: "SEO Audit", icon: SearchCheck },
-      {
-        href: "/admin/client-assessment",
-        label: "Client Assessment",
-        icon: UserCheck,
-      },
-      {
-        href: "/admin/demo-requirements",
-        label: "Demo Website Requirements",
-        icon: FileCheck,
-      },
-    ],
-  },
-  {
-    title: "Marketing Services",
-    items: [
-      { href: "/admin/graphic-design", label: "Graphic Design", icon: Palette },
-      {
-        href: "/admin/social-media-management",
-        label: "Social Media Management",
-        icon: Megaphone,
-      },
-      { href: "/admin/paid-ads", label: "Paid Ads", icon: TrendingUp },
-      {
-        href: "/admin/market-research",
-        label: "Market Research",
-        icon: BarChart3,
-      },
-      { href: "/admin/blog", label: "Blog", icon: FileText },
-      { href: "/admin/portal-demo", label: "Portal Demo", icon: FolderOpen },
-      {
-        href: "/admin/tiktok-shop-opening",
-        label: "TikTok Shop Opening",
-        icon: TrendingUp,
-      },
-    ],
-  },
-  {
-    title: "Sales & Finance",
-    items: [
-      { href: "/admin/contracts", label: "Contracts", icon: FileSignature },
-    ],
-  },
-  {
-    title: "Surveys",
-    items: [
-      { href: "/admin/survey", label: "Survey", icon: ClipboardList },
-      { href: "/admin/juantap-survey", label: "Juantap Survey", icon: IdCard },
-      { href: "/admin/video-survey", label: "Video Survey", icon: Video },
-    ],
-  },
-  {
-    title: "Customer Support",
-    items: [
-      {
-        href: "/admin/support-tickets",
-        label: "Support Tickets",
-        icon: Ticket,
-      },
-    ],
-  },
-  {
-    title: "Human Resources",
-    items: [
-      { href: "/admin/masterfile", label: "Employee Masterfile", icon: Users },
-      {
-        href: "/admin/employee-clearance-form",
-        label: "Clearance Form",
-        icon: ClipboardCheck,
-      },
-      // { href: "/admin/coe", label: "COE", icon: FileText },'
-      { href: "/admin/leave-request", label: "Leave Requests", icon: FileText },
-      {
-        href: "/admin/attendance",
-        label: "OJT Attendance",
-        icon: CalendarCheck,
-      },
-    ],
-  },
-];
-
-const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
-  "/admin/masterfile": "employee_masterfile",
-  "/admin/website-directory": "website_directory",
-  "/admin/inquiries": "inquiries",
-  "/admin/website-audit": "website_audit",
-  "/admin/seo-audits": "seo_audit",
-  "/admin/client-assessment": "client_assessment",
-  "/admin/demo-requirements": "demo_requirements",
-  "/admin/graphic-design": "graphic_design",
-  "/admin/social-media-management": "social_media_management",
-  "/admin/paid-ads": "paid_ads",
-  "/admin/market-research": "market_research",
-  "/admin/blog": "blog",
-  "/admin/contracts": "contracts",
-  "/admin/survey": "survey",
-  "/admin/juantap-survey": "juantap_survey",
-  "/admin/video-survey": "video_survey",
-  "/admin/support-tickets": "support_tickets",
-  "/admin/employee-clearance-form": "clearance_form",
-  "/admin/leave-request": "leave_requests",
-  "/admin/attendance": "ojt_attendance",
-  "/admin/portal-demo": "portal_demo",
-  "/admin/tiktok-shop-opening": "tiktok_shop",
-  "/admin/access-management": "user_access_management",
-  "/admin/audit-logs": "system_audit_logs",
-};
-
-const hasDirectoryAccess = (keys: string[], directory: string) =>
-  keys.includes(directory) || keys.includes("all_directory");
+import {
+  NAV_DIRECTORY_BY_HREF,
+  NAV_SECTIONS,
+  getAuthorizedNavSections,
+  hasDirectoryAccess,
+} from "@/lib/admin-navigation";
 
 /* ============================================================================
  * SECTION: Sidebar
@@ -209,53 +48,7 @@ function Sidebar({
 }) {
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(`${path}/`);
-  const sections = NAV_SECTIONS.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => {
-      if (isSuperadmin && item.href === "/admin/dashboard") return false;
-      const key = NAV_DIRECTORY_BY_HREF[item.href];
-      return !key || isSuperadmin || hasDirectoryAccess(permissionKeys, key);
-    }),
-  })).filter((section) => section.items.length > 0);
-  const canManageAccess =
-    isSuperadmin ||
-    hasDirectoryAccess(permissionKeys, "user_access_management");
-  const canViewSystemAudit =
-    isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
-  if (isSuperadmin || canManageAccess || canViewSystemAudit) {
-    sections.unshift({
-      title: isSuperadmin ? "Superadmin" : "Administration",
-      items: [
-        ...(isSuperadmin
-          ? [
-              {
-                href: "/admin/dashboard",
-                label: "Dashboard",
-                icon: LayoutDashboard,
-              },
-            ]
-          : []),
-        ...(canManageAccess
-          ? [
-              {
-                href: "/admin/access-management",
-                label: "User Access Management",
-                icon: Users,
-              },
-            ]
-          : []),
-        ...(canViewSystemAudit
-          ? [
-              {
-                href: "/admin/audit-logs",
-                label: "System Audit Logs",
-                icon: ClipboardList,
-              },
-            ]
-          : []),
-      ],
-    });
-  }
+  const sections = getAuthorizedNavSections(permissionKeys, isSuperadmin);
 
   return (
     <>
@@ -405,19 +198,9 @@ function TopBar({
   onOpenSidebar: () => void;
   pathname: string;
 }) {
-  const pageItems = [
-    ...NAV_SECTIONS.flatMap((section) => section.items),
-    {
-      href: "/admin/access-management",
-      label: "User Access Management",
-      icon: Users,
-    },
-    {
-      href: "/admin/audit-logs",
-      label: "System Audit Logs",
-      icon: ClipboardList,
-    },
-  ].sort((left, right) => right.href.length - left.href.length);
+  const pageItems = getAuthorizedNavSections([], true)
+    .flatMap((section) => section.items)
+    .sort((left, right) => right.href.length - left.href.length);
   const pageTitle =
     pageItems.find(
       (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
