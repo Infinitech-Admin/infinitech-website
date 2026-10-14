@@ -12,6 +12,7 @@ const pageDirectories: Record<string, string> = {
   attendance: "ojt_attendance",
   "audit-logs": "system_audit_logs",
   blog: "blog",
+  contracts: "contracts",
   "employee-clearance-form": "clearance_form",
   "graphic-design": "graphic_design",
   inquiries: "inquiries",
@@ -39,6 +40,10 @@ const adminApiDirectories: Record<string, string> = {
   clearance: "clearance_form",
   "clearance-template": "clearance_form",
   coe: "clearance_form",
+  contracts: "contracts",
+  // Installment "Record" and commission "Release" actions on a contract.
+  "contract-installments": "contracts",
+  "contract-commissions": "contracts",
   "employee-clearance": "clearance_form",
   employees: "employee_masterfile",
   blog: "blog",
@@ -55,6 +60,7 @@ const directApiDirectories: Record<string, string> = {
   "client-assessment": "client_assessment",
   attendance: "ojt_attendance",
   "blog-posts": "blog",
+  contracts: "contracts",
   "employee-masterfile": "employee_masterfile",
   "graphic-design-requests": "graphic_design",
   inquiries: "inquiries",
@@ -92,7 +98,9 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
   if (
     parts[1] === "attendance" &&
     ((parts.length === 2 && ["POST", "PUT"].includes(method)) ||
-      (parts.length === 3 && ["lookup", "history", "total"].includes(parts[2]) && method === "GET"))
+      (parts.length === 3 &&
+        ["lookup", "history", "total"].includes(parts[2]) &&
+        method === "GET"))
   ) {
     return null;
   }
@@ -108,9 +116,11 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
       ) {
         return { directory: "system_audit_logs", action: "view" };
       }
-      const isCreate = parts[3] === "employees" ||
+      const isCreate =
+        parts[3] === "employees" ||
         (parts[3] === "accounts" && parts.length === 4 && method === "POST");
-      const isEdit = parts[3] === "accounts" &&
+      const isEdit =
+        parts[3] === "accounts" &&
         parts.length >= 6 &&
         ["permissions", "status", "rotate-credentials"].includes(parts[5]);
       return {
@@ -119,7 +129,9 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
       };
     }
     const directory = area ? adminApiDirectories[area] : undefined;
-    return directory ? { directory, action: actionFor(method, path) } : { deny: true, action: "view" };
+    return directory
+      ? { directory, action: actionFor(method, path) }
+      : { deny: true, action: "view" };
   }
 
   if (
@@ -129,7 +141,9 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
     return null;
   }
   if (
-    (parts[1] === "contact" || parts[1] === "chat" || parts[1] === "quotation") &&
+    (parts[1] === "contact" ||
+      parts[1] === "chat" ||
+      parts[1] === "quotation") &&
     method === "POST" &&
     parts.length === 2
   ) {
@@ -138,7 +152,10 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
   if (parts[1] === "video-proxy" && method === "GET") return null;
 
   if (parts[1] === "employee-masterfile") {
-    return { directory: "employee_masterfile", action: actionFor(method, path) };
+    return {
+      directory: "employee_masterfile",
+      action: actionFor(method, path),
+    };
   }
   const directory = parts[1] ? directApiDirectories[parts[1]] : undefined;
   if (!directory) return { deny: true, action: "view" };
@@ -172,8 +189,14 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
 }
 
 function actionFor(method: string, path: string): string {
-  if (method === "GET" && /\/(download|export|attachment)(\/|$)/i.test(path)) return "export";
-  if (method === "POST" && /(?:\/reply(?:\/|$)|\/send-(?:[^/]+-)?email(?:\/|$)|\/summary-send-email(?:\/|$))/i.test(path)) {
+  if (method === "GET" && /\/(download|export|attachment)(\/|$)/i.test(path))
+    return "export";
+  if (
+    method === "POST" &&
+    /(?:\/reply(?:\/|$)|\/send-(?:[^/]+-)?email(?:\/|$)|\/summary-send-email(?:\/|$))/i.test(
+      path,
+    )
+  ) {
     return "edit";
   }
   if (method === "GET" || method === "HEAD") return "view";
@@ -184,20 +207,35 @@ function actionFor(method: string, path: string): string {
 }
 
 function protectedPage(path: string): AccessPolicy | null {
-  if (!path.startsWith("/admin/") || path === "/admin/login" || path === "/admin/access-denied") return null;
+  if (
+    !path.startsWith("/admin/") ||
+    path === "/admin/login" ||
+    path === "/admin/access-denied"
+  )
+    return null;
   const area = path.split("/")[2];
   if (area === "dashboard") return { action: "view" };
   if (area === "access-management" || area === "audit-logs") {
-    return { directory: area === "access-management" ? "user_access_management" : "system_audit_logs", action: "view" };
+    return {
+      directory:
+        area === "access-management"
+          ? "user_access_management"
+          : "system_audit_logs",
+      action: "view",
+    };
   }
   const directory = area ? pageDirectories[area] : undefined;
-  return directory ? { directory, action: "view" } : { deny: true, action: "view" };
+  return directory
+    ? { directory, action: "view" }
+    : { deny: true, action: "view" };
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isApi = pathname.startsWith("/api/");
-  const policy = isApi ? protectedApi(pathname, request.method) : protectedPage(pathname);
+  const policy = isApi
+    ? protectedApi(pathname, request.method)
+    : protectedPage(pathname);
   if (!policy) return NextResponse.next();
 
   if (policy.deny) {
@@ -207,7 +245,10 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get("adminToken")?.value;
-  if (!token) return isApi ? unauthorized() : NextResponse.redirect(new URL("/admin/login", request.url));
+  if (!token)
+    return isApi
+      ? unauthorized()
+      : NextResponse.redirect(new URL("/admin/login", request.url));
 
   const backendPath = policy.directory
     ? `/api/admin/authorize?${new URLSearchParams({ directory: policy.directory, action: policy.action })}`
@@ -219,14 +260,22 @@ export async function middleware(request: NextRequest) {
       cache: "no-store",
     });
   } catch {
-    return NextResponse.json({ message: "Authentication service unavailable." }, { status: 503 });
+    return NextResponse.json(
+      { message: "Authentication service unavailable." },
+      { status: 503 },
+    );
   }
 
   if (response.status === 401) {
-    return isApi ? unauthorized() : NextResponse.redirect(new URL("/admin/login", request.url));
+    return isApi
+      ? unauthorized()
+      : NextResponse.redirect(new URL("/admin/login", request.url));
   }
   if (response.status >= 500) {
-    return NextResponse.json({ message: "Authorization service unavailable." }, { status: 503 });
+    return NextResponse.json(
+      { message: "Authorization service unavailable." },
+      { status: 503 },
+    );
   }
 
   let allowed = response.ok;
@@ -238,7 +287,12 @@ export async function middleware(request: NextRequest) {
     return isApi
       ? NextResponse.json({ message: "Forbidden" }, { status: 403 })
       : NextResponse.redirect(
-          new URL(pathname === "/admin/dashboard" ? "/admin/login" : "/admin/dashboard", request.url),
+          new URL(
+            pathname === "/admin/dashboard"
+              ? "/admin/login"
+              : "/admin/dashboard",
+            request.url,
+          ),
         );
   }
 
@@ -246,7 +300,10 @@ export async function middleware(request: NextRequest) {
 
   const serviceToken = process.env.LARAVEL_SERVICE_TOKEN;
   if (!serviceToken) {
-    return NextResponse.json({ message: "Admin API is not configured." }, { status: 503 });
+    return NextResponse.json(
+      { message: "Admin API is not configured." },
+      { status: 503 },
+    );
   }
 
   const headers = new Headers(request.headers);
