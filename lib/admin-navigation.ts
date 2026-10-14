@@ -33,6 +33,20 @@ export interface NavSection {
   items: NavItem[];
 }
 
+export const ADMIN_NAV_ITEMS: NavItem[] = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  {
+    href: "/admin/access-management",
+    label: "User Access Management",
+    icon: Users,
+  },
+  {
+    href: "/admin/audit-logs",
+    label: "System Audit Logs",
+    icon: ClipboardList,
+  },
+];
+
 export const NAV_SECTIONS: NavSection[] = [
   {
     title: "Lead Generation",
@@ -154,6 +168,31 @@ export const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
 export const hasDirectoryAccess = (keys: string[], directory: string) =>
   keys.includes(directory) || keys.includes("all_directory");
 
+export function getDirectoryKeyForHref(href: string): string | undefined {
+  if (href === "/admin/dashboard") return undefined;
+  return (
+    NAV_DIRECTORY_BY_HREF[href] ||
+    href.split("/").filter(Boolean).at(-1)?.replaceAll("-", "_")
+  );
+}
+
+export function getAdminDirectoryEntries() {
+  const navigationItems = [
+    ...NAV_SECTIONS.flatMap((section) =>
+      section.items.map((item) => ({ ...item, module: section.title })),
+    ),
+    ...ADMIN_NAV_ITEMS.map((item) => ({
+      ...item,
+      module: "Administration",
+    })),
+  ];
+
+  return navigationItems.flatMap(({ href, label, module }) => {
+    const key = getDirectoryKeyForHref(href);
+    return key ? [{ key, label, module }] : [];
+  });
+}
+
 export function getAuthorizedNavSections(
   permissionKeys: string[],
   isSuperadmin: boolean,
@@ -162,7 +201,7 @@ export function getAuthorizedNavSections(
     ...section,
     items: section.items.filter((item) => {
       if (isSuperadmin && item.href === "/admin/dashboard") return false;
-      const directory = NAV_DIRECTORY_BY_HREF[item.href];
+      const directory = getDirectoryKeyForHref(item.href);
       return (
         !directory ||
         isSuperadmin ||
@@ -179,26 +218,19 @@ export function getAuthorizedNavSections(
 
   if (isSuperadmin || canManageAccess || canViewSystemAudit) {
     sections.unshift({
-      title: "Overview",
+      title: "Administration",
       items: [
         ...(isSuperadmin
           ? [
-            {
-              href: "/admin/dashboard",
-              label: "Dashboard",
-              icon: LayoutDashboard,
-            },
-          ]
+              {
+                href: "/admin/dashboard",
+                label: "Dashboard",
+                icon: LayoutDashboard,
+              },
+            ]
           : []),
-        ...(canManageAccess
-          ? [
-            {
-              href: "/admin/access-management",
-              label: "User Access Management",
-              icon: Users,
-            },
-          ]
-          : []),
+        ...(canManageAccess ? [ADMIN_NAV_ITEMS[1]] : []),
+        ...(canViewSystemAudit ? [ADMIN_NAV_ITEMS[2]] : []),
       ],
     });
   }
