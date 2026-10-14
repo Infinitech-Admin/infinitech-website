@@ -6,14 +6,12 @@ import { useSearchParams } from "next/navigation";
 import {
     Eye,
     Pencil,
-    ClipboardPlus,
     ClipboardCheck,
     ArrowDown,
     ArrowUp,
     ChevronsUpDown,
     ExternalLink,
     FolderOpen,
-    History,
     Plus,
     Search,
     SlidersHorizontal,
@@ -809,14 +807,9 @@ function WebsiteDirectoryContent() {
                                 <div className="w-full overflow-x-auto">
                                     <table className="w-full min-w-[1100px] table-fixed border-collapse text-left text-sm">
                                         <colgroup>
-                                            <col style={{ width: "26%" }} />{" "}
-                                            {/* Website Name / URL */}
-                                            <col style={{ width: "15%" }} />{" "}
-                                            {/* Client / Business Type */}
-                                            <col style={{ width: "12%" }} /> {/* Phase */}
-                                            <col style={{ width: "12%" }} /> {/* Project Status */}
-                                            <col style={{ width: "20%" }} /> {/* QA Progress */}
-                                            <col style={{ width: "10%" }} /> {/* Actions */}
+                                            {["26%", "15%", "12%", "12%", "20%", "10%"].map((width) => (
+                                                <col key={width} style={{ width }} />
+                                            ))}
                                         </colgroup>
 
                                         <thead className="border-b border-slate-200 bg-slate-50/70 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400">

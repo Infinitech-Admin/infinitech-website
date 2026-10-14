@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import {
   Activity,
   AlertTriangle,
@@ -24,6 +25,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -82,6 +84,13 @@ type Account = {
 
 type CredentialDisclosure = { login_identifier: string; initial_password: string };
 type AuditEvent = Record<string, unknown>;
+
+type ConfirmRequest = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  destructive?: boolean;
+};
 
 const ACTIONS = ["view", "create", "edit", "delete", "export"] as const;
 type Action = (typeof ACTIONS)[number];
@@ -160,27 +169,47 @@ const makePayload = (grants: Grants) => ({
   })),
 });
 
-function toggleDirectory(current: Grants, directory: Directory): Grants {
-  const next = { ...current };
-  if ((next[directory.id] || []).length) delete next[directory.id];
-  else next[directory.id] = ["view"];
-  return next;
+function withAction(existing: Action[], directory: Directory, action: Action): Action[] {
+  const next = new Set<Action>(existing);
+  next.add(action);
+  if (action !== "view" && directory.grantable_actions?.includes("view")) {
+    next.add("view");
+  }
+  return ACTIONS.filter((item) => next.has(item));
 }
 
-// Granting any action on an un-granted directory also grants "view".
-function toggleAction(current: Grants, directory: Directory, action: Action): Grants {
-  const next = { ...current };
-  const selected = next[directory.id] || [];
-  if (!selected.length) {
-    next[directory.id] = action === "view" ? ["view"] : ["view", action];
-    return next;
-  }
-  const actions = selected.includes(action)
-    ? selected.filter((item) => item !== action)
-    : [...selected, action];
+function withoutAction(existing: Action[], action: Action): Action[] {
+  if (action === "view") return [];
+  return existing.filter((item) => item !== action);
+}
+
+function setDirectoryActions(grants: Grants, directory: Directory, actions: Action[]): Grants {
+  const next = { ...grants };
   if (actions.length) next[directory.id] = actions;
   else delete next[directory.id];
   return next;
+}
+
+function toggleDirectory(current: Grants, directory: Directory): Grants {
+  const next = { ...current };
+  const grantable = ACTIONS.filter((action) =>
+    directory.grantable_actions?.includes(action),
+  );
+  const selected = next[directory.id] || [];
+  const allSelected =
+    grantable.length > 0 && grantable.every((action) => selected.includes(action));
+
+  if (allSelected || grantable.length === 0) delete next[directory.id];
+  else next[directory.id] = grantable;
+  return next;
+}
+
+function toggleAction(current: Grants, directory: Directory, action: Action): Grants {
+  const selected = current[directory.id] || [];
+  const updated = selected.includes(action)
+    ? withoutAction(selected, action)
+    : withAction(selected, directory, action);
+  return setDirectoryActions(current, directory, updated);
 }
 
 function toggleModuleAction(
@@ -189,21 +218,13 @@ function toggleModuleAction(
   action: Action,
   grant: boolean,
 ): Grants {
-  const next = { ...current };
+  let next = current;
   for (const directory of directories) {
     const existing = next[directory.id] || [];
-    let updated: Action[];
-    if (grant) {
-      updated = existing.includes(action)
-        ? existing
-        : existing.length || action === "view"
-          ? [...existing, action]
-          : ["view", action];
-    } else {
-      updated = existing.filter((item) => item !== action);
-    }
-    if (updated.length) next[directory.id] = updated;
-    else delete next[directory.id];
+    const updated = grant
+      ? withAction(existing, directory, action)
+      : withoutAction(existing, action);
+    next = setDirectoryActions(next, directory, updated);
   }
   return next;
 }
@@ -273,9 +294,11 @@ function CredentialLine({ label, value }: { label: string; value: string }) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      toast.success("Copied to clipboard.");
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);
+      toast.error("Unable to copy. Select the text and copy it manually.");
     }
   }
 
@@ -307,9 +330,11 @@ function PasswordReveal({ value }: { value: string }) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      toast.success("Copied to clipboard.");
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);
+      toast.error("Unable to copy. Select the text and copy it manually.");
     }
   }
 
@@ -359,11 +384,10 @@ function AuditList({ events, showActors = false }: { events: AuditEvent[]; showA
             </div>
             <div className="flex items-center gap-3">
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  failed
-                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                }`}
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${failed
+                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  }`}
               >
                 {outcome || "—"}
               </span>
@@ -480,6 +504,13 @@ function PermissionMatrix({
                 <tbody>
                   {directories.map((directory) => {
                     const actions = grants[directory.id] || [];
+
+                    const grantable = ACTIONS.filter((action) =>
+                      directory.grantable_actions?.includes(action),
+                    );
+                    const allGranted =
+                      grantable.length > 0 && grantable.every((action) => actions.includes(action));
+
                     return (
                       <tr
                         className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-900/40"
@@ -488,9 +519,10 @@ function PermissionMatrix({
                         <td className="px-4 py-2.5">
                           <label className="flex items-center gap-2.5 font-medium text-slate-800 dark:text-slate-200">
                             <TriCheckbox
-                              checked={actions.length > 0}
+                              checked={allGranted}
                               disabled={readOnly || (!actions.length && !directory.grantable_actions?.includes("view"))}
-                              label={`Grant access to ${directory.label}`}
+                              indeterminate={actions.length > 0 && !allGranted}
+                              label={`Grant all access to ${directory.label}`}
                               onChange={() => setGrants((current) => toggleDirectory(current, directory))}
                             />
                             <span>{directory.label}</span>
@@ -560,6 +592,28 @@ export default function UserAccessManagementPage() {
   const [credentials, setCredentials] = useState<CredentialDisclosure | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+  const confirmResolverRef = useRef<((confirmed: boolean) => void) | null>(null);
+
+  // Opens the confirmation modal and resolves true/false, so callers can
+  // `await askConfirm(...)` exactly where they used `window.confirm(...)`.
+  function askConfirm(request: ConfirmRequest): Promise<boolean> {
+    return new Promise((resolve) => {
+      confirmResolverRef.current = resolve;
+      setConfirmRequest(request);
+    });
+  }
+
+  function settleConfirm(confirmed: boolean) {
+    confirmResolverRef.current?.(confirmed);
+    confirmResolverRef.current = null;
+    setConfirmRequest(null);
+  }
+
+  function notifyError(failure: unknown, fallback: string) {
+    toast.error(failure instanceof Error ? failure.message : fallback);
+  }
 
   const groupedDirectories = useMemo(
     () =>
@@ -701,15 +755,23 @@ export default function UserAccessManagementPage() {
 
   async function createAccount() {
     if (!selectedEmployee) return;
-    if (!window.confirm(`Create an active account for ${fullName(selectedEmployee)} with the selected directory permissions?`)) return;
+    const employee = selectedEmployee;
+    const count = Object.keys(newGrants).length;
+
+    const confirmed = await askConfirm({
+      title: "Create this account?",
+      description: `An active account will be created for ${fullName(employee)} with access to ${count} ${count === 1 ? "directory" : "directories"}. A one-time password will be generated.`,
+      confirmLabel: "Create account",
+    });
+    if (!confirmed) return;
+
     setBusy(true);
-    setError("");
     try {
       const result = await readJson(
         await fetch("/api/admin/access-management/accounts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employee_id: selectedEmployee.id, ...makePayload(newGrants) }),
+          body: JSON.stringify({ employee_id: employee.id, ...makePayload(newGrants) }),
         }),
       );
       setCredentials({
@@ -718,9 +780,10 @@ export default function UserAccessManagementPage() {
       });
       resetAddAccount();
       setAddAccountOpen(false);
+      toast.success(`Account created for ${fullName(employee)}.`);
       await loadAccounts();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to create the account.");
+      notifyError(failure, "Unable to create the account.");
     } finally {
       setBusy(false);
     }
@@ -737,9 +800,15 @@ export default function UserAccessManagementPage() {
 
   async function savePermissions() {
     if (!selectedAccount) return;
-    if (!window.confirm(`Replace all directory permissions for ${selectedAccount.name}? Existing sessions will be revoked.`)) return;
+
+    const confirmed = await askConfirm({
+      title: "Replace permissions?",
+      description: `All directory permissions for ${selectedAccount.name} will be replaced with your selection. Their active sessions will be revoked and they will need to sign in again.`,
+      confirmLabel: "Save permissions",
+    });
+    if (!confirmed) return;
+
     setBusy(true);
-    setError("");
     try {
       const result = await readJson(
         await fetch(`/api/admin/access-management/accounts/${selectedAccount.id}/permissions`, {
@@ -752,9 +821,10 @@ export default function UserAccessManagementPage() {
       setEditGrants(
         Object.fromEntries(result.data.directories.map((grant: DirectoryGrant) => [grant.id, grant.actions])),
       );
+      toast.success("Permissions updated. Active sessions were revoked.");
       await loadAccounts();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to update permissions.");
+      notifyError(failure, "Unable to update permissions.");
     } finally {
       setBusy(false);
     }
@@ -762,10 +832,41 @@ export default function UserAccessManagementPage() {
 
   async function setAccountStatus(nextStatus: AccountStatus) {
     if (!selectedAccount) return;
-    const verb = nextStatus === "revoked" ? "Revoke" : nextStatus === "suspended" ? "Suspend" : "Reactivate";
-    if (!window.confirm(`${verb} ${selectedAccount.name}'s account?`)) return;
+    const name = selectedAccount.name;
+
+    const copy = {
+      revoked: {
+        title: "Revoke this account?",
+        description: `${name}'s account will be permanently revoked and they will lose all access.`,
+        confirmLabel: "Revoke account",
+        done: "Account revoked.",
+        destructive: true,
+      },
+      suspended: {
+        title: "Suspend this account?",
+        description: `${name} will be signed out and unable to sign in until the account is reactivated.`,
+        confirmLabel: "Suspend account",
+        done: "Account suspended.",
+        destructive: false,
+      },
+      active: {
+        title: "Reactivate this account?",
+        description: `${name} will be able to sign in again with their existing permissions.`,
+        confirmLabel: "Reactivate account",
+        done: "Account reactivated.",
+        destructive: false,
+      },
+    }[nextStatus];
+
+    const confirmed = await askConfirm({
+      title: copy.title,
+      description: copy.description,
+      confirmLabel: copy.confirmLabel,
+      destructive: copy.destructive,
+    });
+    if (!confirmed) return;
+
     setBusy(true);
-    setError("");
     try {
       const result = await readJson(
         await fetch(`/api/admin/access-management/accounts/${selectedAccount.id}/status`, {
@@ -773,15 +874,16 @@ export default function UserAccessManagementPage() {
           ...(nextStatus === "revoked"
             ? {}
             : {
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: nextStatus }),
-              }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: nextStatus }),
+            }),
         }),
       );
       setSelectedAccount(result.data);
+      toast.success(copy.done);
       await loadAccounts();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to update account status.");
+      notifyError(failure, "Unable to update account status.");
     } finally {
       setBusy(false);
     }
@@ -789,9 +891,15 @@ export default function UserAccessManagementPage() {
 
   async function rotateCredentials() {
     if (!selectedAccount) return;
-    if (!window.confirm(`Generate a new password for ${selectedAccount.name}? All current sessions will be revoked.`)) return;
+
+    const confirmed = await askConfirm({
+      title: "Generate a new password?",
+      description: `A new password will be generated for ${selectedAccount.name}. The old password stops working and all current sessions are revoked.`,
+      confirmLabel: "Generate password",
+    });
+    if (!confirmed) return;
+
     setBusy(true);
-    setError("");
     try {
       const result = await readJson(
         await fetch(`/api/admin/access-management/accounts/${selectedAccount.id}/rotate-credentials`, {
@@ -802,9 +910,10 @@ export default function UserAccessManagementPage() {
       setSelectedAccount((current) =>
         current ? { ...current, initial_password: result.initial_password } : current,
       );
+      toast.success("New credentials generated.");
       await loadAccounts();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to rotate credentials.");
+      notifyError(failure, "Unable to rotate credentials.");
     } finally {
       setBusy(false);
     }
@@ -817,7 +926,7 @@ export default function UserAccessManagementPage() {
       );
       setAudit(result.data);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to load account audit history.");
+      notifyError(failure, "Unable to load account audit history.");
     }
   }
 
@@ -830,7 +939,7 @@ export default function UserAccessManagementPage() {
       );
       setSystemAudit(result.data);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to load system audit history.");
+      notifyError(failure, "Unable to load system audit history.");
       setSystemAudit([]);
     }
   }
@@ -892,7 +1001,7 @@ export default function UserAccessManagementPage() {
         </div>
       </header>
 
-      <div className="w-full min-w-0 space-y-5 px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <div className="w-full min-w-0 space-y-5 py-5">
         {error && !dialogOpen && <ErrorAlert message={error} onDismiss={() => setError("")} />}
 
         {/* Stats double as status filters */}
@@ -902,11 +1011,10 @@ export default function UserAccessManagementPage() {
             return (
               <button
                 aria-pressed={selected}
-                className={`flex items-center justify-between gap-3 rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-950 dark:hover:border-blue-700 ${
-                  selected
-                    ? "border-blue-500 ring-1 ring-blue-500"
-                    : "border-slate-200 dark:border-slate-800"
-                }`}
+                className={`flex items-center justify-between gap-3 rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-slate-950 dark:hover:border-blue-700 ${selected
+                  ? "border-blue-500 ring-1 ring-blue-500"
+                  : "border-slate-200 dark:border-slate-800"
+                  }`}
                 key={key}
                 onClick={() => setStatus(filter)}
                 type="button"
@@ -973,9 +1081,9 @@ export default function UserAccessManagementPage() {
                   <SelectContent className={SELECT_CONTENT_CLASS} position="popper">
                     <SelectItem value="all">All directories</SelectItem>
                     {directories.map((directory) => (
-                        <SelectItem key={directory.id} value={directory.key}>
-                          {directory.label}
-                        </SelectItem>
+                      <SelectItem key={directory.id} value={directory.key}>
+                        {directory.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1377,6 +1485,44 @@ export default function UserAccessManagementPage() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Confirmation modal (replaces window.confirm) ── */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) settleConfirm(false);
+        }}
+        open={Boolean(confirmRequest)}
+      >
+        <DialogContent className="w-[calc(100%-1.5rem)] max-w-md">
+          <DialogHeader className="text-left">
+            <DialogTitle className="flex items-center gap-2">
+              {confirmRequest?.destructive ? (
+                <AlertTriangle aria-hidden="true" className="h-5 w-5 text-rose-600" />
+              ) : (
+                <ShieldCheck aria-hidden="true" className="h-5 w-5 text-blue-600" />
+              )}
+              {confirmRequest?.title}
+            </DialogTitle>
+            <DialogDescription>{confirmRequest?.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button onClick={() => settleConfirm(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button
+              className={
+                confirmRequest?.destructive
+                  ? "bg-rose-600 text-white hover:bg-rose-700"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+              }
+              onClick={() => settleConfirm(true)}
+              type="button"
+            >
+              {confirmRequest?.confirmLabel}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

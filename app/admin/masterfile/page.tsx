@@ -1459,7 +1459,7 @@ export default function EmployeeMasterfilePage() {
                                   onClick={() => openEmployeeIdDialog(employee)}
                                 >
                                   <CreditCard className="mr-2 h-4 w-4 text-indigo-600" />
-                                  Employee ID &amp; history
+                                  Issue Employee ID
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />

@@ -27,6 +27,10 @@ import {
 } from "recharts";
 
 import { adminFetch } from "@/lib/admin-fetch";
+import {
+  getAuthorizedNavSections,
+  hasDirectoryAccess,
+} from "@/lib/admin-navigation";
 
 // ---------- Types ----------
 
@@ -281,7 +285,7 @@ export default function AdminDashboard() {
       const visibleCategories = superadmin
         ? CATEGORY_CONFIG
         : CATEGORY_CONFIG.filter((category) =>
-            grantedDirectories.includes(category.directory),
+            hasDirectoryAccess(grantedDirectories, category.directory),
           );
 
       const results = await Promise.allSettled(
@@ -409,6 +413,15 @@ export default function AdminDashboard() {
 
     return days;
   }, [categories]);
+  const directorySections = getAuthorizedNavSections(
+    permissionKeys,
+    isSuperadmin,
+  )
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.href !== "/admin/dashboard"),
+    }))
+    .filter((section) => section.items.length > 0);
 
   if (loading) {
     return (
@@ -430,9 +443,51 @@ export default function AdminDashboard() {
           Dashboard
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Welcome to your support management system
+          Welcome to your admin dashboard
         </p>
       </div>
+
+      {!isSuperadmin && (
+        <section aria-label="Your directories" className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              Your directories
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Open the admin areas assigned to your account.
+            </p>
+          </div>
+          {directorySections.length ? (
+            directorySections.map((section) => (
+              <div key={section.title} className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {section.title}
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {section.items.map(({ href, label, icon: Icon }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 group-hover:bg-cyan-100 dark:bg-cyan-950 dark:text-cyan-300 dark:group-hover:bg-cyan-900">
+                        <Icon size={20} aria-hidden="true" />
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {label}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+              No directories are assigned to your account yet. Contact your administrator for access.
+            </p>
+          )}
+        </section>
+      )}
 
       {error && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
@@ -441,11 +496,12 @@ export default function AdminDashboard() {
       )}
 
       {/* Charts */}
+      {categories.length > 0 && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Requests by Category</CardTitle>
-            <CardDescription>Volume across all request types</CardDescription>
+            <CardDescription>Volume across your available request types</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-72">
@@ -521,7 +577,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle>Request Trend (Last 14 Days)</CardTitle>
             <CardDescription>
-              All incoming requests across every category, by day
+              Incoming requests in your available categories, by day
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -549,13 +605,14 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+      )}
 
-      {(isSuperadmin || permissionKeys.includes("website_directory")) && (
+      {(isSuperadmin || hasDirectoryAccess(permissionKeys, "website_directory")) && (
         <WebsiteDirectorySummary />
       )}
 
       {/* Quick Actions */}
-      {(isSuperadmin || permissionKeys.includes("support_tickets")) && (
+      {(isSuperadmin || hasDirectoryAccess(permissionKeys, "support_tickets")) && (
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
