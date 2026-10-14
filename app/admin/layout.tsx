@@ -15,8 +15,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import {
-  NAV_DIRECTORY_BY_HREF,
+  ADMIN_NAV_ITEMS,
   NAV_SECTIONS,
+  getDirectoryKeyForHref,
   getAuthorizedNavSections,
   hasDirectoryAccess,
 } from "@/lib/admin-navigation";
@@ -336,11 +337,10 @@ export default function AdminLayout({
 
         if (pathname === "/admin/dashboard" && !session.is_superadmin) {
           const firstAuthorizedPath =
-            NAV_SECTIONS.flatMap((section) => section.items).find(
-              (item) =>
-                NAV_DIRECTORY_BY_HREF[item.href] &&
-                hasDirectoryAccess(keys, NAV_DIRECTORY_BY_HREF[item.href]),
-            )?.href ||
+            NAV_SECTIONS.flatMap((section) => section.items).find((item) => {
+              const directory = getDirectoryKeyForHref(item.href);
+              return directory ? hasDirectoryAccess(keys, directory) : false;
+            })?.href ||
             (hasDirectoryAccess(keys, "user_access_management")
               ? "/admin/access-management"
               : hasDirectoryAccess(keys, "system_audit_logs")
@@ -349,9 +349,14 @@ export default function AdminLayout({
           router.replace(firstAuthorizedPath || "/admin/login");
         }
 
-        const currentDirectory = Object.entries(NAV_DIRECTORY_BY_HREF).find(
-          ([href]) => pathname === href || pathname.startsWith(`${href}/`),
-        )?.[1];
+        const currentPath = NAV_SECTIONS.flatMap((section) => section.items)
+          .map((item) => item.href)
+          .concat(ADMIN_NAV_ITEMS.map((item) => item.href))
+          .sort((left, right) => right.length - left.length)
+          .find((href) => pathname === href || pathname.startsWith(`${href}/`));
+        const currentDirectory = currentPath
+          ? getDirectoryKeyForHref(currentPath)
+          : undefined;
         if (
           currentDirectory &&
           !session.is_superadmin &&
