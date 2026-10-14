@@ -337,10 +337,10 @@ export default function BlogAdminPage() {
 
   if (loading && posts.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin mb-4 inline-block">
-            <FileText className="h-8 w-8 text-cyan-600" />
+            <FileText className="h-8 w-8 text-blue-600" />
           </div>
           <p className="text-muted-foreground">Loading blog posts...</p>
         </div>
@@ -349,15 +349,15 @@ export default function BlogAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <FileText className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
                 Blog Posts
               </h1>
               <p className="text-muted-foreground">
@@ -367,7 +367,7 @@ export default function BlogAdminPage() {
           </div>
           <Button
             onClick={openCreateForm}
-            className="bg-cyan-600 hover:bg-cyan-700"
+            className="bg-cyan-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
             New Post
@@ -375,14 +375,14 @@ export default function BlogAdminPage() {
         </div>
 
         {message && (
-          <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <AlertDescription className="text-blue-800">
               {message}
             </AlertDescription>
           </Alert>
         )}
 
-        <Card className="mb-6 border-2">
+        <Card className="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -396,8 +396,8 @@ export default function BlogAdminPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950 dark:to-blue-950 border-b-2">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>All Posts</CardTitle>
@@ -411,7 +411,7 @@ export default function BlogAdminPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                  <TableRow className="bg-slate-50">
                     <TableHead className="font-bold">ID</TableHead>
                     <TableHead className="font-bold">Thumbnail</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
@@ -429,9 +429,9 @@ export default function BlogAdminPage() {
                   {posts.map((post) => (
                     <TableRow
                       key={post.id}
-                      className="hover:bg-cyan-50/50 dark:hover:bg-cyan-900/20 border-b"
+                      className="hover:bg-blue-50/70 border-b"
                     >
-                      <TableCell className="font-bold text-cyan-600">
+                      <TableCell className="font-bold text-blue-600">
                         {post.id}
                       </TableCell>
                       <TableCell>
@@ -493,7 +493,7 @@ export default function BlogAdminPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setViewPost(post)}
-                                className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800"
+                                className="border border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -518,7 +518,7 @@ export default function BlogAdminPage() {
                                     />
                                   )}
                                   {post.image_urls?.length > 0 && (
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                       {post.image_urls.map((url, i) => (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -537,7 +537,7 @@ export default function BlogAdminPage() {
                                       className="w-full rounded-lg max-h-72"
                                     />
                                   )}
-                                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                                  <p className="text-sm text-slate-600">
                                     {post.description}
                                   </p>
                                   {post.content && (
@@ -554,7 +554,7 @@ export default function BlogAdminPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => openEditForm(post)}
-                            className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800"
+                            className="border border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -563,7 +563,7 @@ export default function BlogAdminPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => setDeleteTarget(post)}
-                            className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800"
+                            className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -642,7 +642,7 @@ export default function BlogAdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <Input
@@ -738,7 +738,7 @@ export default function BlogAdminPage() {
                 <Label>Gallery Images</Label>
 
                 {form.image_urls.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {form.image_urls.map((url, i) => (
                       <div key={i} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -843,7 +843,7 @@ export default function BlogAdminPage() {
                   videoUploading ||
                   thumbnailUploading
                 }
-                className="bg-cyan-600 hover:bg-cyan-700"
+                className="bg-cyan-600 hover:bg-blue-700"
               >
                 {saving ? (
                   <>
@@ -872,7 +872,7 @@ export default function BlogAdminPage() {
                 {deleteTarget && (
                   <>
                     You&apos;re about to permanently delete{" "}
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    <span className="font-semibold text-slate-700">
                       &ldquo;{deleteTarget.title}&rdquo;
                     </span>
                     . This cannot be undone.

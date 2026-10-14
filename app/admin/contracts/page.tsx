@@ -69,12 +69,9 @@ type Term = (typeof TERMS)[number];
 // Same pattern as STATUS_BADGE_CLASSES in employee-types — first class is
 // also used for the dot color in the left filter tabs.
 const SERVICE_BADGE_CLASSES: Record<Service, string> = {
-  Photography:
-    "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300",
-  "Social Media Management":
-    "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
-  "Website Development":
-    "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300",
+  Photography: "bg-pink-100 text-pink-700 border-pink-200",
+  "Social Media Management": "bg-blue-100 text-blue-700 border-blue-200",
+  "Website Development": "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
 interface Contract {
@@ -365,9 +362,9 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-900/10 dark:to-purple-950/10">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* ── Header ── */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-900 dark:to-purple-900 shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
@@ -403,8 +400,8 @@ export default function ContractsPage() {
 
       <div className="w-full py-8 space-y-6">
         {/* ── TABLE + LEFT SERVICE FILTER ── */}
-        <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur overflow-hidden">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 dark:from-slate-800 dark:to-blue-900/10 px-4 sm:px-6 lg:px-8">
+        <Card className="border-2 border-slate-200 shadow-xl bg-white/80 backdrop-blur overflow-hidden">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-blue-50/30 px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
@@ -438,7 +435,7 @@ export default function ContractsPage() {
 
           <div className="flex flex-col lg:flex-row">
             {/* Left-side service filter tabs */}
-            <aside className="lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r bg-slate-50/60 dark:bg-slate-900/40 p-3 space-y-1">
+            <aside className="lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r bg-slate-50/60 p-3 space-y-1">
               <FilterTab
                 label="All"
                 count={contracts.length}
@@ -461,7 +458,7 @@ export default function ContractsPage() {
               <div className="w-full overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                    <TableRow className="bg-slate-50">
                       <TableHead className="font-semibold whitespace-nowrap">
                         Client
                       </TableHead>
@@ -519,7 +516,7 @@ export default function ContractsPage() {
                           <TableRow
                             key={contract.id}
                             onClick={() => openContract(contract)}
-                            className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                            className="cursor-pointer hover:bg-slate-50/50"
                           >
                             <TableCell className="font-medium whitespace-nowrap">
                               <div className="flex items-center gap-2">
@@ -577,7 +574,7 @@ export default function ContractsPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => openContract(contract)}
-                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                                  className="border border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                                   title="Open contract"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -660,7 +657,7 @@ export default function ContractsPage() {
           <div className="space-y-5">
             {/* Contract details */}
             <div>
-              <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2 text-xs uppercase tracking-wide">
+              <p className="font-semibold text-slate-700 mb-2 text-xs uppercase tracking-wide">
                 Contract
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -735,7 +732,7 @@ export default function ContractsPage() {
 
             {/* Commission */}
             <div>
-              <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2 text-xs uppercase tracking-wide">
+              <p className="font-semibold text-slate-700 mb-2 text-xs uppercase tracking-wide">
                 Commission
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -875,7 +872,7 @@ function FilterTab({
       className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
         active
           ? "bg-blue-600 text-white shadow-sm"
-          : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+          : "text-slate-600 hover:bg-slate-200/60"
       }`}
     >
       <span className="flex items-center gap-2 text-left">
@@ -888,7 +885,7 @@ function FilterTab({
       </span>
       <span
         className={`text-xs rounded-full px-1.5 py-0.5 ${
-          active ? "bg-white/20" : "bg-slate-200 dark:bg-slate-700"
+          active ? "bg-white/20" : "bg-slate-200"
         }`}
       >
         {count}

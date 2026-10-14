@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,22 +9,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch from Laravel backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/support-tickets`, {
+    const apiUrl = process.env.LARAVEL_API_URL;
+    if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured");
+
+    const response = await fetch(`${apiUrl}/api/support-tickets`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
+        ...laravelServiceHeaders(),
         Accept: "application/json",
       },
     })
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch tickets from backend")
-    }
-
     const data = await response.json()
 
-    return NextResponse.json({ data: data.data || [] }, { status: 200 })
+    return NextResponse.json(
+      response.ok ? { data: data.data || [] } : data,
+      { status: response.status },
+    )
   } catch (error) {
     console.error("[v0] Error fetching tickets:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })

@@ -400,9 +400,12 @@ export default function EmployeeMasterfilePage() {
     let positionHistory: EmployeeFormData["position_history"] = [];
 
     try {
-      const response = await fetch(`/api/employee-masterfile/${employee.id}/position-history`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await fetch(
+        `/api/employee-masterfile/${employee.id}/position-history`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
       if (!response.ok) {
         throw new Error("Failed to load employee position history.");
       }
@@ -446,7 +449,13 @@ export default function EmployeeMasterfilePage() {
 
   const handleFieldChange = (
     field: keyof EmployeeFormData,
-    value: string | { action: "Promote" | "Demote"; new_position: string; effective_date: string }[],
+    value:
+      | string
+      | {
+          action: "Promote" | "Demote";
+          new_position: string;
+          effective_date: string;
+        }[],
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field])
@@ -523,9 +532,9 @@ export default function EmployeeMasterfilePage() {
         : "/api/employee-masterfile";
       const hasFileChanges = Boolean(
         profileImageFile ||
-        signatureFile ||
-        profileImageRemoved ||
-        signatureRemoved,
+          signatureFile ||
+          profileImageRemoved ||
+          signatureRemoved,
       );
       const method = editingId && !hasFileChanges ? "PUT" : "POST";
 
@@ -539,25 +548,25 @@ export default function EmployeeMasterfilePage() {
       const pendingHistoryEntry =
         formData.new_position?.trim() && formData.position_effective_date
           ? {
-            action:
-              formData.position_action === "Demote" ? "Demote" : "Promote",
-            new_position: formData.new_position.trim(),
-            effective_date: formData.position_effective_date,
-          }
+              action:
+                formData.position_action === "Demote" ? "Demote" : "Promote",
+              new_position: formData.new_position.trim(),
+              effective_date: formData.position_effective_date,
+            }
           : null;
 
       const nextPositionHistory = pendingHistoryEntry
         ? [
-          ...(formData.position_history ?? []).filter(
-            (item) =>
-              !(
-                item.new_position === pendingHistoryEntry.new_position &&
-                item.effective_date === pendingHistoryEntry.effective_date
-              ),
-          ),
-          pendingHistoryEntry,
-        ]
-        : formData.position_history ?? [];
+            ...(formData.position_history ?? []).filter(
+              (item) =>
+                !(
+                  item.new_position === pendingHistoryEntry.new_position &&
+                  item.effective_date === pendingHistoryEntry.effective_date
+                ),
+            ),
+            pendingHistoryEntry,
+          ]
+        : (formData.position_history ?? []);
 
       const payload = {
         ...formData,
@@ -588,7 +597,8 @@ export default function EmployeeMasterfilePage() {
           );
         });
 
-        if (profileImageFile) multipart.append("profile_image", profileImageFile);
+        if (profileImageFile)
+          multipart.append("profile_image", profileImageFile);
         if (signatureFile) multipart.append("signature", signatureFile);
         if (profileImageRemoved) multipart.append("remove_profile_image", "1");
         if (signatureRemoved) multipart.append("remove_signature", "1");
@@ -606,13 +616,13 @@ export default function EmployeeMasterfilePage() {
       const data = await response.json();
 
       if (!response.ok || data?.success === false) {
-        const validationMessage = Object.values(
-          data?.errors ?? {},
-        ).flat()[0];
+        const validationMessage = Object.values(data?.errors ?? {}).flat()[0];
         throw new Error(
           data?.message ||
-          (typeof validationMessage === "string" ? validationMessage : null) ||
-          "Failed to save employee record",
+            (typeof validationMessage === "string"
+              ? validationMessage
+              : null) ||
+            "Failed to save employee record",
         );
       }
 
@@ -938,60 +948,57 @@ export default function EmployeeMasterfilePage() {
 
   const SortIcon = ({ column }: { column: EmployeeSortKey }) => {
     if (sortKey !== column) {
-      return (
-        <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />
-      );
+      return <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50" />;
     }
 
     return sortDirection === "asc" ? (
-      <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+      <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-blue-600" />
     ) : (
-      <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+      <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-blue-600" />
     );
   };
 
   const sortedEmployees = sortKey
     ? [...filteredEmployees].sort((a, b) => {
-      let comparison = 0;
+        let comparison = 0;
 
-      if (sortKey === "employee") {
-        comparison = getFullName(a).localeCompare(
-          getFullName(b),
-          undefined,
-          { sensitivity: "base", numeric: true },
-        );
-      } else if (sortKey === "date_hired") {
-        const dateA = a.date_hired
-          ? new Date(a.date_hired).getTime()
-          : Number.NaN;
-        const dateB = b.date_hired
-          ? new Date(b.date_hired).getTime()
-          : Number.NaN;
+        if (sortKey === "employee") {
+          comparison = getFullName(a).localeCompare(getFullName(b), undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        } else if (sortKey === "date_hired") {
+          const dateA = a.date_hired
+            ? new Date(a.date_hired).getTime()
+            : Number.NaN;
+          const dateB = b.date_hired
+            ? new Date(b.date_hired).getTime()
+            : Number.NaN;
 
-        const validA = Number.isFinite(dateA);
-        const validB = Number.isFinite(dateB);
+          const validA = Number.isFinite(dateA);
+          const validB = Number.isFinite(dateB);
 
-        if (!validA && !validB) return 0;
-        if (!validA) return 1;
-        if (!validB) return -1;
+          if (!validA && !validB) return 0;
+          if (!validA) return 1;
+          if (!validB) return -1;
 
-        comparison = dateA - dateB;
-      } else {
-        const valueA = String(a[sortKey] ?? "");
-        const valueB = String(b[sortKey] ?? "");
+          comparison = dateA - dateB;
+        } else {
+          const valueA = String(a[sortKey] ?? "");
+          const valueB = String(b[sortKey] ?? "");
 
-        comparison = valueA.localeCompare(valueB, undefined, {
-          sensitivity: "base",
-          numeric: true,
-        });
-      }
+          comparison = valueA.localeCompare(valueB, undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        }
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    })
+        return sortDirection === "asc" ? comparison : -comparison;
+      })
     : filteredEmployees;
 
   const sortHeadButton =
-    "-ml-2 h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white";
+    "-ml-2 h-8 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-200/60 hover:text-slate-900";
 
   const sortableHead = (
     column: EmployeeSortKey,
@@ -1009,9 +1016,7 @@ export default function EmployeeMasterfilePage() {
     </TableHead>
   );
 
-  const totalPages = Math.ceil(
-    filteredEmployees.length / ITEMS_PER_PAGE,
-  );
+  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -1039,9 +1044,9 @@ export default function EmployeeMasterfilePage() {
   }
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-900/10 dark:to-purple-950/10">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* ── Header ── */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg dark:from-blue-900 dark:to-purple-900">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
         <div className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             {/* Title and Record Summary */}
@@ -1177,8 +1182,8 @@ export default function EmployeeMasterfilePage() {
 
       <div className="w-full min-w-0 space-y-5 py-5 sm:py-8">
         {/* Employee Records Card */}
-        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="space-y-3 border-b border-slate-100 p-4 sm:p-5 dark:border-slate-800">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="space-y-3 border-b border-slate-100 p-4 sm:p-5">
             {/* Search and Filters */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Search Input */}
@@ -1218,9 +1223,8 @@ export default function EmployeeMasterfilePage() {
 
                   <DropdownMenuContent
                     align="end"
-                    className="z-[999] w-64 border border-gray-200 bg-white text-gray-900 shadow-xl opacity-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                    className="z-[999] w-64 border border-gray-200 bg-white text-gray-900 shadow-xl opacity-100"
                   >
-
                     <DropdownMenuRadioGroup
                       value={statusFilter}
                       onValueChange={(value) => {
@@ -1276,12 +1280,24 @@ export default function EmployeeMasterfilePage() {
             <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-slate-200 bg-slate-50/80 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/70">
+                  <TableRow className="border-b border-slate-200 bg-slate-50/80 hover:bg-slate-50/80">
                     {sortableHead("id_number", "ID Number")}
                     {sortableHead("employee", "Employee")}
-                    {sortableHead("department", "Department", "hidden md:table-cell")}
-                    {sortableHead("position", "Position", "hidden lg:table-cell")}
-                    {sortableHead("date_hired", "Date Hired", "hidden lg:table-cell")}
+                    {sortableHead(
+                      "department",
+                      "Department",
+                      "hidden md:table-cell",
+                    )}
+                    {sortableHead(
+                      "position",
+                      "Position",
+                      "hidden lg:table-cell",
+                    )}
+                    {sortableHead(
+                      "date_hired",
+                      "Date Hired",
+                      "hidden lg:table-cell",
+                    )}
                     {sortableHead("status", "Status")}
                     <TableHead className="h-11 whitespace-nowrap flex justify-center items-center text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Actions
@@ -1294,11 +1310,11 @@ export default function EmployeeMasterfilePage() {
                     <TableRow>
                       <TableCell className="h-64 text-center" colSpan={7}>
                         <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50">
                             <Users className="h-6 w-6 text-slate-400" />
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">
+                            <p className="font-semibold text-slate-800">
                               No employee records found
                             </p>
                             <p className="mt-1 text-sm text-slate-500">
@@ -1312,10 +1328,10 @@ export default function EmployeeMasterfilePage() {
                     paginated.map((employee) => (
                       <TableRow
                         key={employee.id}
-                        className="border-b border-slate-100 transition-colors hover:bg-blue-50/40 dark:border-slate-800/80 dark:hover:bg-slate-900/70"
+                        className="border-b border-slate-100 transition-colors hover:bg-blue-50/40"
                       >
                         {/* ID */}
-                        <TableCell className="min-w-[50px] px-6 py-3.5 font-mono text-sm text-slate-600 dark:text-slate-300">
+                        <TableCell className="min-w-[50px] px-6 py-3.5 font-mono text-sm text-slate-600">
                           {employee.id_number}
                         </TableCell>
 
@@ -1324,18 +1340,19 @@ export default function EmployeeMasterfilePage() {
                           <div className="flex gap-3">
                             <EmployeeAvatar
                               employee={employee}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center bg-blue-100 text-sm font-bold text-blue-700 ring-2 ring-white dark:bg-blue-950 dark:text-blue-300 dark:ring-slate-950"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center bg-blue-100 text-sm font-bold text-blue-700 ring-2 ring-white"
                             />
 
                             <div className="min-w-0 justify-center items-center">
-                              <p className="max-w-[220px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              <p className="max-w-[220px] truncate text-sm font-semibold text-slate-900">
                                 {getShortName(employee)}
                               </p>
 
                               {/* Email */}
                               <div className="group/email mt-0.5 flex max-w-[220px] items-center gap-1">
-                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                  {employee.email_address || "No email provided"}
+                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500">
+                                  {employee.email_address ||
+                                    "No email provided"}
                                 </p>
 
                                 {employee.email_address && (
@@ -1346,7 +1363,9 @@ export default function EmployeeMasterfilePage() {
                                     aria-label={`Copy email ${employee.email_address}`}
                                     title="Copy email"
                                     className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-slate-500 opacity-0 transition-opacity group-hover/email:opacity-100 focus-visible:opacity-100 hover:text-cyan-700"
-                                    onClick={() => handleCopyEmail(employee.email_address!)}
+                                    onClick={() =>
+                                      handleCopyEmail(employee.email_address!)
+                                    }
                                   >
                                     <Copy className="h-3 w-3" />
                                   </Button>
@@ -1355,7 +1374,7 @@ export default function EmployeeMasterfilePage() {
 
                               {/* Phone */}
                               <div className="group/phone mt-0.5 flex max-w-[190px] items-center gap-1">
-                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                <p className="min-w-0 flex-1 truncate text-xs text-slate-500">
                                   {employee.mobile_number
                                     ? formatMobileNumber(employee.mobile_number)
                                     : "No phone number provided"}
@@ -1378,7 +1397,7 @@ export default function EmployeeMasterfilePage() {
 
                         {/* Department */}
                         <TableCell className="hidden max-w-[180px] md:table-cell">
-                          <span className="block truncate text-sm text-slate-600 dark:text-slate-300">
+                          <span className="block truncate text-sm text-slate-600">
                             {employee.department || "—"}
                           </span>
                         </TableCell>
@@ -1387,7 +1406,7 @@ export default function EmployeeMasterfilePage() {
                         <TableCell className="hidden lg:table-cell">
                           <div className="flex max-w-[190px] items-center gap-2">
                             <Briefcase className="h-4 w-4 shrink-0 text-slate-400" />
-                            <span className="truncate text-sm text-slate-600 dark:text-slate-300">
+                            <span className="truncate text-sm text-slate-600">
                               {employee.position || "—"}
                             </span>
                           </div>
@@ -1422,7 +1441,7 @@ export default function EmployeeMasterfilePage() {
                             </SelectTrigger>
 
                             <SelectContent
-                              className="z-[999] border border-slate-200 bg-white text-slate-900 shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                              className="z-[999] border border-slate-200 bg-white text-slate-900 shadow-xl"
                               position="popper"
                             >
                               {EMPLOYEE_STATUSES.map((s) => (
@@ -1441,7 +1460,7 @@ export default function EmployeeMasterfilePage() {
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
-                                  className="h-9 gap-1.5 rounded-lg border-slate-200 px-2.5 shadow-none hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                  className="h-9 gap-1.5 rounded-lg border-slate-200 px-2.5 shadow-none hover:bg-slate-50"
                                   size="sm"
                                   variant="outline"
                                 >
@@ -1453,7 +1472,7 @@ export default function EmployeeMasterfilePage() {
 
                               <DropdownMenuContent
                                 align="end"
-                                className="z-[999] w-60 border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+                                className="z-[999] w-60 border border-slate-200 bg-white shadow-xl"
                               >
                                 <DropdownMenuItem
                                   onClick={() => openEmployeeIdDialog(employee)}
@@ -1491,7 +1510,7 @@ export default function EmployeeMasterfilePage() {
                           <div className="flex items-center justify-center gap-1.5">
                             <Button
                               aria-label={`View ${getFullName(employee)}`}
-                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300"
+                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                               size="icon"
                               title="View employee"
                               variant="outline"
@@ -1503,7 +1522,7 @@ export default function EmployeeMasterfilePage() {
                             {/* Edit Dialog */}
                             <Button
                               aria-label={`Edit ${getFullName(employee)}`}
-                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-slate-700 dark:text-slate-300"
+                              className="h-9 w-9 rounded-lg border-slate-200 text-slate-600 shadow-none hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                               size="icon"
                               title="Edit employee"
                               variant="outline"
@@ -1526,7 +1545,7 @@ export default function EmployeeMasterfilePage() {
                               <DialogTrigger asChild>
                                 <Button
                                   aria-label={`Delete ${getFullName(employee)}`}
-                                  className="h-9 w-9 rounded-lg border-slate-200 text-slate-500 shadow-none hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"
+                                  className="h-9 w-9 rounded-lg border-slate-200 text-slate-500 shadow-none hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                                   size="icon"
                                   title="Delete employee"
                                   variant="outline"
@@ -1543,12 +1562,13 @@ export default function EmployeeMasterfilePage() {
                                   </DialogTitle>
                                   <DialogDescription>
                                     Are you sure you want to delete{" "}
-                                    <span className="font-semibold text-slate-900 dark:text-white">
+                                    <span className="font-semibold text-slate-900">
                                       {recordToDelete
                                         ? getFullName(recordToDelete)
                                         : getFullName(employee)}
                                     </span>
-                                    &apos;s record? This action cannot be undone.
+                                    &apos;s record? This action cannot be
+                                    undone.
                                   </DialogDescription>
                                 </DialogHeader>
 
@@ -1587,7 +1607,7 @@ export default function EmployeeMasterfilePage() {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-xs text-slate-500">
                 Page {currentPage} of {Math.max(totalPages, 1)}
                 <span className="mx-2">·</span>
@@ -1633,21 +1653,21 @@ export default function EmployeeMasterfilePage() {
           if (!open) setViewRecord(null);
         }}
       >
-        <DialogContent className="flex max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl dark:border-slate-700 dark:bg-slate-950 sm:w-full">
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:w-full">
           {viewRecord && (
             <>
-              <div className="relative shrink-0 border-b border-slate-200 px-5 py-5 pr-14 dark:border-slate-800 sm:px-7">
+              <div className="relative shrink-0 border-b border-slate-200 px-5 py-5 pr-14 sm:px-7">
                 <div className="flex min-w-0 items-center gap-3">
                   <EmployeeAvatar
                     employee={viewRecord}
-                    className="flex h-12 w-12 shrink-0 items-center justify-center bg-blue-100 text-lg font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center bg-blue-100 text-lg font-bold text-blue-700"
                   />
 
                   <div className="min-w-0 flex-1">
-                    <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
+                    <h2 className="break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                       {getFullName(viewRecord)}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-sm text-slate-500">
                       ID Number: {viewRecord.id_number}
                     </p>
                   </div>
@@ -1656,12 +1676,15 @@ export default function EmployeeMasterfilePage() {
 
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
                 <div className="space-y-4">
-                  <div className="border-b border-slate-200 pb-3 dark:border-slate-800">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <div className="border-b border-slate-200 pb-3">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Employment
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                      <InfoRow label="Department" value={viewRecord.department} />
+                      <InfoRow
+                        label="Department"
+                        value={viewRecord.department}
+                      />
                       <InfoRow label="Position" value={viewRecord.position} />
                       <InfoRow
                         label="Date Hired"
@@ -1675,8 +1698,8 @@ export default function EmployeeMasterfilePage() {
                     </div>
                   </div>
 
-                  <div className="border-b border-slate-200 pb-3 dark:border-slate-800">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <div className="border-b border-slate-200 pb-3">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Personal Information
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -1684,7 +1707,10 @@ export default function EmployeeMasterfilePage() {
                         label="Birthday"
                         value={formatDate(viewRecord.birthday)}
                       />
-                      <InfoRow label="Birthplace" value={viewRecord.birthplace} />
+                      <InfoRow
+                        label="Birthplace"
+                        value={viewRecord.birthplace}
+                      />
                       <InfoRow
                         label="Civil Status"
                         value={viewRecord.civil_status}
@@ -1693,8 +1719,8 @@ export default function EmployeeMasterfilePage() {
                     </div>
                   </div>
 
-                  <div className="border-b border-slate-200 pb-3 dark:border-slate-800">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <div className="border-b border-slate-200 pb-3">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Government ID Numbers
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -1711,8 +1737,8 @@ export default function EmployeeMasterfilePage() {
                     </div>
                   </div>
 
-                  <div className="border-b border-slate-200 pb-3 dark:border-slate-800">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <div className="border-b border-slate-200 pb-3">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Family Information
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -1741,8 +1767,8 @@ export default function EmployeeMasterfilePage() {
                     </div>
                   </div>
 
-                  <div className="border-b border-slate-200 pb-3 dark:border-slate-800">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <div className="border-b border-slate-200 pb-3">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Contact Information
                     </p>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -1787,32 +1813,33 @@ export default function EmployeeMasterfilePage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {viewRecord.allowances && viewRecord.allowances.length > 0 && (
-                      <div className="min-w-0 pb-3">
-                        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                          Allowances
-                        </p>
+                    {viewRecord.allowances &&
+                      viewRecord.allowances.length > 0 && (
+                        <div className="min-w-0 pb-3">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Allowances
+                          </p>
 
-                        <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                          {viewRecord.allowances.map((a, i) => (
-                            <InfoRow
-                              key={`${a.label}-${i}`}
-                              label={a.label}
-                              value={formatCurrency(String(a.amount))}
-                            />
-                          ))}
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                            {viewRecord.allowances.map((a, i) => (
+                              <InfoRow
+                                key={`${a.label}-${i}`}
+                                label={a.label}
+                                value={formatCurrency(String(a.amount))}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     <div
                       className={`min-w-0 pb-3 ${
                         viewRecord.allowances?.length
-                          ? "border-t border-slate-200 pt-6 dark:border-slate-800 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
+                          ? "border-t border-slate-200 pt-6 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
                           : ""
                       }`}
                     >
-                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Employee Signature
                       </p>
 
@@ -1824,13 +1851,13 @@ export default function EmployeeMasterfilePage() {
                           alt={`${getFullName(viewRecord)} signature`}
                           className="max-h-24 max-w-full object-contain"
                           fallback={
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="text-sm text-slate-500">
                               No signature uploaded
                             </p>
                           }
                         />
                       ) : (
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-slate-500">
                           No signature uploaded
                         </p>
                       )}
@@ -1839,32 +1866,36 @@ export default function EmployeeMasterfilePage() {
                 </div>
               </div>
 
-              <div className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-7">
+              <div className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     {
                       label: "Employee ID",
                       icon: CreditCard,
                       action: openEmployeeIdDialog,
-                      className: "from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800",
+                      className:
+                        "from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800",
                     },
                     {
                       label: "COE",
                       icon: FilePlus2,
                       action: openCoeDialog,
-                      className: "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
+                      className:
+                        "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
                     },
                     {
                       label: "Clearance Form",
                       icon: ClipboardCheck,
                       action: openClearanceDialog,
-                      className: "from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700",
+                      className:
+                        "from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700",
                     },
                     {
                       label: "Clearance Cert",
                       icon: BadgeCheck,
                       action: openCertDialog,
-                      className: "from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600",
+                      className:
+                        "from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600",
                     },
                   ].map(({ label, icon: Icon, action, className }) => (
                     <Button
@@ -1913,9 +1944,9 @@ export default function EmployeeMasterfilePage() {
             </DialogTitle>
             <DialogDescription>
               Name, department, position, and period start are pulled from this
-              employee&apos;s masterfile record. Salary, allowances, coverage end
-              date, and signatory still need to be filled in. Choose Word or PDF
-              below before generating.
+              employee&apos;s masterfile record. Salary, allowances, coverage
+              end date, and signatory still need to be filled in. Choose Word or
+              PDF below before generating.
             </DialogDescription>
           </DialogHeader>
 
@@ -2006,7 +2037,7 @@ function InfoRow({
       {href && content !== "—" ? (
         <a
           href={href}
-          className="inline-flex items-center gap-1.5 font-medium text-slate-700 transition-colors hover:text-cyan-700 dark:text-slate-200 dark:hover:text-cyan-300"
+          className="inline-flex items-center gap-1.5 font-medium text-slate-700 transition-colors hover:text-cyan-700"
         >
           <span>{content}</span>
           <Phone className="h-3.5 w-3.5" />

@@ -1,67 +1,94 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
-  Search, Filter, Trash2, Mail, Globe, Phone, User, Clock,
-  CheckCircle2, ChevronLeft, ChevronRight, BarChart3,
-  X, Send, Minimize2, Maximize2, ChevronDown, LayoutDashboard,
-  RefreshCw, Inbox,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { cn } from "@/lib/utils"
+  Search,
+  Filter,
+  Trash2,
+  Mail,
+  Globe,
+  Phone,
+  User,
+  Clock,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
+  X,
+  Send,
+  Minimize2,
+  Maximize2,
+  ChevronDown,
+  LayoutDashboard,
+  RefreshCw,
+  Inbox,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface Reply {
-  id: number
-  direction: "outbound"
-  from_email: string
-  to_email: string
-  subject: string
-  body: string
-  created_at: string
+  id: number;
+  direction: "outbound";
+  from_email: string;
+  to_email: string;
+  subject: string;
+  body: string;
+  created_at: string;
 }
 
 interface SeoAudit {
-  id: number
-  full_name: string
-  email: string
-  mobile: string
-  website_url: string
-  status: string
-  notes: string | null
-  replies: Reply[]
-  created_at: string
+  id: number;
+  full_name: string;
+  email: string;
+  mobile: string;
+  website_url: string;
+  status: string;
+  notes: string | null;
+  replies: Reply[];
+  created_at: string;
 }
 
 // ─── Gmail Compose Modal ─────────────────────────────────────────────────────
 interface ComposeProps {
-  audit: SeoAudit
-  onClose: () => void
-  onSent: (updatedAudit: SeoAudit) => void
+  audit: SeoAudit;
+  onClose: () => void;
+  onSent: (updatedAudit: SeoAudit) => void;
 }
 
 function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
-  const [body, setBody] = useState("")
-  const [subject, setSubject] = useState(`Re: SEO Audit — ${audit.website_url}`)
-  const [minimized, setMinimized] = useState(false)
-  const [maximized, setMaximized] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState("")
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [body, setBody] = useState("");
+  const [subject, setSubject] = useState(
+    `Re: SEO Audit — ${audit.website_url}`,
+  );
+  const [minimized, setMinimized] = useState(false);
+  const [maximized, setMaximized] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!minimized) textareaRef.current?.focus()
-  }, [minimized])
+    if (!minimized) textareaRef.current?.focus();
+  }, [minimized]);
 
   const handleSend = async () => {
-    if (!body.trim()) { setError("Message body cannot be empty."); return }
-    setSending(true)
-    setError("")
+    if (!body.trim()) {
+      setError("Message body cannot be empty.");
+      return;
+    }
+    setSending(true);
+    setError("");
     try {
       const res = await fetch(`/api/seo-audit/${audit.id}/reply`, {
         method: "POST",
@@ -73,9 +100,9 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
           email: audit.email,
           website_url: audit.website_url,
         }),
-      })
-      const data = await res.json()
-      if (!data.success) throw new Error(data.message || "Failed to send")
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Failed to send");
 
       // Optimistically append the reply
       const newReply: Reply = {
@@ -86,15 +113,19 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
         subject,
         body,
         created_at: new Date().toISOString(),
-      }
-      onSent({ ...audit, status: "replied", replies: [...(audit.replies ?? []), newReply] })
-      onClose()
+      };
+      onSent({
+        ...audit,
+        status: "replied",
+        replies: [...(audit.replies ?? []), newReply],
+      });
+      onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.")
+      setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }
+  };
 
   // Minimized pill
   if (minimized) {
@@ -111,21 +142,29 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
             New Message — {audit.full_name}
           </span>
           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setMinimized(false)} className="text-white/70 hover:text-white"><Maximize2 className="w-3.5 h-3.5" /></button>
-            <button onClick={onClose} className="text-white/70 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+            <button
+              onClick={() => setMinimized(false)}
+              className="text-white/70 hover:text-slate-900"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-slate-900"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div
       className={cn(
         "fixed z-50 shadow-2xl rounded-t-xl overflow-hidden flex flex-col",
-        maximized
-          ? "inset-4 rounded-xl"
-          : "bottom-0 right-6 w-[520px]",
+        maximized ? "inset-4 rounded-xl" : "bottom-0 right-6 w-[520px]",
       )}
       style={{ maxHeight: maximized ? "calc(100vh - 32px)" : "520px" }}
     >
@@ -136,13 +175,26 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
       >
         <span className="text-white text-sm font-semibold">New Message</span>
         <div className="flex items-center gap-3">
-          <button onClick={() => setMinimized(true)} className="text-white/70 hover:text-white transition-colors">
+          <button
+            onClick={() => setMinimized(true)}
+            className="text-white/70 hover:text-slate-900 transition-colors"
+          >
             <Minimize2 className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => setMaximized((m) => !m)} className="text-white/70 hover:text-white transition-colors">
-            {maximized ? <Minimize2 className="w-3.5 h-3.5 rotate-45" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          <button
+            onClick={() => setMaximized((m) => !m)}
+            className="text-white/70 hover:text-slate-900 transition-colors"
+          >
+            {maximized ? (
+              <Minimize2 className="w-3.5 h-3.5 rotate-45" />
+            ) : (
+              <Maximize2 className="w-3.5 h-3.5" />
+            )}
           </button>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-slate-900 transition-colors"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -158,7 +210,9 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
 
         {/* Subject */}
         <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100">
-          <span className="text-xs text-slate-400 w-12 flex-shrink-0">Subject</span>
+          <span className="text-xs text-slate-400 w-12 flex-shrink-0">
+            Subject
+          </span>
           <input
             type="text"
             value={subject}
@@ -177,14 +231,10 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
           style={{ fontFamily: "inherit" }}
         />
 
-        {error && (
-          <p className="text-red-500 text-xs px-4 pb-2">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-xs px-4 pb-2">{error}</p>}
 
         {/* Toolbar */}
-        <div
-          className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 flex-shrink-0"
-        >
+        <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 flex-shrink-0">
           <button
             onClick={handleSend}
             disabled={sending || !body.trim()}
@@ -197,54 +247,74 @@ function GmailCompose({ audit, onClose, onSent }: ComposeProps) {
             style={{ background: "linear-gradient(135deg, #0d1b3e, #1a306e)" }}
           >
             {sending ? (
-              <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Sending...</>
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />{" "}
+                Sending...
+              </>
             ) : (
-              <><Send className="w-3.5 h-3.5" /> Send</>
+              <>
+                <Send className="w-3.5 h-3.5" /> Send
+              </>
             )}
           </button>
 
-          <button onClick={onClose} className="ml-auto text-slate-400 hover:text-red-500 transition-colors">
+          <button
+            onClick={onClose}
+            className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Thread Drawer ───────────────────────────────────────────────────────────
 interface ThreadDrawerProps {
-  audit: SeoAudit
-  onClose: () => void
-  onReply: () => void
-  onStatusChange: (id: number, status: string) => void
+  audit: SeoAudit;
+  onClose: () => void;
+  onReply: () => void;
+  onStatusChange: (id: number, status: string) => void;
 }
 
-function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerProps) {
+function ThreadDrawer({
+  audit,
+  onClose,
+  onReply,
+  onStatusChange,
+}: ThreadDrawerProps) {
   const statusColors: Record<string, string> = {
-    pending:     "bg-amber-100 text-amber-700 border-amber-200",
-    replied:     "bg-blue-100 text-blue-700 border-blue-200",
+    pending: "bg-amber-100 text-amber-700 border-amber-200",
+    replied: "bg-blue-100 text-blue-700 border-blue-200",
     in_progress: "bg-purple-100 text-purple-700 border-purple-200",
-    completed:   "bg-green-100 text-green-700 border-green-200",
-  }
+    completed: "bg-green-100 text-green-700 border-green-200",
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex">
       {/* Backdrop */}
-      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex-1 bg-black/30-sm" onClick={onClose} />
 
       {/* Panel */}
       <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)" }}
+          style={{
+            background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)",
+          }}
         >
           <div>
-            <h2 className="text-white font-bold text-base">{audit.full_name}</h2>
+            <h2 className="text-white font-bold text-base">
+              {audit.full_name}
+            </h2>
             <p className="text-white/60 text-xs mt-0.5">{audit.email}</p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-slate-900 transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -253,7 +323,12 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
         <div className="px-6 py-4 border-b border-slate-100 flex-shrink-0 space-y-2">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <Globe className="w-3.5 h-3.5 text-slate-400" />
-            <a href={audit.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+            <a
+              href={audit.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline truncate"
+            >
               {audit.website_url}
             </a>
           </div>
@@ -262,11 +337,19 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
             {audit.mobile}
           </div>
           <div className="flex items-center gap-4 mt-3">
-            <Select value={audit.status} onValueChange={(v) => onStatusChange(audit.id, v)}>
-              <SelectTrigger className={cn("w-36 h-7 text-xs border", statusColors[audit.status] || statusColors.pending)}>
+            <Select
+              value={audit.status}
+              onValueChange={(v) => onStatusChange(audit.id, v)}
+            >
+              <SelectTrigger
+                className={cn(
+                  "w-36 h-7 text-xs border bg-white text-slate-900 border-slate-200",
+                  statusColors[audit.status] || statusColors.pending,
+                )}
+              >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="z-[200]">
+              <SelectContent className="z-[200] bg-white text-slate-900 border-slate-200">
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="replied">Replied</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
@@ -274,7 +357,11 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
               </SelectContent>
             </Select>
             <span className="text-xs text-slate-400">
-              {new Date(audit.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              {new Date(audit.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </span>
           </div>
         </div>
@@ -284,19 +371,34 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
           {/* Original inquiry */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #f5a623, #e8891a)" }}>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                style={{
+                  background: "linear-gradient(135deg, #f5a623, #e8891a)",
+                }}
+              >
                 {audit.full_name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-700">{audit.full_name}</p>
-                <p className="text-xs text-slate-400">{new Date(audit.created_at).toLocaleString()}</p>
+                <p className="text-xs font-semibold text-slate-700">
+                  {audit.full_name}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {new Date(audit.created_at).toLocaleString()}
+                </p>
               </div>
-              <span className="ml-auto text-xs bg-amber-50 text-amber-600 border border-amber-200 rounded-full px-2 py-0.5">Inquiry</span>
+              <span className="ml-auto text-xs bg-amber-50 text-amber-600 border border-amber-200 rounded-full px-2 py-0.5">
+                Inquiry
+              </span>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
               Requested a free SEO audit for{" "}
-              <a href={audit.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-medium hover:underline">
+              <a
+                href={audit.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 font-medium hover:underline"
+              >
                 {audit.website_url}
               </a>
             </p>
@@ -304,29 +406,48 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
 
           {/* Reply bubbles */}
           {(audit.replies ?? []).map((reply) => (
-            <div key={reply.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div
+              key={reply.id}
+              className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"
+            >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #0d1b3e, #1a306e)" }}>
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, #0d1b3e, #1a306e)",
+                  }}
+                >
                   A
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">You (Admin)</p>
-                  <p className="text-xs text-slate-400">{new Date(reply.created_at).toLocaleString()}</p>
+                  <p className="text-xs font-semibold text-slate-700">
+                    You (Admin)
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {new Date(reply.created_at).toLocaleString()}
+                  </p>
                 </div>
-                <span className="ml-auto text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">Sent</span>
+                <span className="ml-auto text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-full px-2 py-0.5">
+                  Sent
+                </span>
               </div>
               {reply.subject && (
-                <p className="text-xs font-semibold text-slate-500 mb-1">{reply.subject}</p>
+                <p className="text-xs font-semibold text-slate-500 mb-1">
+                  {reply.subject}
+                </p>
               )}
-              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{reply.body}</p>
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                {reply.body}
+              </p>
             </div>
           ))}
 
           {(audit.replies ?? []).length === 0 && (
             <div className="text-center py-8 text-slate-400">
               <Inbox className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-xs">No replies yet. Click Reply to start the conversation.</p>
+              <p className="text-xs">
+                No replies yet. Click Reply to start the conversation.
+              </p>
             </div>
           )}
         </div>
@@ -344,50 +465,68 @@ function ThreadDrawer({ audit, onClose, onReply, onStatusChange }: ThreadDrawerP
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending:     { label: "Pending",     className: "bg-amber-100 text-amber-700 border border-amber-200" },
-  replied:     { label: "Replied",     className: "bg-blue-100 text-blue-700 border border-blue-200" },
-  in_progress: { label: "In Progress", className: "bg-purple-100 text-purple-700 border border-purple-200" },
-  completed:   { label: "Completed",   className: "bg-green-100 text-green-700 border border-green-200" },
-}
+  pending: {
+    label: "Pending",
+    className: "bg-amber-100 text-amber-700 border border-amber-200",
+  },
+  replied: {
+    label: "Replied",
+    className: "bg-blue-100 text-blue-700 border border-blue-200",
+  },
+  in_progress: {
+    label: "In Progress",
+    className: "bg-purple-100 text-purple-700 border border-purple-200",
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-green-100 text-green-700 border border-green-200",
+  },
+};
 
-const ITEMS_PER_PAGE = 12
+const ITEMS_PER_PAGE = 12;
 
 // ─── Main Admin Page ─────────────────────────────────────────────────────────
 export default function AdminSeoAuditPage() {
-  const [audits, setAudits]           = useState<SeoAudit[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [toast, setToast]             = useState("")
+  const [audits, setAudits] = useState<SeoAudit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [toast, setToast] = useState("");
 
   // Thread drawer
-  const [selectedAudit, setSelectedAudit] = useState<SeoAudit | null>(null)
+  const [selectedAudit, setSelectedAudit] = useState<SeoAudit | null>(null);
   // Gmail compose
-  const [composeAudit, setComposeAudit]   = useState<SeoAudit | null>(null)
+  const [composeAudit, setComposeAudit] = useState<SeoAudit | null>(null);
 
-  useEffect(() => { fetchAudits() }, [])
+  useEffect(() => {
+    fetchAudits();
+  }, []);
 
   const fetchAudits = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res  = await fetch("/api/seo-audit")
-      const data = await res.json()
-      if (data.success && data.data) setAudits(Array.isArray(data.data) ? data.data : [])
-      else setAudits([])
-    } catch { setAudits([]) }
-    finally { setLoading(false) }
-  }
+      const res = await fetch("/api/seo-audit");
+      const data = await res.json();
+      if (data.success && data.data)
+        setAudits(Array.isArray(data.data) ? data.data : []);
+      else setAudits([]);
+    } catch {
+      setAudits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(""), 3000)
-  }
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
@@ -395,86 +534,103 @@ export default function AdminSeoAuditPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
-      })
-      if (!res.ok) throw new Error()
-      setAudits((prev) => prev.map((a) => a.id === id ? { ...a, status } : a))
-      if (selectedAudit?.id === id) setSelectedAudit((p) => p ? { ...p, status } : p)
-    } catch { showToast("Failed to update status.") }
-  }
+      });
+      if (!res.ok) throw new Error();
+      setAudits((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status } : a)),
+      );
+      if (selectedAudit?.id === id)
+        setSelectedAudit((p) => (p ? { ...p, status } : p));
+    } catch {
+      showToast("Failed to update status.");
+    }
+  };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this audit request?")) return
+    if (!confirm("Delete this audit request?")) return;
     try {
-      const res = await fetch(`/api/seo-audit/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error()
-      setAudits((prev) => prev.filter((a) => a.id !== id))
-      if (selectedAudit?.id === id) setSelectedAudit(null)
-      showToast("Deleted successfully.")
-    } catch { showToast("Failed to delete.") }
-  }
+      const res = await fetch(`/api/seo-audit/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setAudits((prev) => prev.filter((a) => a.id !== id));
+      if (selectedAudit?.id === id) setSelectedAudit(null);
+      showToast("Deleted successfully.");
+    } catch {
+      showToast("Failed to delete.");
+    }
+  };
 
   const handleReplySent = (updated: SeoAudit) => {
-    setAudits((prev) => prev.map((a) => a.id === updated.id ? updated : a))
-    setSelectedAudit(updated)
-    setComposeAudit(null)
-    showToast("Reply sent successfully!")
-  }
+    setAudits((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+    setSelectedAudit(updated);
+    setComposeAudit(null);
+    showToast("Reply sent successfully!");
+  };
 
   // Filter + search
   const filtered = audits
     .filter((a) => {
-      const q = searchQuery.toLowerCase()
+      const q = searchQuery.toLowerCase();
       return (
         (a.full_name.toLowerCase().includes(q) ||
-         a.email.toLowerCase().includes(q) ||
-         a.website_url.toLowerCase().includes(q)) &&
+          a.email.toLowerCase().includes(q) ||
+          a.website_url.toLowerCase().includes(q)) &&
         (filterStatus === "all" || a.status === filterStatus)
-      )
+      );
     })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
-  const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
   const stats = {
-    total:       audits.length,
-    pending:     audits.filter((a) => a.status === "pending").length,
-    replied:     audits.filter((a) => a.status === "replied").length,
-    completed:   audits.filter((a) => a.status === "completed").length,
-  }
+    total: audits.length,
+    pending: audits.filter((a) => a.status === "pending").length,
+    replied: audits.filter((a) => a.status === "replied").length,
+    completed: audits.filter((a) => a.status === "completed").length,
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "#f0f4f8" }}>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-900">
         <div className="text-center">
           <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-slate-500 text-sm">Loading SEO audits...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#f0f4f8", fontFamily: "'Segoe UI', sans-serif" }}>
-
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* ── Top bar ── */}
-      <div style={{ background: "linear-gradient(135deg, #0d1b3e 0%, #1a306e 100%)" }} className="shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-5 sm:flex-row sm:items-center sm:px-6">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
-                <Search className="w-5 h-5 text-white" />
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
+                <Search className="h-5 w-5 text-white" />
               </div>
               SEO Audit Requests
             </h1>
-            <p className="text-white/50 text-sm mt-1">Manage, reply and track all audit inquiries</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage, reply and track all audit inquiries
+            </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={fetchAudits} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all">
+            <button
+              onClick={fetchAudits}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            >
               <RefreshCw className="w-4 h-4" /> Refresh
             </button>
             <Link href="/admin/dashboard">
-              <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all">
+              <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700">
                 <LayoutDashboard className="w-4 h-4" /> Dashboard
               </button>
             </Link>
@@ -482,22 +638,55 @@ export default function AdminSeoAuditPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Total", value: stats.total,     icon: BarChart3,    color: "#1a306e", bg: "#e8eef9" },
-            { label: "Pending", value: stats.pending, icon: Clock,        color: "#b45309", bg: "#fef3c7" },
-            { label: "Replied", value: stats.replied, icon: Mail,         color: "#1d4ed8", bg: "#dbeafe" },
-            { label: "Completed", value: stats.completed, icon: CheckCircle2, color: "#15803d", bg: "#dcfce7" },
+            {
+              label: "Total",
+              value: stats.total,
+              icon: BarChart3,
+              color: "#2563eb",
+              bg: "#eff6ff",
+            },
+            {
+              label: "Pending",
+              value: stats.pending,
+              icon: Clock,
+              color: "#b45309",
+              bg: "#fef3c7",
+            },
+            {
+              label: "Replied",
+              value: stats.replied,
+              icon: Mail,
+              color: "#1d4ed8",
+              bg: "#dbeafe",
+            },
+            {
+              label: "Completed",
+              value: stats.completed,
+              icon: CheckCircle2,
+              color: "#15803d",
+              bg: "#dcfce7",
+            },
           ].map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+            <div
+              key={label}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between"
+            >
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                <p className="text-3xl font-bold" style={{ color }}>{value}</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                  {label}
+                </p>
+                <p className="text-3xl font-bold" style={{ color }}>
+                  {value}
+                </p>
               </div>
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: bg }}>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                style={{ background: bg }}
+              >
                 <Icon className="w-5 h-5" style={{ color }} />
               </div>
             </div>
@@ -518,16 +707,25 @@ export default function AdminSeoAuditPage() {
             <Input
               placeholder="Search by name, email, or URL..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="pl-9 border-slate-200 text-sm"
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-9 border-slate-200 text-sm bg-white text-slate-900 placeholder:text-slate-400"
             />
           </div>
-          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1) }}>
-            <SelectTrigger className="w-40 border-slate-200 text-sm">
+          <Select
+            value={filterStatus}
+            onValueChange={(v) => {
+              setFilterStatus(v);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-40 border-slate-200 text-sm bg-white text-slate-900">
               <Filter className="w-3.5 h-3.5 mr-2 text-slate-400" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="z-[100]">
+            <SelectContent className="z-[100] bg-white text-slate-900 border-slate-200">
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="replied">Replied</SelectItem>
@@ -535,7 +733,9 @@ export default function AdminSeoAuditPage() {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-400 ml-auto">{filtered.length} results</p>
+          <p className="text-xs text-slate-400 ml-auto">
+            {filtered.length} results
+          </p>
         </div>
 
         {/* ── Table ── */}
@@ -544,26 +744,44 @@ export default function AdminSeoAuditPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Contact</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">Website</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">Mobile</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell">Replies</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell">Date</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Actions</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    Contact
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">
+                    Website
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">
+                    Mobile
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell">
+                    Replies
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell">
+                    Date
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-16 text-center text-slate-400">
+                    <td
+                      colSpan={7}
+                      className="py-16 text-center text-slate-400"
+                    >
                       <Inbox className="w-10 h-10 mx-auto mb-3 opacity-30" />
                       <p className="text-sm">No audit requests found</p>
                     </td>
                   </tr>
                 ) : (
                   paginated.map((audit) => {
-                    const sc = statusConfig[audit.status] || statusConfig.pending
+                    const sc =
+                      statusConfig[audit.status] || statusConfig.pending;
                     return (
                       <tr
                         key={audit.id}
@@ -575,13 +793,20 @@ export default function AdminSeoAuditPage() {
                           <div className="flex items-center gap-3">
                             <div
                               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                              style={{ background: "linear-gradient(135deg, #1a306e, #0d1b3e)" }}
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #1a306e, #0d1b3e)",
+                              }}
                             >
                               {audit.full_name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-700 text-sm">{audit.full_name}</p>
-                              <p className="text-xs text-slate-400">{audit.email}</p>
+                              <p className="font-semibold text-slate-700 text-sm">
+                                {audit.full_name}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {audit.email}
+                              </p>
                             </div>
                           </div>
                         </td>
@@ -600,47 +825,81 @@ export default function AdminSeoAuditPage() {
                         </td>
 
                         {/* Mobile */}
-                        <td className="px-5 py-3.5 hidden lg:table-cell text-slate-500 text-xs">{audit.mobile}</td>
+                        <td className="px-5 py-3.5 hidden lg:table-cell text-slate-500 text-xs">
+                          {audit.mobile}
+                        </td>
 
                         {/* Status */}
-                        <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
-                          <Select value={audit.status} onValueChange={(v) => handleStatusChange(audit.id, v)}>
-                            <SelectTrigger className={cn("h-7 w-32 text-xs rounded-full border", sc.className)}>
+                        <td
+                          className="px-5 py-3.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Select
+                            value={audit.status}
+                            onValueChange={(v) =>
+                              handleStatusChange(audit.id, v)
+                            }
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                "h-7 w-32 text-xs rounded-full border bg-white text-slate-900 border-slate-200",
+                                sc.className,
+                              )}
+                            >
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="z-[100]">
+                            <SelectContent className="z-[100] bg-white text-slate-900 border-slate-200">
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="replied">Replied</SelectItem>
-                              <SelectItem value="in_progress">In Progress</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="in_progress">
+                                In Progress
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                Completed
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
 
                         {/* Replies count */}
                         <td className="px-5 py-3.5 hidden sm:table-cell">
-                          <span className={cn(
-                            "text-xs font-semibold px-2.5 py-1 rounded-full",
-                            audit.replies?.length > 0
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-slate-100 text-slate-400"
-                          )}>
-                            {audit.replies?.length ?? 0} {audit.replies?.length === 1 ? "reply" : "replies"}
+                          <span
+                            className={cn(
+                              "text-xs font-semibold px-2.5 py-1 rounded-full",
+                              audit.replies?.length > 0
+                                ? "bg-blue-50 text-blue-600"
+                                : "bg-slate-50 text-slate-400",
+                            )}
+                          >
+                            {audit.replies?.length ?? 0}{" "}
+                            {audit.replies?.length === 1 ? "reply" : "replies"}
                           </span>
                         </td>
 
                         {/* Date */}
                         <td className="px-5 py-3.5 hidden sm:table-cell text-xs text-slate-400">
-                          {new Date(audit.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          {new Date(audit.created_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric", year: "numeric" },
+                          )}
                         </td>
 
                         {/* Actions */}
-                        <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="px-5 py-3.5 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => { setSelectedAudit(audit); setTimeout(() => setComposeAudit(audit), 100) }}
+                              onClick={() => {
+                                setSelectedAudit(audit);
+                                setTimeout(() => setComposeAudit(audit), 100);
+                              }}
                               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full text-white transition-all hover:opacity-90"
-                              style={{ background: "linear-gradient(135deg, #0d1b3e, #1a306e)" }}
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #0d1b3e, #1a306e)",
+                              }}
                             >
                               <Mail className="w-3 h-3" /> Reply
                             </button>
@@ -653,7 +912,7 @@ export default function AdminSeoAuditPage() {
                           </div>
                         </td>
                       </tr>
-                    )
+                    );
                   })
                 )}
               </tbody>
@@ -663,19 +922,23 @@ export default function AdminSeoAuditPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-              <p className="text-xs text-slate-400">Page {currentPage} of {totalPages}</p>
+              <p className="text-xs text-slate-400">
+                Page {currentPage} of {totalPages}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 disabled:opacity-40 hover:bg-slate-100 transition-all flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-all flex items-center gap-1"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Prev
                 </button>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 disabled:opacity-40 hover:bg-slate-100 transition-all flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-all flex items-center gap-1"
                 >
                   Next <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -704,5 +967,5 @@ export default function AdminSeoAuditPage() {
         />
       )}
     </div>
-  )
+  );
 }

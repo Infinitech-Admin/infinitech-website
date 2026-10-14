@@ -70,7 +70,9 @@ interface TemplateResponse {
 
 const authHeaders = () => {
   const token =
-    typeof window === "undefined" ? null : localStorage.getItem("adminSessionActive");
+    typeof window === "undefined"
+      ? null
+      : localStorage.getItem("adminSessionActive");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -305,8 +307,8 @@ export default function EmployeeClearanceFormPage() {
   }
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-900/10 dark:to-purple-950/10">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-900 dark:to-purple-900 shadow-lg">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 text-slate-900">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
@@ -342,7 +344,7 @@ export default function EmployeeClearanceFormPage() {
               className={`rounded-lg px-4 py-2 text-sm font-medium border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                 department === d.key
                   ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-sm"
-                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 "
               }`}
             >
               {d.label}
@@ -354,7 +356,7 @@ export default function EmployeeClearanceFormPage() {
         </div>
 
         {!isSavedOnServer && (
-          <div className="rounded-lg border-2 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+          <div className="rounded-lg border-2 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 ">
             No template has been saved yet for{" "}
             <span className="font-semibold">
               {DEPARTMENTS.find((d) => d.key === department)?.label}
@@ -371,7 +373,7 @@ export default function EmployeeClearanceFormPage() {
           </p>
         )}
 
-        <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <Card className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm">
           <CardHeader className="border-b">
             <ClearanceStepper
               steps={STEPS}
@@ -412,7 +414,7 @@ export default function EmployeeClearanceFormPage() {
               {units.map((row, index) => (
                 <div
                   key={row.id}
-                  className="rounded-lg border p-3 bg-white/60 dark:bg-slate-900/40"
+                  className="rounded-lg border p-3 bg-white/60 "
                 >
                   <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_auto] gap-2 lg:items-start">
                     <Input

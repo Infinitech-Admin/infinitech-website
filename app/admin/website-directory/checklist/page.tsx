@@ -9,7 +9,7 @@ import {
   Plus,
   Save,
   Search,
-  X
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -65,9 +65,8 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 ];
 
 const fieldClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition-shadow placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-600 dark:border-slate-700 dark:bg-slate-950";
-const labelClass =
-  "block space-y-1.5 text-sm font-medium text-slate-800 dark:text-slate-200";
+  "w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition-shadow placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-cyan-600 ";
+const labelClass = "block space-y-1.5 text-sm font-medium text-slate-800 ";
 
 function nextSortOrder(checklistItems: ChecklistItem[]) {
   return (
@@ -353,10 +352,10 @@ export default function QaChecklistManagementPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6">
-      <header className="space-y-3">
+    <main className="mx-auto min-h-screen max-w-6xl space-y-6 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 p-4 text-slate-900 sm:p-6">
+      <header className="space-y-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-5 text-white shadow-lg sm:p-7">
         <Link
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-slate-100"
+          className="inline-flex items-center gap-1.5 text-sm text-blue-100 transition-colors hover:text-white"
           href="/admin/website-directory"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -364,10 +363,10 @@ export default function QaChecklistManagementPage() {
         </Link>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
               Default QA checklist
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className="mt-1.5 text-sm leading-relaxed text-blue-100">
               Active items are included in new sessions, and new or reactivated
               items are added to unfinished sessions. Deactivating an item
               removes it from unfinished sessions and excludes it from new
@@ -377,20 +376,20 @@ export default function QaChecklistManagementPage() {
           <div className="flex shrink-0 items-center gap-5">
             <dl className="flex gap-5 text-sm">
               <div>
-                <dt className="text-slate-500">Active</dt>
-                <dd className="text-2xl font-semibold tabular-nums text-cyan-700 dark:text-cyan-400">
+                <dt className="text-blue-100">Active</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-white">
                   {activeCount}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">Inactive</dt>
-                <dd className="text-2xl font-semibold tabular-nums">
+                <dt className="text-blue-100">Inactive</dt>
+                <dd className="text-2xl font-semibold tabular-nums text-white">
                   {items.length - activeCount}
                 </dd>
               </div>
             </dl>
             <Button
-              className="bg-cyan-700 text-white shadow-sm hover:bg-cyan-800"
+              className="bg-white text-blue-700 shadow-sm hover:bg-blue-50"
               onClick={openNewItem}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -402,8 +401,8 @@ export default function QaChecklistManagementPage() {
 
       <div>
         {/* Definitions */}
-        <section className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center">
+        <section className="min-w-0 rounded-xl border border-slate-200 bg-white ">
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search
                 aria-hidden="true"
@@ -419,17 +418,18 @@ export default function QaChecklistManagementPage() {
             </div>
             <div
               aria-label="Filter by status"
-              className="flex shrink-0 rounded-md bg-slate-100 p-0.5 text-sm dark:bg-slate-900"
+              className="flex shrink-0 rounded-md bg-slate-100 p-0.5 text-sm "
               role="group"
             >
               {STATUS_FILTERS.map((option) => (
                 <button
                   key={option.value}
                   aria-pressed={statusFilter === option.value}
-                  className={`rounded px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 ${statusFilter === option.value
-                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-50"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                    }`}
+                  className={`rounded px-3 py-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 ${
+                    statusFilter === option.value
+                      ? "bg-white text-slate-900 shadow-sm "
+                      : "text-slate-500 hover:text-slate-900 "
+                  }`}
                   type="button"
                   onClick={() => setStatusFilter(option.value)}
                 >
@@ -445,7 +445,7 @@ export default function QaChecklistManagementPage() {
             </p>
           ) : error ? (
             <div
-              className="flex items-center justify-between gap-3 p-6 text-sm text-rose-700 dark:text-rose-400"
+              className="flex items-center justify-between gap-3 p-6 text-sm text-rose-700 "
               role="alert"
             >
               <span>{error}</span>
@@ -470,7 +470,7 @@ export default function QaChecklistManagementPage() {
                     {groupedItems.length === 1 ? "category" : "categories"}
                   </span>
                   <button
-                    className="font-medium text-cyan-700 hover:underline dark:text-cyan-400"
+                    className="font-medium text-cyan-700 hover:underline "
                     type="button"
                     onClick={toggleAll}
                   >
@@ -493,9 +493,9 @@ export default function QaChecklistManagementPage() {
                   return (
                     <div
                       key={category}
-                      className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800"
+                      className="overflow-hidden rounded-lg border border-slate-200 "
                     >
-                      <div className="flex items-center gap-3 bg-slate-50 px-3 py-2.5 dark:bg-slate-900">
+                      <div className="flex items-center gap-3 bg-slate-50 px-3 py-2.5 ">
                         <button
                           aria-controls={panelId}
                           aria-expanded={open}
@@ -505,8 +505,9 @@ export default function QaChecklistManagementPage() {
                         >
                           <ChevronRight
                             aria-hidden="true"
-                            className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""
-                              }`}
+                            className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                              open ? "rotate-90" : ""
+                            }`}
                           />
                           <span className="min-w-0 flex-1 truncate font-semibold">
                             {category}
@@ -517,20 +518,18 @@ export default function QaChecklistManagementPage() {
                         </span>
                         <span
                           aria-hidden="true"
-                          className="ml-2 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700"
+                          className="ml-2 h-5 w-px shrink-0 bg-slate-200 "
                         />
                         <button
                           aria-checked={
                             allActive ? "true" : someActive ? "mixed" : "false"
                           }
                           aria-label={`Activate or deactivate all ${category} items`}
-                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${allActive
-                              ? "bg-cyan-700"
-                              : "bg-slate-300 dark:bg-slate-700"
-                            } ${updatingCategory !== null
-                              ? "animate-pulse"
-                              : ""
-                            }`}
+                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${
+                            allActive ? "bg-cyan-700" : "bg-slate-300 "
+                          } ${
+                            updatingCategory !== null ? "animate-pulse" : ""
+                          }`}
                           disabled={
                             updatingItemId !== null || updatingCategory !== null
                           }
@@ -546,29 +545,28 @@ export default function QaChecklistManagementPage() {
                           onClick={() => void toggleCategoryActive(category)}
                         >
                           <span
-                            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${allActive
+                            className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                              allActive
                                 ? "translate-x-4"
                                 : someActive
                                   ? "translate-x-2"
                                   : ""
-                              }`}
+                            }`}
                           />
                         </button>
                       </div>
                       {open && (
-                        <ul
-                          className="divide-y divide-slate-100 dark:divide-slate-800"
-                          id={panelId}
-                        >
+                        <ul className="divide-y divide-slate-100 " id={panelId}>
                           {categoryItems.map((item) => {
                             const isEditing = editingId === item.id;
                             return (
                               <li
                                 key={item.id}
-                                className={`flex items-start gap-3 border-l-2 py-3 pl-3 pr-3 ${isEditing
-                                    ? "border-cyan-600 bg-cyan-50/60 dark:bg-cyan-950/20"
+                                className={`flex items-start gap-3 border-l-2 py-3 pl-3 pr-3 ${
+                                  isEditing
+                                    ? "border-cyan-600 bg-cyan-50/60 "
                                     : "border-transparent"
-                                  }`}
+                                }`}
                               >
                                 <span
                                   className="mt-0.5 w-7 shrink-0 text-right text-xs tabular-nums text-slate-400"
@@ -577,8 +575,9 @@ export default function QaChecklistManagementPage() {
                                   {item.sort_order}
                                 </span>
                                 <div
-                                  className={`min-w-0 flex-1 ${item.is_active ? "" : "opacity-55"
-                                    }`}
+                                  className={`min-w-0 flex-1 ${
+                                    item.is_active ? "" : "opacity-55"
+                                  }`}
                                 >
                                   <p className="text-sm font-medium">
                                     {item.title}
@@ -593,22 +592,26 @@ export default function QaChecklistManagementPage() {
                                   <button
                                     aria-checked={item.is_active}
                                     aria-label={`${item.is_active ? "Deactivate" : "Activate"} ${item.title}`}
-                                    className={`relative h-5 w-9 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${item.is_active
+                                    className={`relative h-5 w-9 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${
+                                      item.is_active
                                         ? "bg-cyan-700"
-                                        : "bg-slate-300 dark:bg-slate-700"
-                                      }`}
+                                        : "bg-slate-300 "
+                                    }`}
                                     disabled={
                                       updatingItemId !== null ||
                                       updatingCategory !== null
                                     }
                                     role="switch"
-                                    title={item.is_active ? "Active" : "Inactive"}
+                                    title={
+                                      item.is_active ? "Active" : "Inactive"
+                                    }
                                     type="button"
                                     onClick={() => void toggleActive(item)}
                                   >
                                     <span
-                                      className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${item.is_active ? "translate-x-4" : ""
-                                        }`}
+                                      className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                                        item.is_active ? "translate-x-4" : ""
+                                      }`}
                                     />
                                   </button>
                                   <Button
@@ -631,7 +634,7 @@ export default function QaChecklistManagementPage() {
               </div>
             </>
           )}
-          <p className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-800">
+          <p className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500 ">
             Deactivate items instead of deleting them to preserve QA history.
           </p>
         </section>
@@ -643,8 +646,8 @@ export default function QaChecklistManagementPage() {
             else if (open) setEditorOpen(true);
           }}
         >
-          <DialogContent className="max-h-[100dvh] max-w-[90vh] gap-0 overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-2xl dark:border-slate-800 dark:bg-slate-950 sm:max-w-xl">
-            <DialogHeader className="border-b border-slate-200 bg-gradient-to-br from-cyan-50 via-white to-white px-6 py-5 pr-12 text-left dark:border-slate-800 dark:from-cyan-950/40 dark:via-slate-950 dark:to-slate-950">
+          <DialogContent className="max-h-[100dvh] max-w-[90vh] gap-0 overflow-hidden rounded-2xl border-slate-200 bg-white p-0 shadow-2xl sm:max-w-xl">
+            <DialogHeader className="border-b border-slate-200 bg-gradient-to-br from-cyan-50 via-white to-white px-6 py-5 pr-12 text-left ">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-700 text-white shadow-sm">
                 {editingId ? (
                   <Pencil aria-hidden="true" className="h-5 w-5" />
@@ -652,20 +655,17 @@ export default function QaChecklistManagementPage() {
                   <Plus aria-hidden="true" className="h-5 w-5" />
                 )}
               </div>
-              <DialogTitle className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
+              <DialogTitle className="text-xl font-semibold tracking-tight text-slate-950 ">
                 {editingId ? "Edit checklist item" : "Add checklist item"}
               </DialogTitle>
-              <DialogDescription className="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              <DialogDescription className="max-w-md text-sm leading-relaxed text-slate-600 ">
                 {editingId
                   ? "Update the item details used in website QA sessions."
                   : "Create a reusable check for new and unfinished QA sessions."}
               </DialogDescription>
             </DialogHeader>
 
-            <form
-              className="flex min-h-0 flex-col"
-              onSubmit={saveItem}
-            >
+            <form className="flex min-h-0 flex-col" onSubmit={saveItem}>
               <div className="max-h-[calc(90dvh-190px)] space-y-5 overflow-y-auto px-6 py-5">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -704,7 +704,9 @@ export default function QaChecklistManagementPage() {
                           maxLength={150}
                           placeholder="Enter category name"
                           value={otherCategory}
-                          onChange={(event) => setOtherCategory(event.target.value)}
+                          onChange={(event) =>
+                            setOtherCategory(event.target.value)
+                          }
                         />
                       </label>
                     )}
@@ -764,7 +766,7 @@ export default function QaChecklistManagementPage() {
                 </label>
               </div>
 
-              <DialogFooter className="flex-row justify-end gap-2 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/60 sm:space-x-0">
+              <DialogFooter className="flex-row justify-end gap-2 border-t border-slate-200 bg-slate-50/80 px-6 py-4 sm:space-x-0">
                 <Button
                   disabled={saving}
                   type="button"
@@ -783,11 +785,7 @@ export default function QaChecklistManagementPage() {
                   ) : (
                     <Plus className="mr-2 h-4 w-4" />
                   )}
-                  {saving
-                    ? "Saving…"
-                    : editingId
-                      ? "Save changes"
-                      : "Add item"}
+                  {saving ? "Saving…" : editingId ? "Save changes" : "Add item"}
                 </Button>
               </DialogFooter>
             </form>

@@ -18,13 +18,20 @@ import {
   Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  Activity,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  Inbox,
+  Layers3,
+  RefreshCw,
+} from "lucide-react";
 
 import { adminFetch } from "@/lib/admin-fetch";
 import {
@@ -49,11 +56,10 @@ interface CategoryData {
 }
 
 interface DashboardStats {
-  totalTickets: number;
-  openTickets: number;
-  inProgressTickets: number;
-  resolvedTickets: number;
   totalRequests: number;
+  recentRequests: number;
+  needsAttention: number;
+  completedRequests: number;
 }
 
 const CATEGORY_CONFIG: Omit<CategoryData, "records">[] = [
@@ -119,6 +125,36 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: COLORS.amber,
   resolved: COLORS.emerald,
 };
+
+const ATTENTION_STATUSES = new Set([
+  "open",
+  "pending",
+  "in_progress",
+  "contacted",
+  "on_hold",
+]);
+const COMPLETED_STATUSES = new Set([
+  "resolved",
+  "closed",
+  "completed",
+  "approved",
+  "rejected",
+]);
+
+function extractRecords(payload: unknown): RequestRecord[] {
+  if (Array.isArray(payload)) return payload as RequestRecord[];
+  if (!payload || typeof payload !== "object") return [];
+
+  const data = (payload as { data?: unknown }).data;
+  return data === undefined ? [] : extractRecords(data);
+}
+
+function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 type WebsiteDirectoryStats = {
   total: number;
@@ -203,7 +239,7 @@ function WebsiteDirectorySummary() {
   return (
     <section aria-label="Website project summary" className="space-y-3">
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-slate-900">
           Website projects
         </h2>
         <p className="text-sm text-slate-500">
@@ -224,12 +260,12 @@ function WebsiteDirectorySummary() {
                 <Link
                   key={card.label}
                   href={card.href}
-                  className={`rounded-xl border border-l-4 border-slate-200 ${card.accent} bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900`}
+                  className={`rounded-xl border border-l-4 border-slate-200 ${card.accent} bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
                 >
                   <p className="text-sm font-medium text-slate-500">
                     {card.label}
                   </p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                  <p className="mt-2 text-3xl font-bold text-slate-900">
                     {card.value}
                   </p>
                 </Link>
@@ -238,7 +274,7 @@ function WebsiteDirectorySummary() {
                 <div
                   key={index}
                   aria-label="Loading website summary"
-                  className="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                  className="h-24 animate-pulse rounded-xl bg-slate-50"
                 />
               ))}
         </div>
@@ -254,6 +290,7 @@ export default function AdminDashboard() {
   const [permissionKeys, setPermissionKeys] = useState<string[]>([]);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -267,6 +304,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   const loadDashboard = async () => {
+    setRefreshing(true);
     try {
       setError(null);
       const sessionResponse = await adminFetch("/api/admin/session", {
@@ -290,7 +328,14 @@ export default function AdminDashboard() {
 
       const results = await Promise.allSettled(
         visibleCategories.map(async (cfg) => {
-          const response = await adminFetch(cfg.endpoint);
+          const token = localStorage.getItem("adminSessionActive");
+          const endpoint =
+            cfg.key === "supportTickets"
+              ? "/api/admin/support-tickets"
+              : cfg.endpoint;
+          const response = await adminFetch(endpoint, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
 
           if (!response.ok) {
             let bodyText = "";
@@ -309,7 +354,7 @@ export default function AdminDashboard() {
           }
 
           const json = await response.json();
-          const records: RequestRecord[] = json.data || [];
+          const records = extractRecords(json);
           return { ...cfg, records };
         }),
       );
@@ -334,26 +379,32 @@ export default function AdminDashboard() {
 
       setCategories(resolved);
 
-      const tickets =
-        resolved.find((c) => c.key === "supportTickets")?.records || [];
-      const totalRequests = resolved.reduce(
-        (sum, c) => sum + c.records.length,
-        0,
-      );
+      const allRecords = resolved.flatMap((category) => category.records);
+      const recentCutoff = new Date();
+      recentCutoff.setDate(recentCutoff.getDate() - 30);
 
       setStats({
-        totalTickets: tickets.length,
-        openTickets: tickets.filter((t) => t.status === "open").length,
-        inProgressTickets: tickets.filter((t) => t.status === "in_progress")
-          .length,
-        resolvedTickets: tickets.filter((t) => t.status === "resolved").length,
-        totalRequests,
+        totalRequests: allRecords.length,
+        recentRequests: allRecords.filter((record) => {
+          if (!record.created_at) return false;
+          const createdAt = new Date(record.created_at);
+          return (
+            !Number.isNaN(createdAt.getTime()) && createdAt >= recentCutoff
+          );
+        }).length,
+        needsAttention: allRecords.filter((record) =>
+          ATTENTION_STATUSES.has(record.status?.toLowerCase() ?? ""),
+        ).length,
+        completedRequests: allRecords.filter((record) =>
+          COMPLETED_STATUSES.has(record.status?.toLowerCase() ?? ""),
+        ).length,
       });
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Failed to load dashboard data.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -367,20 +418,6 @@ export default function AdminDashboard() {
     [categories],
   );
 
-  // Pie chart: support ticket status breakdown
-  const ticketStatusData = useMemo(() => {
-    if (!stats) return [];
-    return [
-      { name: "Open", value: stats.openTickets, key: "open" },
-      {
-        name: "In Progress",
-        value: stats.inProgressTickets,
-        key: "in_progress",
-      },
-      { name: "Resolved", value: stats.resolvedTickets, key: "resolved" },
-    ].filter((d) => d.value > 0);
-  }, [stats]);
-
   // Line chart: all requests across every category, last 14 days
   const trendData = useMemo(() => {
     const days: { date: string; label: string; count: number }[] = [];
@@ -389,7 +426,7 @@ export default function AdminDashboard() {
     for (let i = 13; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateKey = d.toISOString().split("T")[0];
+      const dateKey = localDateKey(d);
       days.push({
         date: dateKey,
         label: d.toLocaleDateString("en-US", {
@@ -405,13 +442,35 @@ export default function AdminDashboard() {
     categories.forEach((c) => {
       c.records.forEach((r) => {
         if (!r.created_at) return;
-        const dateKey = new Date(r.created_at).toISOString().split("T")[0];
+        const date = new Date(r.created_at);
+        if (Number.isNaN(date.getTime())) return;
+        const dateKey = localDateKey(date);
         const day = dayMap.get(dateKey);
         if (day) day.count += 1;
       });
     });
 
     return days;
+  }, [categories]);
+
+  const supportTicketStatusData = useMemo(() => {
+    const tickets =
+      categories.find((category) => category.key === "supportTickets")
+        ?.records ?? [];
+    const counts = new Map<string, number>();
+    tickets.forEach((ticket) => {
+      const status = ticket.status?.toLowerCase() || "open";
+      counts.set(status, (counts.get(status) ?? 0) + 1);
+    });
+
+    return Array.from(counts, ([key, value]) => ({
+      key,
+      value,
+      name: key
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" "),
+    }));
   }, [categories]);
   const directorySections = getAuthorizedNavSections(
     permissionKeys,
@@ -428,204 +487,288 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="inline-block w-8 h-8 border-4 border-cyan-300 border-t-cyan-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">
-            Loading dashboard...
-          </p>
+          <p className="text-slate-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-2">
-          Dashboard
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Welcome to your admin dashboard
-        </p>
-      </div>
-
-      {!isSuperadmin && (
-        <section aria-label="Your directories" className="space-y-5">
+    <div className="space-y-8 pb-8">
+      <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 text-white shadow-lg sm:px-9 sm:py-10">
+        <div className="absolute -right-16 -top-24 -z-10 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="absolute -bottom-32 right-1/3 -z-10 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              Your directories
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Open the admin areas assigned to your account.
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
+              Infinitech Operations
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Admin overview
+            </h1>
+            <p className="mt-2 max-w-xl text-sm text-slate-300 sm:text-base">
+              A live snapshot of incoming work and the directories assigned to
+              you.
             </p>
           </div>
-          {directorySections.length ? (
-            directorySections.map((section) => (
-              <div key={section.title} className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {section.title}
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {section.items.map(({ href, label, icon: Icon }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700"
-                    >
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 group-hover:bg-cyan-100 dark:bg-cyan-950 dark:text-cyan-300 dark:group-hover:bg-cyan-900">
-                        <Icon size={20} aria-hidden="true" />
-                      </span>
-                      <span className="font-medium text-slate-900 dark:text-white">
-                        {label}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-              No directories are assigned to your account yet. Contact your administrator for access.
-            </p>
-          )}
-        </section>
-      )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void loadDashboard()}
+            disabled={refreshing}
+            className="w-fit border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+          >
+            <RefreshCw
+              size={16}
+              className={`mr-2 ${refreshing ? "animate-spin" : ""}`}
+              aria-hidden="true"
+            />
+            Refresh overview
+          </Button>
+        </div>
+      </section>
 
       {error && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {error}
         </div>
       )}
 
-      {/* Charts */}
-      {categories.length > 0 && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Requests by Category</CardTitle>
-            <CardDescription>Volume across your available request types</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={categoryVolumeData}
-                  margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 11 }}
-                    angle={-20}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                    {categoryVolumeData.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+      {stats && (
+        <section aria-label="Request statistics" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">
+                At a glance
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Counts are based on the directories available to your account.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-medium text-slate-400">
+              Updated{" "}
+              {new Date().toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                label: "Total requests",
+                value: stats.totalRequests,
+                caption: `${categories.length} request ${categories.length === 1 ? "directory" : "directories"} tracked`,
+                icon: Inbox,
+                tone: "bg-cyan-50 text-cyan-700",
+                accent: "border-t-cyan-500",
+              },
+              {
+                label: "Last 30 days",
+                value: stats.recentRequests,
+                caption: "New requests received",
+                icon: Activity,
+                tone: "bg-blue-50 text-blue-700",
+                accent: "border-t-blue-500",
+              },
+              {
+                label: "Needs attention",
+                value: stats.needsAttention,
+                caption: "Open, pending, or in progress",
+                icon: Clock3,
+                tone: "bg-amber-50 text-amber-700",
+                accent: "border-t-amber-500",
+              },
+              {
+                label: "Completed",
+                value: stats.completedRequests,
+                caption: "Resolved or closed requests",
+                icon: CheckCircle2,
+                tone: "bg-emerald-50 text-emerald-700",
+                accent: "border-t-emerald-500",
+              },
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Card
+                  key={stat.label}
+                  className={`overflow-hidden rounded-2xl border border-slate-200 border-t-4 ${stat.accent} bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+                >
+                  <CardContent className="flex items-start justify-between gap-4 p-5">
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">
+                        {stat.label}
+                      </p>
+                      <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                        {stat.value.toLocaleString()}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {stat.caption}
+                      </p>
+                    </div>
+                    <span className={`rounded-xl p-3 ${stat.tone}`}>
+                      <Icon size={20} aria-hidden="true" />
+                    </span>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Ticket Status Breakdown</CardTitle>
-            <CardDescription>Current support ticket pipeline</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              {ticketStatusData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-sm text-slate-400">
-                  No ticket data yet
-                </div>
-              ) : (
+      {/* Activity charts */}
+      {categories.length > 0 && (
+        <section
+          aria-label="Request activity"
+          className="grid gap-5 xl:grid-cols-5"
+        >
+          <Card className="rounded-2xl border-slate-200 bg-white shadow-sm xl:col-span-3">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Request activity</CardTitle>
+              <CardDescription>
+                Daily incoming requests over the past two weeks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={ticketStatusData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={3}
+                  <LineChart
+                    data={trendData}
+                    margin={{ top: 12, right: 12, left: -18, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e2e8f0"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="count"
+                      name="Requests"
+                      stroke={COLORS.cyan}
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-slate-200 bg-white shadow-sm xl:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Requests by directory</CardTitle>
+              <CardDescription>
+                All-time volume in your available categories
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={categoryVolumeData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 12, left: 12, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e2e8f0"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={112}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip />
+                    <Bar
+                      dataKey="count"
+                      name="Requests"
+                      radius={[0, 6, 6, 0]}
+                      barSize={18}
                     >
-                      {ticketStatusData.map((entry) => (
+                      {categoryVolumeData.map((_, i) => (
                         <Cell
-                          key={entry.key}
-                          fill={STATUS_COLORS[entry.key] ?? COLORS.cyan}
+                          key={i}
+                          fill={CATEGORY_COLORS[i % CATEGORY_COLORS.length]}
                         />
                       ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="border-0 shadow-lg lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Request Trend (Last 14 Days)</CardTitle>
-            <CardDescription>
-              Incoming requests in your available categories, by day
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={trendData}
-                  margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke={COLORS.cyan}
-                    strokeWidth={2.5}
-                    dot={{ r: 3, fill: COLORS.cyan }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      )}
-
-      {(isSuperadmin || hasDirectoryAccess(permissionKeys, "website_directory")) && (
-        <WebsiteDirectorySummary />
-      )}
-
-      {/* Quick Actions */}
-      {(isSuperadmin || hasDirectoryAccess(permissionKeys, "support_tickets")) && (
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Navigate to manage support tickets</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/admin/support-tickets">
-              <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
-                View All Support Tickets
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+          {hasDirectoryAccess(permissionKeys, "support_tickets") ||
+          isSuperadmin ? (
+            <Card className="rounded-2xl border-slate-200 bg-white shadow-sm xl:col-span-5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">
+                  Support ticket status
+                </CardTitle>
+                <CardDescription>
+                  Current breakdown across your support queue
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {supportTicketStatusData.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-slate-500">
+                    No support tickets yet.
+                  </p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {supportTicketStatusData.map((item) => (
+                      <div
+                        key={item.key}
+                        className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"
+                      >
+                        <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{
+                              backgroundColor:
+                                STATUS_COLORS[item.key] ?? COLORS.violet,
+                            }}
+                          />
+                          {item.name}
+                        </span>
+                        <span className="text-lg font-semibold text-slate-950">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+        </section>
       )}
     </div>
   );

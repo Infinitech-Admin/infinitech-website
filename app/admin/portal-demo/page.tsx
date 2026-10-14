@@ -470,10 +470,10 @@ export default function PortalDemoAdminPage() {
 
   if (loading && demos.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin mb-4 inline-block">
-            <LayoutGrid className="h-8 w-8 text-cyan-600" />
+            <LayoutGrid className="h-8 w-8 text-blue-600" />
           </div>
           <p className="text-muted-foreground">Loading portal demos...</p>
         </div>
@@ -482,15 +482,15 @@ export default function PortalDemoAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <LayoutGrid className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
                 Portal Demos
               </h1>
               <p className="text-muted-foreground">
@@ -500,7 +500,7 @@ export default function PortalDemoAdminPage() {
           </div>
           <Button
             onClick={openCreateForm}
-            className="bg-cyan-600 hover:bg-cyan-700"
+            className="bg-cyan-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Demo
@@ -508,8 +508,8 @@ export default function PortalDemoAdminPage() {
         </div>
 
         {message && (
-          <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <AlertDescription className="text-blue-800">
               {message}
             </AlertDescription>
           </Alert>
@@ -571,7 +571,7 @@ export default function PortalDemoAdminPage() {
             deleteTarget && (
               <>
                 You're about to permanently delete{" "}
-                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                <span className="font-semibold text-slate-700">
                   "{deleteTarget.name}"
                 </span>
                 , including its roles and theme configuration. This cannot be

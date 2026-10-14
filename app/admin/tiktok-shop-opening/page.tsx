@@ -483,10 +483,10 @@ The Team`);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin mb-4 inline-block">
-            <FileText className="h-8 w-8 text-pink-600" />
+            <FileText className="h-8 w-8 text-blue-600" />
           </div>
           <p className="text-muted-foreground">Loading requests...</p>
         </div>
@@ -495,18 +495,18 @@ The Team`);
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 p-4 text-slate-900 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-6 text-white shadow-lg sm:px-7">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-slate-900 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
               <Store className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-3xl font-bold text-white sm:text-4xl">
                 TikTok Shop Requests
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-blue-100">
                 View and manage all TikTok Shop opening requests
               </p>
             </div>
@@ -514,14 +514,14 @@ The Team`);
         </div>
 
         {message && (
-          <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Alert className="mb-4 bg-blue-50 border-blue-200 ">
+            <AlertDescription className="text-blue-800 ">
               {message}
             </AlertDescription>
           </Alert>
         )}
 
-        <Card className="mb-6 border-2">
+        <Card className="mb-6 border border-slate-200 bg-white text-slate-900 shadow-sm">
           <CardContent className="p-6">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -538,8 +538,8 @@ The Team`);
           </CardContent>
         </Card>
 
-        <Card className="border-2 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-pink-50 to-slate-100 dark:from-pink-950 dark:to-slate-900 border-b-2">
+        <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm">
+          <CardHeader className="border-b bg-gradient-to-r from-blue-50 via-white to-purple-50">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Request Submissions</CardTitle>
@@ -554,7 +554,7 @@ The Team`);
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                  <TableRow className="bg-slate-100 ">
                     <TableHead className="font-bold">ID</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Name</TableHead>
@@ -577,9 +577,9 @@ The Team`);
                     return (
                       <TableRow
                         key={request.id}
-                        className="hover:bg-pink-50/50 dark:hover:bg-pink-900/20 border-b"
+                        className="hover:bg-blue-50/50 border-b"
                       >
-                        <TableCell className="font-bold text-pink-600">
+                        <TableCell className="font-bold text-blue-700">
                           {request.id}
                         </TableCell>
                         <TableCell>
@@ -628,7 +628,7 @@ The Team`);
                             "N/A"
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-blue-600 dark:text-blue-400">
+                        <TableCell className="text-sm text-blue-600 ">
                           {request.email}
                         </TableCell>
                         <TableCell className="text-sm">
@@ -650,7 +650,7 @@ The Team`);
                                       updateStatus(request, "contacted");
                                     }
                                   }}
-                                  className="border-2 border-pink-200 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-800 dark:hover:bg-pink-900/20"
+                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                                 >
                                   <Eye className="h-4 w-4 mr-1" />
                                   View
@@ -659,7 +659,7 @@ The Team`);
                               {selectedRequest?.id === request.id && (
                                 <DialogContent className="max-w-[92vw] sm:max-w-md max-h-[85vh] overflow-y-auto border-2 p-0 gap-0">
                                   <div className="space-y-0">
-                                    <div className="bg-gradient-to-r from-pink-500 to-slate-900 px-4 py-3 text-white">
+                                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-white">
                                       <div className="flex items-center gap-2.5">
                                         <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                                           <User className="h-4.5 w-4.5" />
@@ -683,10 +683,10 @@ The Team`);
                                           Contact
                                         </h3>
 
-                                        <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-md">
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-md">
                                           <a
                                             href={`mailto:${request.email}`}
-                                            className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline break-all"
+                                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline break-all"
                                           >
                                             <Mail className="h-3.5 w-3.5 flex-shrink-0" />
                                             {request.email}
@@ -697,17 +697,17 @@ The Team`);
                                                 request.email,
                                               )
                                             }
-                                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded flex-shrink-0"
+                                            className="p-1 hover:bg-slate-200 rounded flex-shrink-0"
                                           >
                                             <Copy className="h-3 w-3 text-slate-500" />
                                           </button>
                                         </div>
 
                                         {request.phone && (
-                                          <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-md">
+                                          <div className="flex items-center justify-between p-2 bg-slate-50 rounded-md">
                                             <a
                                               href={`tel:${request.phone}`}
-                                              className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                              className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
                                             >
                                               <Phone className="h-3.5 w-3.5 flex-shrink-0" />
                                               {request.phone}
@@ -718,7 +718,7 @@ The Team`);
                                                   request.phone!,
                                                 )
                                               }
-                                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded flex-shrink-0"
+                                              className="p-1 hover:bg-slate-200 rounded flex-shrink-0"
                                             >
                                               <Copy className="h-3 w-3 text-slate-500" />
                                             </button>
@@ -726,7 +726,7 @@ The Team`);
                                         )}
 
                                         {request.business_name && (
-                                          <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-900 rounded-md text-xs">
+                                          <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-md text-xs">
                                             <Building2 className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
                                             {request.business_name}
                                           </div>
@@ -759,7 +759,7 @@ The Team`);
                                             <MessageSquare className="h-3 w-3" />
                                             Goals & Products
                                           </h3>
-                                          <p className="text-xs bg-slate-50 dark:bg-slate-900 rounded-md p-2 leading-relaxed max-h-24 overflow-y-auto">
+                                          <p className="text-xs bg-slate-50 rounded-md p-2 leading-relaxed max-h-24 overflow-y-auto">
                                             {request.details}
                                           </p>
                                         </div>
@@ -782,7 +782,7 @@ The Team`);
                               size="sm"
                               onClick={() => generatePDF(request)}
                               disabled={downloadingId === request.id}
-                              className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-900/20"
+                              className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 "
                             >
                               {downloadingId === request.id ? (
                                 <Loader className="h-4 w-4 mr-1 animate-spin" />
@@ -799,7 +799,7 @@ The Team`);
                               disabled={
                                 sendingEmailId === request.id || !request.email
                               }
-                              className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950/20"
+                              className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 "
                             >
                               {sendingEmailId === request.id ? (
                                 <Loader className="h-4 w-4 mr-1 animate-spin" />
@@ -813,7 +813,7 @@ The Team`);
                               variant="outline"
                               size="sm"
                               onClick={() => deleteRequest(request)}
-                              className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/20"
+                              className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 "
                             >
                               Delete
                             </Button>
@@ -876,7 +876,7 @@ The Team`);
                   id="email-to"
                   value={emailRequest?.email || ""}
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900"
+                  className="bg-slate-50 "
                 />
               </div>
               <div className="space-y-2">

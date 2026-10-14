@@ -457,19 +457,19 @@ The Team`);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-900">
         <div className="text-center">
           <div className="animate-spin mb-4 inline-block">
             <FileText className="h-8 w-8 text-blue-600" />
           </div>
-          <p className="text-muted-foreground">Loading requests...</p>
+          <p className="text-slate-500">Loading requests...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 text-slate-900">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -477,10 +477,10 @@ The Team`);
               <Megaphone className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                 Paid Ads Requests
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-slate-500">
                 View and manage all paid ads requests
               </p>
             </div>
@@ -488,17 +488,17 @@ The Team`);
         </div>
 
         {message && (
-          <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <AlertDescription className="text-blue-800">
               {message}
             </AlertDescription>
           </Alert>
         )}
 
-        <Card className="mb-6 border-2">
+        <Card className="mb-6 border-2 bg-white text-slate-900">
           <CardContent className="p-6">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
               <Input
                 placeholder="Search by name, email, business, phone, platform, or budget..."
                 value={searchQuery}
@@ -506,14 +506,14 @@ The Team`);
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10"
+                className="pl-10 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200"
               />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-b-2">
+        <Card className="border-2 overflow-hidden bg-white text-slate-900">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b-2">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Request Submissions</CardTitle>
@@ -528,7 +528,7 @@ The Team`);
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                  <TableRow className="bg-slate-50">
                     <TableHead className="font-bold">ID</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Name</TableHead>
@@ -546,14 +546,19 @@ The Team`);
                   {paginatedRequests.map((request) => (
                     <TableRow
                       key={request.id}
-                      className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 border-b"
+                      className="hover:bg-blue-50/50 border-b"
                     >
                       <TableCell className="font-bold text-blue-600">
                         {request.id}
                       </TableCell>
                       <TableCell>
                         {request.is_read ? (
-                          <Badge variant="secondary">Read</Badge>
+                          <Badge
+                            variant="secondary"
+                            className="bg-slate-100 text-slate-700"
+                          >
+                            Read
+                          </Badge>
                         ) : (
                           <Badge className="bg-blue-500 hover:bg-blue-600">
                             New
@@ -566,7 +571,7 @@ The Team`);
                       <TableCell className="text-sm">
                         {request.business_name || "N/A"}
                       </TableCell>
-                      <TableCell className="text-sm text-blue-600 dark:text-blue-400">
+                      <TableCell className="text-sm text-blue-600">
                         {request.email}
                       </TableCell>
                       <TableCell className="text-sm max-w-[160px] truncate">
@@ -591,14 +596,14 @@ The Team`);
                                   setSelectedRequest(request);
                                   if (!request.is_read) markAsRead(request);
                                 }}
-                                className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
+                                className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 View
                               </Button>
                             </DialogTrigger>
                             {selectedRequest?.id === request.id && (
-                              <DialogContent className="max-w-[92vw] sm:max-w-md max-h-[85vh] overflow-y-auto border-2 p-0 gap-0">
+                              <DialogContent className="max-w-[92vw] sm:max-w-md max-h-[85vh] overflow-y-auto border-2 p-0 gap-0 bg-white text-slate-900">
                                 <div className="space-y-0">
                                   <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-3 text-white">
                                     <div className="flex items-center gap-2.5">
@@ -620,14 +625,14 @@ The Team`);
 
                                   <div className="px-4 py-3 space-y-3">
                                     <div className="space-y-1.5">
-                                      <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+                                      <h3 className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">
                                         Contact
                                       </h3>
 
-                                      <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-md">
+                                      <div className="flex items-center justify-between p-2 bg-slate-50 rounded-md">
                                         <a
                                           href={`mailto:${request.email}`}
-                                          className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline break-all"
+                                          className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline break-all"
                                         >
                                           <Mail className="h-3.5 w-3.5 flex-shrink-0" />
                                           {request.email}
@@ -638,17 +643,17 @@ The Team`);
                                               request.email,
                                             )
                                           }
-                                          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded flex-shrink-0"
+                                          className="p-1 hover:bg-slate-200 rounded flex-shrink-0"
                                         >
                                           <Copy className="h-3 w-3 text-slate-500" />
                                         </button>
                                       </div>
 
                                       {request.phone && (
-                                        <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-md">
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-md">
                                           <a
                                             href={`tel:${request.phone}`}
-                                            className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
                                           >
                                             <Phone className="h-3.5 w-3.5 flex-shrink-0" />
                                             {request.phone}
@@ -659,7 +664,7 @@ The Team`);
                                                 request.phone!,
                                               )
                                             }
-                                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded flex-shrink-0"
+                                            className="p-1 hover:bg-slate-200 rounded flex-shrink-0"
                                           >
                                             <Copy className="h-3 w-3 text-slate-500" />
                                           </button>
@@ -667,14 +672,14 @@ The Team`);
                                       )}
 
                                       {request.business_name && (
-                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-900 rounded-md text-xs">
+                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-md text-xs">
                                           <Building2 className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
                                           {request.business_name}
                                         </div>
                                       )}
 
                                       {request.ad_platforms && (
-                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-900 rounded-md text-xs">
+                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-md text-xs">
                                           <Megaphone className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
                                           {request.ad_platforms
                                             .split(",")
@@ -683,7 +688,7 @@ The Team`);
                                       )}
 
                                       {request.monthly_budget && (
-                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-900 rounded-md text-xs">
+                                        <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded-md text-xs">
                                           <Wallet className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
                                           {request.monthly_budget}
                                         </div>
@@ -692,17 +697,17 @@ The Team`);
 
                                     {request.details && (
                                       <div className="space-y-1">
-                                        <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground flex items-center gap-1.5">
+                                        <h3 className="text-[10px] uppercase tracking-widest font-semibold text-slate-500 flex items-center gap-1.5">
                                           <MessageSquare className="h-3 w-3" />
                                           Campaign Goals
                                         </h3>
-                                        <p className="text-xs bg-slate-50 dark:bg-slate-900 rounded-md p-2 leading-relaxed max-h-24 overflow-y-auto">
+                                        <p className="text-xs bg-slate-50 rounded-md p-2 leading-relaxed max-h-24 overflow-y-auto">
                                           {request.details}
                                         </p>
                                       </div>
                                     )}
 
-                                    <p className="text-[10px] text-muted-foreground">
+                                    <p className="text-[10px] text-slate-500">
                                       Submitted{" "}
                                       {new Date(
                                         request.created_at,
@@ -719,7 +724,7 @@ The Team`);
                             size="sm"
                             onClick={() => generatePDF(request)}
                             disabled={downloadingId === request.id}
-                            className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-900/20"
+                            className="border-2 border-green-200 hover:bg-green-50 hover:text-green-700"
                           >
                             {downloadingId === request.id ? (
                               <Loader className="h-4 w-4 mr-1 animate-spin" />
@@ -736,7 +741,7 @@ The Team`);
                             disabled={
                               sendingEmailId === request.id || !request.email
                             }
-                            className="border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-950/20"
+                            className="border-2 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
                           >
                             {sendingEmailId === request.id ? (
                               <Loader className="h-4 w-4 mr-1 animate-spin" />
@@ -750,7 +755,7 @@ The Team`);
                             variant="outline"
                             size="sm"
                             onClick={() => deleteRequest(request)}
-                            className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950/20"
+                            className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700"
                           >
                             Delete
                           </Button>
@@ -766,7 +771,7 @@ The Team`);
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-500">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
@@ -795,7 +800,7 @@ The Team`);
         )}
 
         <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-white text-slate-900">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5 text-blue-600" />
@@ -812,7 +817,7 @@ The Team`);
                   id="email-to"
                   value={emailRequest?.email || ""}
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900"
+                  className="bg-slate-50 bg-white text-slate-900 placeholder:text-slate-400 border-slate-200"
                 />
               </div>
               <div className="space-y-2">
@@ -822,6 +827,7 @@ The Team`);
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Enter email subject..."
+                  className="bg-white text-slate-900 placeholder:text-slate-400 border-slate-200"
                 />
               </div>
               <div className="space-y-2">
@@ -832,7 +838,7 @@ The Team`);
                   onChange={(e) => setEmailMessage(e.target.value)}
                   placeholder="Enter your message..."
                   rows={10}
-                  className="resize-none"
+                  className="resize-none bg-white text-slate-900 placeholder:text-slate-400 border-slate-200"
                 />
               </div>
             </div>

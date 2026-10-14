@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -207,9 +208,13 @@ export async function POST(request: NextRequest) {
 
     // Update ticket status in Laravel backend
     console.log("🔄 Updating ticket status in backend:", { ticketId, status })
-    const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/support-tickets/${ticketId}`, {
+    const apiUrl = process.env.LARAVEL_API_URL
+    if (!apiUrl) throw new Error("LARAVEL_API_URL is not configured")
+
+    const updateResponse = await fetch(`${apiUrl}/api/support-tickets/${ticketId}`, {
       method: "PUT",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         Accept: "application/json",
       },

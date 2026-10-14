@@ -1,12 +1,25 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +27,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -31,200 +50,207 @@ import {
   Calendar,
   FileText,
   Trash2,
-} from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Survey {
-  id: number
-  survey_id: string
-  client_name: string
-  company_name: string
-  email: string
-  phone: string
-  role: string
-  industries: string[]
-  industry_other: string
-  business_goals: string[]
-  business_goals_other: string
-  slowdown_issues: string[]
-  slowdown_issues_other: string
-  customer_journey: string
-  customer_journey_details: string
-  sops_status: string
-  sops_details: string
-  current_tools: string[]
-  current_tools_details: string
-  marketing_confidence: string
-  marketing_details: string
-  content_quality: string
-  content_details: string
-  problem_areas: string[]
-  problem_areas_details: string
-  data_analytics: string
-  data_details: string
-  solution_openness: string
-  solution_details: string
-  created_at: string
+  id: number;
+  survey_id: string;
+  client_name: string;
+  company_name: string;
+  email: string;
+  phone: string;
+  role: string;
+  industries: string[];
+  industry_other: string;
+  business_goals: string[];
+  business_goals_other: string;
+  slowdown_issues: string[];
+  slowdown_issues_other: string;
+  customer_journey: string;
+  customer_journey_details: string;
+  sops_status: string;
+  sops_details: string;
+  current_tools: string[];
+  current_tools_details: string;
+  marketing_confidence: string;
+  marketing_details: string;
+  content_quality: string;
+  content_details: string;
+  problem_areas: string[];
+  problem_areas_details: string;
+  data_analytics: string;
+  data_details: string;
+  solution_openness: string;
+  solution_details: string;
+  created_at: string;
 }
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminSurveyPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [surveys, setSurveys] = useState<Survey[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null)
-  const [message, setMessage] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterIndustry, setFilterIndustry] = useState("all")
-  const [downloadingId, setDownloadingId] = useState<number | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [surveyToDelete, setSurveyToDelete] = useState<Survey | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
-  const [surveyToEmail, setSurveyToEmail] = useState<Survey | null>(null)
-  const [sendingEmail, setSendingEmail] = useState(false)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [message, setMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterIndustry, setFilterIndustry] = useState("all");
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [surveyToDelete, setSurveyToDelete] = useState<Survey | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [surveyToEmail, setSurveyToEmail] = useState<Survey | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminSessionActive")
+    const token = localStorage.getItem("adminSessionActive");
     if (!token) {
-      router.push("/admin/login")
-      return
+      router.push("/admin/login");
+      return;
     }
 
-    fetchSurveys()
-  }, [router])
+    fetchSurveys();
+  }, [router]);
 
   const fetchSurveys = async () => {
     try {
-      const response = await fetch("/api/surveys")
+      const response = await fetch("/api/surveys");
 
       if (!response.ok) {
-        throw new Error("Failed to fetch surveys")
+        throw new Error("Failed to fetch surveys");
       }
 
-      const data = await response.json()
-      setSurveys(data.data.data || [])
+      const data = await response.json();
+      setSurveys(data.data.data || []);
     } catch (error) {
-      console.error("Error fetching surveys:", error)
-      setMessage("Failed to load surveys")
+      console.error("Error fetching surveys:", error);
+      setMessage("Failed to load surveys");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const downloadSurveyPDF = async (survey: Survey) => {
-    setDownloadingId(survey.id)
+    setDownloadingId(survey.id);
     try {
-      const { generateSurveyPDF } = await import("@/lib/pdf-generator")
-      await generateSurveyPDF(survey)
-      setMessage("PDF downloaded successfully!")
-      setTimeout(() => setMessage(""), 3000)
+      const { generateSurveyPDF } = await import("@/lib/pdf-generator");
+      await generateSurveyPDF(survey);
+      setMessage("PDF downloaded successfully!");
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      console.error("Error generating PDF:", error)
-      setMessage("Error generating PDF")
-      setTimeout(() => setMessage(""), 3000)
+      console.error("Error generating PDF:", error);
+      setMessage("Error generating PDF");
+      setTimeout(() => setMessage(""), 3000);
     } finally {
-      setDownloadingId(null)
+      setDownloadingId(null);
     }
-  }
+  };
 
   const handleDeleteSurvey = async () => {
-    if (!surveyToDelete) return
+    if (!surveyToDelete) return;
 
-    setDeleting(true)
+    setDeleting(true);
     try {
       const response = await fetch(`/api/surveys/${surveyToDelete.id}`, {
         method: "DELETE",
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to delete survey")
+        throw new Error("Failed to delete survey");
       }
 
       toast({
         title: "Success",
         description: `Survey for ${surveyToDelete.client_name} deleted successfully!`,
         variant: "default",
-      })
+      });
 
-      setSurveys(surveys.filter((s) => s.id !== surveyToDelete.id))
+      setSurveys(surveys.filter((s) => s.id !== surveyToDelete.id));
 
-      setDeleteDialogOpen(false)
-      setSurveyToDelete(null)
+      setDeleteDialogOpen(false);
+      setSurveyToDelete(null);
     } catch (error) {
-      console.error("Error deleting survey:", error)
+      console.error("Error deleting survey:", error);
       toast({
         title: "Error",
         description: "Failed to delete survey. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   const handleSendEmail = async () => {
-    if (!surveyToEmail) return
+    if (!surveyToEmail) return;
 
-    setSendingEmail(true)
+    setSendingEmail(true);
     try {
-      const response = await fetch(`/api/surveys/${surveyToEmail.id}/send-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/surveys/${surveyToEmail.id}/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ survey: surveyToEmail }),
         },
-        body: JSON.stringify({ survey: surveyToEmail }),
-      })
+      );
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send email")
+        throw new Error(data.error || "Failed to send email");
       }
 
       toast({
         title: "Success",
         description: `Email sent to ${surveyToEmail.client_name} successfully!`,
         variant: "default",
-      })
+      });
 
-      setEmailDialogOpen(false)
-      setSurveyToEmail(null)
+      setEmailDialogOpen(false);
+      setSurveyToEmail(null);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send email"
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send email";
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
-      })
+      });
     } finally {
-      setSendingEmail(false)
+      setSendingEmail(false);
     }
-  }
+  };
 
   const filteredSurveys = surveys.filter((survey) => {
     const matchesSearch =
       survey.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       survey.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      survey.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      survey.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesFilter = filterIndustry === "all" || survey.industries?.includes(filterIndustry)
+    const matchesFilter =
+      filterIndustry === "all" || survey.industries?.includes(filterIndustry);
 
-    return matchesSearch && matchesFilter
-  })
+    return matchesSearch && matchesFilter;
+  });
 
-  const uniqueIndustries = Array.from(new Set(surveys.flatMap((s) => s.industries || [])))
+  const uniqueIndustries = Array.from(
+    new Set(surveys.flatMap((s) => s.industries || [])),
+  );
 
   const stats = {
     total: surveys.length,
     submitted: surveys.length,
     pending: surveys.filter((s) => !s.customer_journey).length,
     completed: surveys.filter((s) => s.customer_journey).length,
-  }
+  };
 
   if (loading) {
     return (
@@ -234,17 +260,17 @@ export default function AdminSurveyPage() {
           <p className="text-muted-foreground">Loading surveys...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const endIndex = startIndex + ITEMS_PER_PAGE
-  const paginatedSurveys = filteredSurveys.slice(startIndex, endIndex)
+  const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedSurveys = filteredSurveys.slice(startIndex, endIndex);
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-50/20 dark:from-slate-950 dark:via-cyan-900/10 dark:to-blue-950/10">
-      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-900 dark:to-blue-900 shadow-lg">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 text-slate-900">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
@@ -252,10 +278,15 @@ export default function AdminSurveyPage() {
                 <FileText className="h-8 w-8 sm:h-10 sm:w-10" />
                 Survey Responses
               </h1>
-              <p className="text-cyan-100">Manage and view all survey responses</p>
+              <p className="text-blue-100">
+                Manage and view all survey responses
+              </p>
             </div>
             <Link href="/admin/dashboard">
-              <Button variant="secondary" className="bg-white hover:bg-gray-100 text-cyan-900">
+              <Button
+                variant="secondary"
+                className="bg-white hover:bg-gray-100 text-blue-900"
+              >
                 Back to Dashboard
               </Button>
             </Link>
@@ -265,12 +296,16 @@ export default function AdminSurveyPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          <Card className="border-2 border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+          <Card className="border-2 border-slate-200 hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Total Surveys</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+                    Total Surveys
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-900 ">
+                    {stats.total}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl">
                   <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -279,12 +314,16 @@ export default function AdminSurveyPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+          <Card className="border-2 border-blue-200 hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Submitted</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">{stats.submitted}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+                    Submitted
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+                    {stats.submitted}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
                   <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -293,12 +332,16 @@ export default function AdminSurveyPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+          <Card className="border-2 border-purple-200 hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Completed</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats.completed}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+                    Completed
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-600">
+                    {stats.completed}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
                   <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -307,13 +350,18 @@ export default function AdminSurveyPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-green-200 dark:border-green-800 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+          <Card className="border-2 border-green-200 hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Response Rate</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+                    Response Rate
+                  </p>
                   <p className="text-2xl sm:text-3xl font-bold text-green-600">
-                    {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+                    {stats.total > 0
+                      ? Math.round((stats.completed / stats.total) * 100)
+                      : 0}
+                    %
                   </p>
                 </div>
                 <div className="p-2 sm:p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
@@ -325,13 +373,20 @@ export default function AdminSurveyPage() {
         </div>
 
         {message && (
-          <Alert className="mb-6 border-2" variant={message.includes("successfully") ? "default" : "destructive"}>
-            <AlertDescription className="font-medium">{message}</AlertDescription>
+          <Alert
+            className="mb-6 border-2"
+            variant={
+              message.includes("successfully") ? "default" : "destructive"
+            }
+          >
+            <AlertDescription className="font-medium">
+              {message}
+            </AlertDescription>
           </Alert>
         )}
 
-        <Card className="border-2 border-slate-200 dark:border-slate-800 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-900/10">
+        <Card className="border-2 border-slate-200 shadow-xl bg-white/80 backdrop-blur">
+          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-cyan-50/30 ">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl flex items-center gap-2">
@@ -339,7 +394,9 @@ export default function AdminSurveyPage() {
                   All Surveys
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredSurveys.length)} of {filteredSurveys.length}
+                  Showing {startIndex + 1}-
+                  {Math.min(endIndex, filteredSurveys.length)} of{" "}
+                  {filteredSurveys.length}
                 </CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -349,8 +406,8 @@ export default function AdminSurveyPage() {
                     placeholder="Search surveys..."
                     value={searchQuery}
                     onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      setCurrentPage(1)
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
                     }}
                     className="pl-9 border-2"
                   />
@@ -359,15 +416,15 @@ export default function AdminSurveyPage() {
                   <Select
                     value={filterIndustry}
                     onValueChange={(value) => {
-                      setFilterIndustry(value)
-                      setCurrentPage(1)
+                      setFilterIndustry(value);
+                      setCurrentPage(1);
                     }}
                   >
                     <SelectTrigger className="w-full sm:w-[180px] border-2">
                       <Filter className="h-4 w-4 mr-2" />
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[100] bg-white dark:bg-slate-900 border-2 shadow-xl">
+                    <SelectContent className="z-[100] bg-white border-2 shadow-xl">
                       <SelectItem value="all">All Industries</SelectItem>
                       {uniqueIndustries.map((industry) => (
                         <SelectItem key={industry} value={industry}>
@@ -384,12 +441,18 @@ export default function AdminSurveyPage() {
             <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <TableRow className="bg-slate-50 hover:bg-slate-50 ">
                     <TableHead className="font-semibold">Client Name</TableHead>
-                    <TableHead className="font-semibold hidden md:table-cell">Company</TableHead>
-                    <TableHead className="font-semibold hidden lg:table-cell">Email</TableHead>
+                    <TableHead className="font-semibold hidden md:table-cell">
+                      Company
+                    </TableHead>
+                    <TableHead className="font-semibold hidden lg:table-cell">
+                      Email
+                    </TableHead>
                     <TableHead className="font-semibold">Industries</TableHead>
-                    <TableHead className="font-semibold hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="font-semibold hidden sm:table-cell">
+                      Date
+                    </TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -399,8 +462,12 @@ export default function AdminSurveyPage() {
                       <TableCell colSpan={6} className="text-center py-12">
                         <div className="flex flex-col items-center gap-2">
                           <FileText className="h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-muted-foreground font-medium">No surveys found</p>
-                          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+                          <p className="text-muted-foreground font-medium">
+                            No surveys found
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Try adjusting your search or filters
+                          </p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -408,18 +475,22 @@ export default function AdminSurveyPage() {
                     paginatedSurveys.map((survey) => (
                       <TableRow
                         key={survey.id}
-                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                        className="hover:bg-slate-50/50 transition-colors"
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                               {survey.client_name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="truncate">{survey.client_name}</span>
+                            <span className="truncate">
+                              {survey.client_name}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <span className="truncate text-sm">{survey.company_name}</span>
+                          <span className="truncate text-sm">
+                            {survey.company_name}
+                          </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="flex items-center gap-2 text-sm">
@@ -430,15 +501,20 @@ export default function AdminSurveyPage() {
                         <TableCell>
                           <div className="flex gap-1 flex-wrap max-w-xs">
                             {survey.industries?.slice(0, 2).map((industry) => (
-                              <Badge key={industry} variant="secondary" className="text-xs">
+                              <Badge
+                                key={industry}
+                                variant="secondary"
+                                className="text-xs"
+                              >
                                 {industry}
                               </Badge>
                             ))}
-                            {survey.industries && survey.industries.length > 2 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{survey.industries.length - 2}
-                              </Badge>
-                            )}
+                            {survey.industries &&
+                              survey.industries.length > 2 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{survey.industries.length - 2}
+                                </Badge>
+                              )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
@@ -456,10 +532,12 @@ export default function AdminSurveyPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSelectedSurvey(survey)}
-                                  className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20"
+                                  className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 "
                                 >
                                   <Eye className="h-4 w-4" />
-                                  <span className="hidden sm:inline ml-1">View</span>
+                                  <span className="hidden sm:inline ml-1">
+                                    View
+                                  </span>
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-2">
@@ -470,102 +548,161 @@ export default function AdminSurveyPage() {
                                   </DialogTitle>
                                   <DialogDescription>
                                     Response ID: {survey.survey_id} • Submitted:{" "}
-                                    {new Date(survey.created_at).toLocaleString()}
+                                    {new Date(
+                                      survey.created_at,
+                                    ).toLocaleString()}
                                   </DialogDescription>
                                 </DialogHeader>
 
                                 <div className="space-y-4">
-                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 dark:from-slate-800 dark:to-cyan-900/10 p-6 rounded-xl border-2">
+                                  <div className="bg-gradient-to-br from-slate-50 to-cyan-50/30 p-6 rounded-xl border-2">
                                     <div className="grid grid-cols-2 gap-4">
                                       <div>
-                                        <Label className="font-semibold">Client Name</Label>
-                                        <p className="text-sm">{survey.client_name}</p>
+                                        <Label className="font-semibold">
+                                          Client Name
+                                        </Label>
+                                        <p className="text-sm">
+                                          {survey.client_name}
+                                        </p>
                                       </div>
                                       <div>
-                                        <Label className="font-semibold">Company</Label>
-                                        <p className="text-sm">{survey.company_name}</p>
+                                        <Label className="font-semibold">
+                                          Company
+                                        </Label>
+                                        <p className="text-sm">
+                                          {survey.company_name}
+                                        </p>
                                       </div>
                                       <div>
-                                        <Label className="font-semibold">Email</Label>
-                                        <p className="text-sm break-all">{survey.email}</p>
+                                        <Label className="font-semibold">
+                                          Email
+                                        </Label>
+                                        <p className="text-sm break-all">
+                                          {survey.email}
+                                        </p>
                                       </div>
                                       <div>
-                                        <Label className="font-semibold">Phone</Label>
-                                        <p className="text-sm">{survey.phone}</p>
+                                        <Label className="font-semibold">
+                                          Phone
+                                        </Label>
+                                        <p className="text-sm">
+                                          {survey.phone}
+                                        </p>
                                       </div>
                                       <div>
-                                        <Label className="font-semibold">Role</Label>
+                                        <Label className="font-semibold">
+                                          Role
+                                        </Label>
                                         <p className="text-sm">{survey.role}</p>
                                       </div>
                                       <div>
-                                        <Label className="font-semibold">Industries</Label>
-                                        <p className="text-sm">{survey.industries?.join(", ") || "N/A"}</p>
+                                        <Label className="font-semibold">
+                                          Industries
+                                        </Label>
+                                        <p className="text-sm">
+                                          {survey.industries?.join(", ") ||
+                                            "N/A"}
+                                        </p>
                                       </div>
                                     </div>
                                   </div>
 
                                   {survey.industry_other && (
                                     <div className="border-t pt-4">
-                                      <h3 className="font-semibold mb-3">Additional Information</h3>
+                                      <h3 className="font-semibold mb-3">
+                                        Additional Information
+                                      </h3>
                                       <div className="space-y-3 text-sm">
                                         <div>
-                                          <Label className="font-medium">Industry - Other</Label>
-                                          <p className="text-muted-foreground">{survey.industry_other}</p>
+                                          <Label className="font-medium">
+                                            Industry - Other
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.industry_other}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
                                   )}
 
                                   <div className="border-t pt-4">
-                                    <h3 className="font-semibold mb-3">Business Information</h3>
+                                    <h3 className="font-semibold mb-3">
+                                      Business Information
+                                    </h3>
                                     <div className="space-y-3 text-sm">
                                       <div>
-                                        <Label className="font-medium">Business Goals</Label>
+                                        <Label className="font-medium">
+                                          Business Goals
+                                        </Label>
                                         <p className="text-muted-foreground">
-                                          {survey.business_goals?.join(", ") || "N/A"}
+                                          {survey.business_goals?.join(", ") ||
+                                            "N/A"}
                                         </p>
                                       </div>
                                       {survey.business_goals_other && (
                                         <div>
-                                          <Label className="font-medium">Business Goals - Other</Label>
-                                          <p className="text-muted-foreground">{survey.business_goals_other}</p>
+                                          <Label className="font-medium">
+                                            Business Goals - Other
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.business_goals_other}
+                                          </p>
                                         </div>
                                       )}
                                       <div>
-                                        <Label className="font-medium">Slowdown Issues</Label>
+                                        <Label className="font-medium">
+                                          Slowdown Issues
+                                        </Label>
                                         <p className="text-muted-foreground">
-                                          {survey.slowdown_issues?.join(", ") || "N/A"}
+                                          {survey.slowdown_issues?.join(", ") ||
+                                            "N/A"}
                                         </p>
                                       </div>
                                       {survey.slowdown_issues_other && (
                                         <div>
-                                          <Label className="font-medium">Slowdown Issues - Other</Label>
-                                          <p className="text-muted-foreground">{survey.slowdown_issues_other}</p>
+                                          <Label className="font-medium">
+                                            Slowdown Issues - Other
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.slowdown_issues_other}
+                                          </p>
                                         </div>
                                       )}
                                       <div>
-                                        <Label className="font-medium">Current Tools</Label>
+                                        <Label className="font-medium">
+                                          Current Tools
+                                        </Label>
                                         <p className="text-muted-foreground">
-                                          {survey.current_tools?.join(", ") || "N/A"}
+                                          {survey.current_tools?.join(", ") ||
+                                            "N/A"}
                                         </p>
                                       </div>
                                       {survey.current_tools_details && (
                                         <div>
-                                          <Label className="font-medium">Tools - Details</Label>
-                                          <p className="text-muted-foreground">{survey.current_tools_details}</p>
+                                          <Label className="font-medium">
+                                            Tools - Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.current_tools_details}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
                                   </div>
 
                                   <div className="border-t pt-4">
-                                    <h3 className="font-semibold mb-3">Marketing & Content Assessment</h3>
+                                    <h3 className="font-semibold mb-3">
+                                      Marketing & Content Assessment
+                                    </h3>
                                     <div className="space-y-3 text-sm">
                                       <div>
-                                        <Label className="font-medium">Marketing Confidence</Label>
+                                        <Label className="font-medium">
+                                          Marketing Confidence
+                                        </Label>
                                         <p className="text-muted-foreground">
                                           {survey.marketing_confidence
-                                            ? survey.marketing_confidence === "yes"
+                                            ? survey.marketing_confidence ===
+                                              "yes"
                                               ? "Yes, very confident"
                                               : "No, somewhat confident / not sure / not confident"
                                             : "N/A"}
@@ -573,12 +710,18 @@ export default function AdminSurveyPage() {
                                       </div>
                                       {survey.marketing_details && (
                                         <div>
-                                          <Label className="font-medium">Marketing Details</Label>
-                                          <p className="text-muted-foreground">{survey.marketing_details}</p>
+                                          <Label className="font-medium">
+                                            Marketing Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.marketing_details}
+                                          </p>
                                         </div>
                                       )}
                                       <div>
-                                        <Label className="font-medium">Content Quality</Label>
+                                        <Label className="font-medium">
+                                          Content Quality
+                                        </Label>
                                         <p className="text-muted-foreground">
                                           {survey.content_quality
                                             ? survey.content_quality === "yes"
@@ -589,42 +732,62 @@ export default function AdminSurveyPage() {
                                       </div>
                                       {survey.content_details && (
                                         <div>
-                                          <Label className="font-medium">Content Details</Label>
-                                          <p className="text-muted-foreground">{survey.content_details}</p>
+                                          <Label className="font-medium">
+                                            Content Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.content_details}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
                                   </div>
 
                                   <div className="border-t pt-4">
-                                    <h3 className="font-semibold mb-3">Assessment Details</h3>
+                                    <h3 className="font-semibold mb-3">
+                                      Assessment Details
+                                    </h3>
                                     <div className="space-y-3 text-sm">
                                       <div>
-                                        <Label className="font-medium">Customer Journey</Label>
+                                        <Label className="font-medium">
+                                          Customer Journey
+                                        </Label>
                                         <p className="text-muted-foreground">
-                                          {survey.customer_journey_details || "Not specified"}
+                                          {survey.customer_journey_details ||
+                                            "Not specified"}
                                         </p>
                                       </div>
                                       <div>
-                                        <Label className="font-medium">Problem Areas</Label>
+                                        <Label className="font-medium">
+                                          Problem Areas
+                                        </Label>
                                         <p className="text-muted-foreground">
-                                          {survey.problem_areas?.join(", ") || "N/A"}
+                                          {survey.problem_areas?.join(", ") ||
+                                            "N/A"}
                                         </p>
                                       </div>
                                       {survey.problem_areas_details && (
                                         <div>
-                                          <Label className="font-medium">Problem Areas - Details</Label>
-                                          <p className="text-muted-foreground">{survey.problem_areas_details}</p>
+                                          <Label className="font-medium">
+                                            Problem Areas - Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.problem_areas_details}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
                                   </div>
 
                                   <div className="border-t pt-4">
-                                    <h3 className="font-semibold mb-3">Data & Solution Assessment</h3>
+                                    <h3 className="font-semibold mb-3">
+                                      Data & Solution Assessment
+                                    </h3>
                                     <div className="space-y-3 text-sm">
                                       <div>
-                                        <Label className="font-medium">Data & Analytics</Label>
+                                        <Label className="font-medium">
+                                          Data & Analytics
+                                        </Label>
                                         <p className="text-muted-foreground">
                                           {survey.data_analytics
                                             ? survey.data_analytics === "yes"
@@ -635,12 +798,18 @@ export default function AdminSurveyPage() {
                                       </div>
                                       {survey.data_details && (
                                         <div>
-                                          <Label className="font-medium">Data Details</Label>
-                                          <p className="text-muted-foreground">{survey.data_details}</p>
+                                          <Label className="font-medium">
+                                            Data Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.data_details}
+                                          </p>
                                         </div>
                                       )}
                                       <div>
-                                        <Label className="font-medium">Solution Openness</Label>
+                                        <Label className="font-medium">
+                                          Solution Openness
+                                        </Label>
                                         <p className="text-muted-foreground">
                                           {survey.solution_openness
                                             ? survey.solution_openness === "yes"
@@ -651,8 +820,12 @@ export default function AdminSurveyPage() {
                                       </div>
                                       {survey.solution_details && (
                                         <div>
-                                          <Label className="font-medium">Solution Details</Label>
-                                          <p className="text-muted-foreground">{survey.solution_details}</p>
+                                          <Label className="font-medium">
+                                            Solution Details
+                                          </Label>
+                                          <p className="text-muted-foreground">
+                                            {survey.solution_details}
+                                          </p>
                                         </div>
                                       )}
                                     </div>
@@ -662,16 +835,21 @@ export default function AdminSurveyPage() {
                             </Dialog>
 
                             {/* Send Email Button */}
-                            <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+                            <Dialog
+                              open={emailDialogOpen}
+                              onOpenChange={setEmailDialogOpen}
+                            >
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSurveyToEmail(survey)}
-                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/20"
+                                  className="border-2 border-blue-200 hover:bg-blue-50 hover:text-blue-700 "
                                 >
                                   <Mail className="h-4 w-4" />
-                                  <span className="hidden sm:inline ml-1">Email</span>
+                                  <span className="hidden sm:inline ml-1">
+                                    Email
+                                  </span>
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="border-2 max-w-md">
@@ -681,26 +859,31 @@ export default function AdminSurveyPage() {
                                     Send Assessment Email
                                   </DialogTitle>
                                   <DialogDescription>
-                                    Send a personalized follow-up email with insights based on the survey responses.
+                                    Send a personalized follow-up email with
+                                    insights based on the survey responses.
                                   </DialogDescription>
                                 </DialogHeader>
 
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                                    <strong>Client:</strong> {surveyToEmail?.client_name}
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 ">
+                                  <p className="text-sm font-medium text-blue-900 ">
+                                    <strong>Client:</strong>{" "}
+                                    {surveyToEmail?.client_name}
                                   </p>
-                                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>Email:</strong> {surveyToEmail?.email}
+                                  <p className="text-sm text-blue-800 ">
+                                    <strong>Email:</strong>{" "}
+                                    {surveyToEmail?.email}
                                   </p>
-                                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>Company:</strong> {surveyToEmail?.company_name}
+                                  <p className="text-sm text-blue-800 ">
+                                    <strong>Company:</strong>{" "}
+                                    {surveyToEmail?.company_name}
                                   </p>
                                 </div>
 
-                                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-                                  <p className="text-xs text-amber-800 dark:text-amber-200">
-                                    This email will be personalized based on the client's identified problems and needs
-                                    from their survey responses.
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 ">
+                                  <p className="text-xs text-amber-800 ">
+                                    This email will be personalized based on the
+                                    client's identified problems and needs from
+                                    their survey responses.
                                   </p>
                                 </div>
 
@@ -708,8 +891,8 @@ export default function AdminSurveyPage() {
                                   <Button
                                     variant="outline"
                                     onClick={() => {
-                                      setEmailDialogOpen(false)
-                                      setSurveyToEmail(null)
+                                      setEmailDialogOpen(false);
+                                      setSurveyToEmail(null);
                                     }}
                                     disabled={sendingEmail}
                                   >
@@ -742,7 +925,7 @@ export default function AdminSurveyPage() {
                               size="sm"
                               onClick={() => downloadSurveyPDF(survey)}
                               disabled={downloadingId === survey.id}
-                              className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-cyan-800 dark:hover:bg-cyan-900/20"
+                              className="border-2 border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 "
                             >
                               {downloadingId === survey.id ? (
                                 <Loader className="h-4 w-4 animate-spin" />
@@ -751,16 +934,21 @@ export default function AdminSurveyPage() {
                               )}
                             </Button>
 
-                            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                            <Dialog
+                              open={deleteDialogOpen}
+                              onOpenChange={setDeleteDialogOpen}
+                            >
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSurveyToDelete(survey)}
-                                  className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-900/20"
+                                  className="border-2 border-red-200 hover:bg-red-50 hover:text-red-700 "
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                  <span className="hidden sm:inline ml-1">Delete</span>
+                                  <span className="hidden sm:inline ml-1">
+                                    Delete
+                                  </span>
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="border-2 max-w-sm">
@@ -770,16 +958,19 @@ export default function AdminSurveyPage() {
                                     Delete Survey
                                   </DialogTitle>
                                   <DialogDescription>
-                                    Are you sure you want to delete this survey? This action cannot be undone.
+                                    Are you sure you want to delete this survey?
+                                    This action cannot be undone.
                                   </DialogDescription>
                                 </DialogHeader>
 
-                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                                  <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                                    <strong>Client:</strong> {surveyToDelete?.client_name}
+                                <div className="bg-red-50 p-4 rounded-lg border border-red-200 ">
+                                  <p className="text-sm font-medium text-red-900 ">
+                                    <strong>Client:</strong>{" "}
+                                    {surveyToDelete?.client_name}
                                   </p>
-                                  <p className="text-sm text-red-800 dark:text-red-200">
-                                    <strong>Company:</strong> {surveyToDelete?.company_name}
+                                  <p className="text-sm text-red-800 ">
+                                    <strong>Company:</strong>{" "}
+                                    {surveyToDelete?.company_name}
                                   </p>
                                 </div>
 
@@ -787,14 +978,18 @@ export default function AdminSurveyPage() {
                                   <Button
                                     variant="outline"
                                     onClick={() => {
-                                      setDeleteDialogOpen(false)
-                                      setSurveyToDelete(null)
+                                      setDeleteDialogOpen(false);
+                                      setSurveyToDelete(null);
                                     }}
                                     disabled={deleting}
                                   >
                                     Cancel
                                   </Button>
-                                  <Button variant="destructive" onClick={handleDeleteSurvey} disabled={deleting}>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteSurvey}
+                                    disabled={deleting}
+                                  >
                                     {deleting ? (
                                       <>
                                         <Loader className="h-4 w-4 mr-2 animate-spin" />
@@ -820,7 +1015,7 @@ export default function AdminSurveyPage() {
             </div>
 
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t bg-slate-50/50 dark:bg-slate-800/20">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t bg-slate-50/50 ">
                 <p className="text-sm text-muted-foreground font-medium">
                   Page {currentPage} of {totalPages}
                 </p>
@@ -838,7 +1033,9 @@ export default function AdminSurveyPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="border-2"
                   >
@@ -852,5 +1049,5 @@ export default function AdminSurveyPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
