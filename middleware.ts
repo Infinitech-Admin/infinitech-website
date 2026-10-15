@@ -36,6 +36,7 @@ const pageDirectories: Record<string, string> = {
 
 const adminApiDirectories: Record<string, string> = {
   analytics: "system_audit_logs",
+  attendance: "ojt_attendance",
   "blog-posts": "blog",
   clearance: "clearance_form",
   "clearance-template": "clearance_form",

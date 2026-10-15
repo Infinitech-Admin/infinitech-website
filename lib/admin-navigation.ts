@@ -40,11 +40,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "User Access Management",
     icon: Users,
   },
-  {
-    href: "/admin/audit-logs",
-    label: "System Audit Logs",
-    icon: ClipboardList,
-  },
 ];
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -162,7 +157,6 @@ export const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
   "/admin/portal-demo": "portal_demo",
   "/admin/tiktok-shop-opening": "tiktok_shop",
   "/admin/access-management": "user_access_management",
-  "/admin/audit-logs": "system_audit_logs",
 };
 
 export const hasDirectoryAccess = (keys: string[], directory: string) =>
@@ -215,6 +209,9 @@ export function getAuthorizedNavSections(
     hasDirectoryAccess(permissionKeys, "user_access_management");
   const canViewSystemAudit =
     isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
+  const auditNavItem = ADMIN_NAV_ITEMS.find(
+    (item) => item.href === "/admin/audit-logs",
+  );
 
   if (isSuperadmin || canManageAccess || canViewSystemAudit) {
     sections.unshift({
@@ -230,7 +227,7 @@ export function getAuthorizedNavSections(
             ]
           : []),
         ...(canManageAccess ? [ADMIN_NAV_ITEMS[1]] : []),
-        ...(canViewSystemAudit ? [ADMIN_NAV_ITEMS[2]] : []),
+        ...(canViewSystemAudit && auditNavItem ? [auditNavItem] : []),
       ],
     });
   }
