@@ -98,6 +98,7 @@ import {
   EmployeeAvatar,
   EmployeePrivateImage,
 } from "@/components/admin/employee-media";
+import { ImageCropDialog } from "@/components/admin/image-crop-dialog";
 
 // The two downloadable formats for a generated certificate. "docx" stays the
 // default so existing behavior (Word doc with employee's + employer's copy)
@@ -217,6 +218,12 @@ export default function EmployeeMasterfilePage() {
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [profileImageRemoved, setProfileImageRemoved] = useState(false);
   const [signatureRemoved, setSignatureRemoved] = useState(false);
+
+  // File picked but not yet cropped — the crop dialog owns it until confirmed.
+  const [cropTarget, setCropTarget] = useState<{
+    kind: "profile" | "signature";
+    file: File;
+  } | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<Employee | null>(null);
@@ -380,6 +387,7 @@ export default function EmployeeMasterfilePage() {
     setSignatureFile(null);
     setProfileImageRemoved(false);
     setSignatureRemoved(false);
+    setCropTarget(null);
     setFormOpen(true);
   };
 
@@ -394,6 +402,7 @@ export default function EmployeeMasterfilePage() {
     setSignatureFile(null);
     setProfileImageRemoved(false);
     setSignatureRemoved(false);
+    setCropTarget(null);
     const token = localStorage.getItem("adminSessionActive");
     const { id, created_at, updated_at, allowances, ...rest } = employee;
 
@@ -484,14 +493,24 @@ export default function EmployeeMasterfilePage() {
     }));
   };
 
+  // Picking a file now opens the crop dialog first; the cropped file is what
+  // actually lands in state (see the <ImageCropDialog /> at the bottom).
   const handleProfileImageChange = (file: File | null) => {
-    setProfileImageFile(file);
-    if (file) setProfileImageRemoved(false);
+    if (!file) {
+      setProfileImageFile(null);
+
+      return;
+    }
+    setCropTarget({ kind: "profile", file });
   };
 
   const handleSignatureChange = (file: File | null) => {
-    setSignatureFile(file);
-    if (file) setSignatureRemoved(false);
+    if (!file) {
+      setSignatureFile(null);
+
+      return;
+    }
+    setCropTarget({ kind: "signature", file });
   };
 
   const removeProfileImage = () => {
@@ -2015,6 +2034,28 @@ export default function EmployeeMasterfilePage() {
         employee={certTargetEmployee}
         open={certDialogOpen}
         onOpenChange={setCertDialogOpen}
+      />
+
+      {/* ── Crop dialog for profile photo / signature uploads ── */}
+      <ImageCropDialog
+        aspect={cropTarget?.kind === "signature" ? undefined : 1}
+        file={cropTarget?.file ?? null}
+        title={
+          cropTarget?.kind === "signature"
+            ? "Crop Signature"
+            : "Crop Profile Photo"
+        }
+        onCancel={() => setCropTarget(null)}
+        onConfirm={(cropped) => {
+          if (cropTarget?.kind === "profile") {
+            setProfileImageFile(cropped);
+            setProfileImageRemoved(false);
+          } else {
+            setSignatureFile(cropped);
+            setSignatureRemoved(false);
+          }
+          setCropTarget(null);
+        }}
       />
     </div>
   );
