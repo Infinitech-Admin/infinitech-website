@@ -1,3 +1,4 @@
+// lib/admin-navigation.ts
 import {
   BarChart3,
   CalendarCheck,
@@ -169,7 +170,9 @@ export const hasDirectoryAccess = (keys: string[], directory: string) =>
   keys.includes(directory) || keys.includes("all_directory");
 
 export function getDirectoryKeyForHref(href: string): string | undefined {
-  if (href === "/admin/dashboard") return undefined;
+  // Dashboards are open to every signed-in admin (no directory permission).
+  if (href === "/admin/dashboard" || href.endsWith("/dashboard"))
+    return undefined;
   return (
     NAV_DIRECTORY_BY_HREF[href] ||
     href.split("/").filter(Boolean).at(-1)?.replaceAll("-", "_")
@@ -200,7 +203,6 @@ export function getAuthorizedNavSections(
   const sections = NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
-      if (isSuperadmin && item.href === "/admin/dashboard") return false;
       const directory = getDirectoryKeyForHref(item.href);
       return (
         !directory ||
@@ -216,24 +218,17 @@ export function getAuthorizedNavSections(
   const canViewSystemAudit =
     isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
 
-  if (isSuperadmin || canManageAccess || canViewSystemAudit) {
-    sections.unshift({
-      title: "Administration",
-      items: [
-        ...(isSuperadmin
-          ? [
-              {
-                href: "/admin/dashboard",
-                label: "Dashboard",
-                icon: LayoutDashboard,
-              },
-            ]
-          : []),
-        ...(canManageAccess ? [ADMIN_NAV_ITEMS[1]] : []),
-        ...(canViewSystemAudit ? [ADMIN_NAV_ITEMS[2]] : []),
-      ],
-    });
+  const adminItems = [
+    ...(canManageAccess ? [ADMIN_NAV_ITEMS[1]] : []),
+    ...(canViewSystemAudit ? [ADMIN_NAV_ITEMS[2]] : []),
+  ];
+  if (adminItems.length > 0) {
+    sections.unshift({ title: "Administration", items: adminItems });
   }
+
+  // Every signed-in admin gets a Dashboard link. /admin/dashboard redirects
+  // each user to the dashboard for their own role.
+  sections.unshift({ title: "Overview", items: [ADMIN_NAV_ITEMS[0]] });
 
   return sections;
 }

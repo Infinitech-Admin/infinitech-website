@@ -1,14 +1,40 @@
 // File: app/api/admin/employees/lookup/route.ts
 import { type NextRequest, NextResponse } from "next/server";
 
-const laravelUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const laravelUrl =
+  process.env.LARAVEL_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8000";
+
+// Palitan kung iba ang pangalan ng cookie mo (hal. "auth_token", "access_token")
+const TOKEN_COOKIE_NAME = "token";
+
+function buildAuthHeaders(request: NextRequest): Record<string, string> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+
+  // 1) Bearer token galing sa incoming Authorization header
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    headers["Authorization"] = authHeader;
+  } else {
+    // 2) Bearer token na nakatago sa cookie
+    const token = request.cookies.get(TOKEN_COOKIE_NAME)?.value;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // 3) Sanctum SPA (cookie-based session)
+  const cookie = request.headers.get("cookie");
+  if (cookie) headers["Cookie"] = cookie;
+
+  const xsrf = request.cookies.get("XSRF-TOKEN")?.value;
+  if (xsrf) headers["X-XSRF-TOKEN"] = decodeURIComponent(xsrf);
+
+  headers["Referer"] = request.headers.get("referer") ?? request.nextUrl.origin;
+
+  return headers;
+}
 
 export async function GET(request: NextRequest) {
-  console.log(
-    "🔥 HIT: /api/admin/employees/lookup",
-    request.nextUrl.searchParams.get("id_number"),
-  );
-
   try {
     const idNumber = request.nextUrl.searchParams.get("id_number");
 
@@ -23,7 +49,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set("id_number", idNumber);
 
     const response = await fetch(url.toString(), {
-      headers: { Accept: "application/json" },
+      headers: buildAuthHeaders(request),
       cache: "no-store",
     });
 
@@ -32,6 +58,7 @@ export async function GET(request: NextRequest) {
     if (text.includes("<!DOCTYPE") || text.includes("<html")) {
       console.error(
         "❌ Laravel returned HTML error page for employees/lookup GET",
+        response.status,
       );
       return NextResponse.json(
         {
@@ -57,7 +84,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 404 (employee not found) is expected while typing — pass it through as-is.
+    if (response.status === 401) {
+      console.warn(
+        "⚠️ Laravel returned 401 for employees/lookup. Auth not forwarded or token expired.",
+      );
+    }
+
+    // 404 (employee not found) is expected while typing, pass through as-is.
+    // 401 is also passed through so the client can redirect to login.
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("❌ employees/lookup GET error:", error);

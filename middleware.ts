@@ -1,3 +1,4 @@
+// middleware.ts  (project root, or src/middleware.ts if you use a src folder)
 import { NextRequest, NextResponse } from "next/server";
 
 const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
@@ -7,6 +8,9 @@ type AccessPolicy = {
   action: string;
   deny?: boolean;
 };
+
+// ADDED: role dashboards live at /admin/<role>/dashboard.
+const DASHBOARD_ROLES = new Set(["hr", "accounting", "admin", "superadmin"]);
 
 const pageDirectories: Record<string, string> = {
   attendance: "ojt_attendance",
@@ -109,6 +113,11 @@ function protectedApi(path: string, method: string): AccessPolicy | null {
     const area = parts[2];
     if (area === "login" && method === "POST") return null;
     if (area === "session" && ["GET", "DELETE"].includes(method)) return null;
+    // ADDED: /api/admin/dashboard/<role> only needs a signed-in admin.
+    // Laravel (AdminDashboardController) checks that the role matches.
+    if (area === "dashboard" && method === "GET") {
+      return { action: "view" };
+    }
     if (area === "access-management") {
       if (
         parts[3] === "audit" ||
@@ -215,6 +224,16 @@ function protectedPage(path: string): AccessPolicy | null {
     return null;
   const area = path.split("/")[2];
   if (area === "dashboard") return { action: "view" };
+  // ADDED: /admin/<role>/dashboard (hr, accounting, admin, superadmin).
+  // Any signed-in admin may load it; RoleGuard sends them to their own.
+  const segments = path.split("/").filter(Boolean);
+  if (
+    segments.length === 3 &&
+    DASHBOARD_ROLES.has(segments[1]) &&
+    segments[2] === "dashboard"
+  ) {
+    return { action: "view" };
+  }
   if (area === "access-management" || area === "audit-logs") {
     return {
       directory:

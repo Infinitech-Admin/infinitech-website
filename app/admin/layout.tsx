@@ -1,4 +1,5 @@
 "use client";
+// app/admin/layout.tsx
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -47,8 +48,12 @@ function Sidebar({
   permissionKeys: string[];
   isSuperadmin: boolean;
 }) {
+  // CHANGED: the Dashboard link is active on every role dashboard
+  // (/admin/hr/dashboard, /admin/accounting/dashboard, ...).
   const isActive = (path: string) =>
-    pathname === path || pathname.startsWith(`${path}/`);
+    path === "/admin/dashboard"
+      ? pathname.endsWith("/dashboard")
+      : pathname === path || pathname.startsWith(`${path}/`);
   const sections = getAuthorizedNavSections(permissionKeys, isSuperadmin);
 
   return (
@@ -202,10 +207,13 @@ function TopBar({
   const pageItems = getAuthorizedNavSections([], true)
     .flatMap((section) => section.items)
     .sort((left, right) => right.href.length - left.href.length);
-  const pageTitle =
-    pageItems.find(
-      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-    )?.label ?? "Admin";
+  // CHANGED: every role dashboard shows "Dashboard" as the page title.
+  const pageTitle = pathname.endsWith("/dashboard")
+    ? "Dashboard"
+    : (pageItems.find(
+        (item) =>
+          pathname === item.href || pathname.startsWith(`${item.href}/`),
+      )?.label ?? "Admin");
 
   return (
     <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-4 flex items-center justify-between">
@@ -335,19 +343,9 @@ export default function AdminLayout({
         setIsAuthenticated(true);
         setIsChecking(false);
 
-        if (pathname === "/admin/dashboard" && !session.is_superadmin) {
-          const firstAuthorizedPath =
-            NAV_SECTIONS.flatMap((section) => section.items).find((item) => {
-              const directory = getDirectoryKeyForHref(item.href);
-              return directory ? hasDirectoryAccess(keys, directory) : false;
-            })?.href ||
-            (hasDirectoryAccess(keys, "user_access_management")
-              ? "/admin/access-management"
-              : hasDirectoryAccess(keys, "system_audit_logs")
-                ? "/admin/audit-logs"
-                : undefined);
-          router.replace(firstAuthorizedPath || "/admin/login");
-        }
+        // REMOVED: the old block that sent non-superadmins from /admin/dashboard
+        // to their first authorized directory (e.g. /admin/contracts).
+        // /admin/dashboard now redirects each user to their own role dashboard.
 
         const currentPath = NAV_SECTIONS.flatMap((section) => section.items)
           .map((item) => item.href)
