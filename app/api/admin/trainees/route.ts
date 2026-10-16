@@ -1,71 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
+import { laravelServiceHeaders } from "@/lib/laravel-service-auth";
 
-const LARAVEL_API_URL = process.env.LARAVEL_API_URL || "http://localhost:8000";
+const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
 
-// GET - Fetch all trainees (No auth)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const response = await fetch(`${LARAVEL_API_URL}/api/admin/trainees`, {
-      method: "GET",
+    const response = await fetch(`${laravelUrl}/api/admin/trainees`, {
       headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+        ...laravelServiceHeaders(),
+        Accept: "application/json",
       },
+      cache: "no-store",
     });
+    const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to fetch trainees");
-    }
-
-    const data = await response.json();
-    
-    return NextResponse.json({
-      success: true,
-      trainees: data.trainees || data.data || [],
-    });
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching trainees:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch trainees" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// POST - Add new trainee (No auth)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    const response = await fetch(`${LARAVEL_API_URL}/api/admin/trainees`, {
+
+    const response = await fetch(`${laravelUrl}/api/admin/trainees`, {
       method: "POST",
       headers: {
+        ...laravelServiceHeaders(),
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
       body: JSON.stringify(body),
+      cache: "no-store",
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: data.message || data.error || "Failed to add trainee" },
-        { status: response.status }
-      );
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: data.message || "Trainee added successfully",
-      trainee: data.trainee || data.data,
-    });
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error adding trainee:", error);
     return NextResponse.json(
       { success: false, error: "Failed to add trainee" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

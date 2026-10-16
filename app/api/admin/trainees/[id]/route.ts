@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const LARAVEL_API_URL = process.env.LARAVEL_API_URL || "http://localhost:8000/api";
+const laravelUrl = process.env.LARAVEL_API_URL || "http://localhost:8000";
 
 function getAuthToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization");
@@ -27,7 +27,7 @@ export async function DELETE(
   try {
     const traineeId = params.id;
     
-    const response = await fetch(`${LARAVEL_API_URL}/api/admin/trainees/${traineeId}`, {
+    const response = await fetch(`${laravelUrl}/api/admin/trainees/${traineeId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
