@@ -296,7 +296,21 @@ function toggleModuleAction(
   }
   return next;
 }
-
+// Grants every grantable action on every directory, or clears everything.
+function toggleAllDirectories(
+  directories: Directory[],
+  grant: boolean,
+): Grants {
+  if (!grant) return {};
+  const next: Grants = {};
+  for (const directory of directories) {
+    const grantable = ACTIONS.filter((action) =>
+      directory.grantable_actions?.includes(action),
+    );
+    if (grantable.length) next[directory.id] = grantable;
+  }
+  return next;
+}
 /* ============================================================================
  * SMALL PRESENTATIONAL PIECES
  * ========================================================================== */
@@ -816,8 +830,27 @@ export default function UserAccessManagementPage() {
     null,
   );
 
+  // ... askConfirm, settleConfirm, notifyError (walang binago)
+
+  // "Select all" state for the Add account dialog
+  const grantableDirectories = useMemo(
+    () =>
+      directories.filter((directory) => directory.grantable_actions?.length),
+    [directories],
+  );
+
+  const allNewSelected =
+    grantableDirectories.length > 0 &&
+    grantableDirectories.every((directory) =>
+      directory.grantable_actions.every((action) =>
+        (newGrants[directory.id] || []).includes(action),
+      ),
+    );
+
+  const someNewSelected = Object.keys(newGrants).length > 0;
+
   // Opens the confirmation modal and resolves true/false, so callers can
-  // `await askConfirm(...)` exactly where they used `window.confirm(...)`.
+
   function askConfirm(request: ConfirmRequest): Promise<boolean> {
     return new Promise((resolve) => {
       confirmResolverRef.current = resolve;
@@ -1774,9 +1807,28 @@ export default function UserAccessManagementPage() {
                       Grant only the directories and actions this role needs.
                     </p>
                   </div>
-                  <span className="text-xs text-slate-500">
-                    {Object.keys(newGrants).length} selected
-                  </span>
+                  <div className="flex items-center gap-4">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+                      <TriCheckbox
+                        checked={allNewSelected}
+                        disabled={grantableDirectories.length === 0}
+                        indeterminate={someNewSelected && !allNewSelected}
+                        label="Select all directories and actions"
+                        onChange={() =>
+                          setNewGrants(
+                            toggleAllDirectories(
+                              grantableDirectories,
+                              !allNewSelected,
+                            ),
+                          )
+                        }
+                      />
+                      Select all
+                    </label>
+                    <span className="text-xs text-slate-500">
+                      {Object.keys(newGrants).length} selected
+                    </span>
+                  </div>
                 </div>
                 <PermissionMatrix
                   grants={newGrants}

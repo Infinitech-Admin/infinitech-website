@@ -13,6 +13,7 @@ import {
   Megaphone,
   MessageSquare,
   Palette,
+  ScrollText,
   Search,
   SearchCheck,
   Ticket,
@@ -41,6 +42,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "User Access Management",
     icon: Users,
   },
+  // RESTORED: getAuthorizedNavSections referenced this item, but it was
+  // missing from the array, which produced the `undefined` nav entry.
+  { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
 ];
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -158,6 +162,9 @@ export const NAV_DIRECTORY_BY_HREF: Record<string, string> = {
   "/admin/portal-demo": "portal_demo",
   "/admin/tiktok-shop-opening": "tiktok_shop",
   "/admin/access-management": "user_access_management",
+  // ADDED: without this the key would be derived as "audit_logs", which
+  // doesn't match the "system_audit_logs" permission.
+  "/admin/audit-logs": "system_audit_logs",
 };
 
 export const hasDirectoryAccess = (keys: string[], directory: string) =>
@@ -172,6 +179,11 @@ export function getDirectoryKeyForHref(href: string): string | undefined {
     href.split("/").filter(Boolean).at(-1)?.replaceAll("-", "_")
   );
 }
+
+// Look up admin items by href instead of array index so reordering or
+// removing an entry can never produce an `undefined` nav item.
+const findAdminItem = (href: string): NavItem | undefined =>
+  ADMIN_NAV_ITEMS.find((item) => item.href === href);
 
 export function getAdminDirectoryEntries() {
   const navigationItems = [
@@ -211,21 +223,25 @@ export function getAuthorizedNavSections(
     hasDirectoryAccess(permissionKeys, "user_access_management");
   const canViewSystemAudit =
     isSuperadmin || hasDirectoryAccess(permissionKeys, "system_audit_logs");
-  const auditNavItem = ADMIN_NAV_ITEMS.find(
-    (item) => item.href === "/admin/audit-logs",
-  );
+
+  const dashboardItem = findAdminItem("/admin/dashboard");
+  const accessItem = findAdminItem("/admin/access-management");
+  const auditItem = findAdminItem("/admin/audit-logs");
 
   const adminItems = [
-    ...(canManageAccess ? [ADMIN_NAV_ITEMS[1]] : []),
-    ...(canViewSystemAudit ? [ADMIN_NAV_ITEMS[2]] : []),
-  ];
+    canManageAccess ? accessItem : undefined,
+    canViewSystemAudit ? auditItem : undefined,
+  ].filter((item): item is NavItem => Boolean(item));
+
   if (adminItems.length > 0) {
     sections.unshift({ title: "Administration", items: adminItems });
   }
 
   // Every signed-in admin gets a Dashboard link. /admin/dashboard redirects
   // each user to the dashboard for their own role.
-  sections.unshift({ title: "Overview", items: [ADMIN_NAV_ITEMS[0]] });
+  if (dashboardItem) {
+    sections.unshift({ title: "Overview", items: [dashboardItem] });
+  }
 
   return sections;
 }

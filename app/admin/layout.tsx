@@ -48,13 +48,35 @@ function Sidebar({
   permissionKeys: string[];
   isSuperadmin: boolean;
 }) {
-  // CHANGED: the Dashboard link is active on every role dashboard
+  // The Dashboard link is active on every role dashboard
   // (/admin/hr/dashboard, /admin/accounting/dashboard, ...).
   const isActive = (path: string) =>
     path === "/admin/dashboard"
       ? pathname.endsWith("/dashboard")
       : pathname === path || pathname.startsWith(`${path}/`);
-  const sections = getAuthorizedNavSections(permissionKeys, isSuperadmin);
+
+  // DEFENSIVE: drop undefined/null items (and empty sections) so one bad
+  // entry in admin-navigation.ts can't crash the whole admin shell.
+  const sections = getAuthorizedNavSections(permissionKeys, isSuperadmin)
+    .map((section) => ({
+      ...section,
+      items: (section.items ?? []).filter(Boolean),
+    }))
+    .filter((section) => section.items.length > 0);
+
+  if (process.env.NODE_ENV !== "production") {
+    getAuthorizedNavSections(permissionKeys, isSuperadmin).forEach(
+      (section) => {
+        (section.items ?? []).forEach((item, index) => {
+          if (!item) {
+            console.error(
+              `Undefined nav item at index ${index} in section "${section.title}". Check lib/admin-navigation.ts.`,
+            );
+          }
+        });
+      },
+    );
+  }
 
   return (
     <>
@@ -204,10 +226,12 @@ function TopBar({
   onOpenSidebar: () => void;
   pathname: string;
 }) {
+  // DEFENSIVE: filter(Boolean) so an undefined item can't throw on `.href`.
   const pageItems = getAuthorizedNavSections([], true)
-    .flatMap((section) => section.items)
+    .flatMap((section) => section.items ?? [])
+    .filter(Boolean)
     .sort((left, right) => right.href.length - left.href.length);
-  // CHANGED: every role dashboard shows "Dashboard" as the page title.
+  // Every role dashboard shows "Dashboard" as the page title.
   const pageTitle = pathname.endsWith("/dashboard")
     ? "Dashboard"
     : (pageItems.find(
@@ -343,13 +367,15 @@ export default function AdminLayout({
         setIsAuthenticated(true);
         setIsChecking(false);
 
-        // REMOVED: the old block that sent non-superadmins from /admin/dashboard
-        // to their first authorized directory (e.g. /admin/contracts).
-        // /admin/dashboard now redirects each user to their own role dashboard.
+        // /admin/dashboard redirects each user to their own role dashboard.
 
-        const currentPath = NAV_SECTIONS.flatMap((section) => section.items)
+        // DEFENSIVE: filter(Boolean) before reading `.href`.
+        const currentPath = NAV_SECTIONS.flatMap(
+          (section) => section.items ?? [],
+        )
+          .concat(ADMIN_NAV_ITEMS ?? [])
+          .filter(Boolean)
           .map((item) => item.href)
-          .concat(ADMIN_NAV_ITEMS.map((item) => item.href))
           .sort((left, right) => right.length - left.length)
           .find((href) => pathname === href || pathname.startsWith(`${href}/`));
         const currentDirectory = currentPath
